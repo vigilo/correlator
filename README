@@ -1,0 +1,3 @@
+# Mandriva puts this stuff in /sbin
+PATH=/sbin:$PATH
+runsvdir service

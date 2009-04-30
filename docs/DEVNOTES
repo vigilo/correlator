@@ -1,0 +1,20 @@
+virtualenv ~/var/lib/virtualenv/default
+source ~/var/lib/virtualenv/default/bin/activate
+easy_install processing pylibmc rel
+python /usr/bin/nosetests -v
+python /usr/bin/ipython
+
+For pubsub in python
+	twisted + wokkel
+		Try to use PubSubClient.
+		PubSubResource and PubSubService are for servers.
+	PubSubClient
+		Affero
+		http://github.com/Warbo/pubsubclient
+		http://pubsubclient.sourceforge.net/
+
+Can use ejabber + idavoll (based on wokkel) as a pubsub server,
+or use plain ejabberd 2.0.0+. I don't know if plain idavoll is possible.
+* http://www.josephguhlin.com/blog/archives/2007/04/10/on-being-late-to-the-party-or-pubsub-jabber-and-pain/
+* http://www.ejabberd.im/ejabberd-2.0.0
+
