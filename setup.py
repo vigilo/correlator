@@ -17,6 +17,7 @@ setup(name='vigilo-correlator',
             'pylibmc',
             'processing',
             'rel',
+            'wokkel',
             ],
         packages=[
             'vigilo',
