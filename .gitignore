@@ -1,2 +1,9 @@
-/service/memcached/supervise
+/bin/buildout
+/bin/python
+/build/lib/vigilo
+/develop-eggs
 /docs/.build
+/eggs
+/lib/*.egg-info
+/service/memcached/supervise
+/.installed.cfg

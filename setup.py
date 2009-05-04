@@ -12,7 +12,12 @@ setup(name='vigilo-correlator',
         long_description='The vigilo correlation engine aggregates vigilo\n'
         +'alerts to reduce information overload and help pin out\n'
         +'the cause of a problem.\n',
-        requires=['python_memcached', ],
+        install_requires=[
+            'python_memcached',
+            'pylibmc',
+            'processing',
+            'rel',
+            ],
         packages=[
             'vigilo',
             'vigilo.corr',
