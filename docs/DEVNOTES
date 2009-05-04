@@ -5,6 +5,11 @@ python bootstrap.py
 ./bin/buildout
 ./bin/python /usr/bin/nosetests -v unittests/
 ./bin/python /usr/bin/ipython
+./bin/python /usr/bin/twistd -ny ./lib/vigilo/corr/twisted_service.tac
+
+
+For pubsub monitoring
+	http://x60br.berlios.de/
 
 For pubsub in python
 	twisted + wokkel
