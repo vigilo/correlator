@@ -9,4 +9,4 @@ os.chdir(os.path.join(curdir, ".."))
 
 sys.path.insert(0, "lib")
 
-nose.main()
+nose.main(argv=["-w", "unittests"])
