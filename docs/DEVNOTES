@@ -1,8 +1,10 @@
-virtualenv ~/var/lib/virtualenv/default
-source ~/var/lib/virtualenv/default/bin/activate
-easy_install processing pylibmc rel
-python /usr/bin/nosetests -v
-python /usr/bin/ipython
+# In another shell
+( PATH=/sbin:$PATH; PYTHONPATH=lib runsvdir service; )
+
+python bootstrap.py
+./bin/buildout
+./bin/python /usr/bin/nosetests -v
+./bin/python /usr/bin/ipython
 
 For pubsub in python
 	twisted + wokkel
