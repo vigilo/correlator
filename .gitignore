@@ -2,7 +2,7 @@
 /bin/python
 /build/lib/vigilo
 /develop-eggs
-/docs/.build
+/doc/.build
 /eggs
 /lib/*.egg-info
 /service/memcached/supervise
