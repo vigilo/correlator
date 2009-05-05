@@ -3,6 +3,7 @@
 /build/lib/vigilo
 /develop-eggs
 /doc/.build
+/doc/apidoc
 /eggs
 /lib/*.egg-info
 /service/memcached/supervise

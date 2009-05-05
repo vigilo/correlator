@@ -1,9 +1,10 @@
 # In another shell
 ( PATH=/sbin:$PATH; PYTHONPATH=lib runsvdir service; )
 
-python bootstrap.py
+python ./extra/bootstrap.py
 ./bin/buildout
 ./bin/python /usr/bin/nosetests -v unittests/
+./bin/python /usr/bin/pylint --rcfile=extra/pylintrc lib/vigilo
 ./bin/python /usr/bin/ipython
 ./bin/python /usr/bin/twistd -ny ./lib/vigilo/corr/twisted_service.tac
 
