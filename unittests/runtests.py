@@ -4,9 +4,15 @@ import os
 import sys
 import nose
 
-curdir = os.path.abspath(os.path.dirname(__file__))
-os.chdir(os.path.join(curdir, ".."))
+testsdir = os.path.abspath(os.path.dirname(__file__))
+topdir = os.path.abspath(os.path.join(testsdir, ".."))
+os.chdir(topdir)
 
-sys.path.insert(0, "lib")
+sys.path.insert(0, os.path.join(topdir, "lib"))
 
-nose.main(argv=["-w", "unittests"])
+# Tests path
+sys.argv.insert(1, "-w")
+sys.argv.insert(2, testsdir)
+
+# Run tests
+nose.main()
