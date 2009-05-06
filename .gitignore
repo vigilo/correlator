@@ -1,4 +1,5 @@
 /bin/buildout
+/bin/correlator
 /bin/python
 /build/lib/vigilo
 /develop-eggs

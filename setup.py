@@ -25,5 +25,11 @@ setup(name='vigilo-correlator',
             'vigilo.corr.actors',
             'vigilo.corr.rules',
             ],
+        entry_points={
+            'console_scripts': [
+                'correlator = vigilo.corr.actors.main:main',
+                ],
+            },
         package_dir={'': 'lib'},
         )
+
