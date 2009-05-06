@@ -11,6 +11,8 @@ bin/python: bin/buildout
 
 clean:
 	find $(CURDIR) \( -name "*.pyc" -o -name "*~" \) -delete
+buildclean: clean
+	rm -rf eggs develop-eggs parts .installed.cfg bin lib/vigilo_correlator.egg-info
 
 apidoc: doc/apidoc/index.html
 doc/apidoc/index.html: lib/vigilo
@@ -22,5 +24,5 @@ doc/apidoc/index.html: lib/vigilo
 lint: bin/python
 	./bin/python "$$(which pylint)" --rcfile=extra/pylintrc lib/vigilo
 
-.PHONY: all clean apidoc lint
+.PHONY: all clean buildclean apidoc lint
 
