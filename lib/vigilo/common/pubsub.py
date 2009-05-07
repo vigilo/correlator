@@ -70,7 +70,10 @@ class NodeOwner(pubsub.PubSubClient):
                     returnValue(False)
                 else:
                     raise
-        if (yield ensure(name)): # pylint/astng cannot deal
+        # pylint/astng cannot deal
+        # http://www.logilab.org/ticket/8771
+        # (and btw, unrelated: http://www.logilab.org/ticket/5010 )
+        if (yield ensure(name)):
             return
         components = [ e for e in name.split('/') if e != '' ]
         # parent_paths is like [ '/a', '/a/b', … ]
