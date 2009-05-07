@@ -3,9 +3,10 @@
 /bin/python
 /build/lib/vigilo
 /develop-eggs
-/doc/.build
+/dist
 /doc/apidoc
+/doc/.build
 /eggs
+/.installed.cfg
 /lib/*.egg-info
 /service/memcached/supervise
-/.installed.cfg
