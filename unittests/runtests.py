@@ -8,7 +8,8 @@ testsdir = os.path.abspath(os.path.dirname(__file__))
 topdir = os.path.abspath(os.path.join(testsdir, ".."))
 os.chdir(topdir)
 
-sys.path.insert(0, os.path.join(topdir, "lib"))
+sys.path.append(os.path.join(topdir, "lib"))
+sys.path.append(os.path.join(topdir, ".")) # for settings.py
 
 # Tests path
 sys.argv.insert(1, "-w")
