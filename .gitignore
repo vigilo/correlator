@@ -9,4 +9,5 @@
 /eggs
 /.installed.cfg
 /lib/*.egg-info
+/service/correlator/supervise
 /service/memcached/supervise

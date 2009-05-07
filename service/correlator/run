@@ -1,0 +1,4 @@
+#!/bin/bash
+cd ../..
+# PYTHONPATH in cwd is for settings.py
+PYTHONPATH=. exec ./bin/correlator
