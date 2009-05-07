@@ -21,6 +21,7 @@ setup(name='vigilo-correlator',
             ],
         packages=[
             'vigilo',
+            'vigilo.common',
             'vigilo.corr',
             'vigilo.corr.actors',
             'vigilo.corr.rules',
