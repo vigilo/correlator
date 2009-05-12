@@ -13,6 +13,8 @@ setup(name='vigilo-correlator',
         +'alerts to reduce information overload and help pin out\n'
         +'the cause of a problem.\n',
         install_requires=[
+            # dashes become underscores
+            # order is important (wokkel before Twisted)
             'multiprocessing',
             'nose',
             'processing',
@@ -20,6 +22,7 @@ setup(name='vigilo-correlator',
             'python_memcached',
             'rel',
             'wokkel',
+            'Twisted',
             ],
         packages=[
             'vigilo',
