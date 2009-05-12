@@ -1,6 +1,9 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
 from __future__ import absolute_import
 
+import logging
+import signal
+
 from vigilo.corr.libs import mp
 
 def run_once(p):
@@ -15,6 +18,10 @@ def run_once(p):
     finally:
         p.terminate()
         p.join()
+
+def setup():
+    # 5 is the 'SUBDEBUG' level.
+    mp.log_to_stderr(logging.INFO)
 
 def check_loaded_modules():
     import sys
@@ -63,4 +70,16 @@ def test_pool_passing():
     pool = mp.Pool(processes=4)
     p = mp.Process(target=use_passed_pool, args=(pool,))
     run_once(p)
+
+def display_signals(prefix):
+    print '%s %s %s' % (prefix, 'SIGINT', signal.getsignal(signal.SIGINT))
+    print '%s %s %s' % (prefix, 'SIGTERM', signal.getsignal(signal.SIGTERM))
+    print '%s %s %s' % (prefix, 'SIGCHLD', signal.getsignal(signal.SIGCHLD))
+    print '%s %s %s' % (prefix, 'SIGPIPE', signal.getsignal(signal.SIGPIPE))
+
+def test_signals():
+    display_signals('parent')
+    p = mp.Process(target=display_signals, args=('child', ))
+    run_once(p)
+
 
