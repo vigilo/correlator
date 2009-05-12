@@ -13,9 +13,10 @@ setup(name='vigilo-correlator',
         +'alerts to reduce information overload and help pin out\n'
         +'the cause of a problem.\n',
         install_requires=[
-            'python_memcached',
-            'pylibmc',
             'multiprocessing',
+            'processing',
+            'pylibmc',
+            'python_memcached',
             'rel',
             'wokkel',
             ],

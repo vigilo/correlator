@@ -13,3 +13,19 @@ def test_modules():
     p.start()
     p.join()
 
+def square(x):
+    return x*x
+
+def test_pool():
+    pool = mp.Pool(processes=4)
+    pool.map(square, [0, 1])
+
+def test_pool_from_process():
+    # Pools created in a process block when map is used,
+    # from the same process.
+    # Flaky. pyprocessing isn't subject to this.
+    # http://bugs.python.org/issue5331
+    p = mp.Process(target=test_pool)
+    p.start()
+    p.join()
+
