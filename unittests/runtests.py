@@ -11,9 +11,8 @@ os.chdir(topdir)
 sys.path.append(os.path.join(topdir, "lib"))
 sys.path.append(os.path.join(topdir, ".")) # for settings.py
 
-# Tests path
-sys.argv.insert(1, "-w")
-sys.argv.insert(2, testsdir)
+# unittests isn't normally autodiscovered
+sys.argv[1:0] = [ '-v', '-w', 'unittests', ]
 
 # Run tests
 nose.main()

@@ -14,6 +14,7 @@ setup(name='vigilo-correlator',
         +'the cause of a problem.\n',
         install_requires=[
             'multiprocessing',
+            'nose',
             'processing',
             'pylibmc',
             'python_memcached',
