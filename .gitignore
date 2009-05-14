@@ -8,7 +8,10 @@
 /doc/apidoc
 /doc/.build
 /eggs
+/ID
 /.installed.cfg
 /lib/*.egg-info
 /service/correlator/supervise
 /service/memcached/supervise
+/tags
+/TAGS
