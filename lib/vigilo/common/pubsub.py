@@ -5,11 +5,14 @@ from __future__ import absolute_import
 Extensible pubsub clients.
 """
 
+import logging
+
 from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.words.protocols.jabber import error
 from wokkel import pubsub, xmppim
 
+LOGGER = logging.getLogger(__name__)
 
 class Subscription(object):
     """
@@ -138,6 +141,6 @@ class NodeSubscriber(pubsub.PubSubClient):
             yield subscription.owner.ensureTopicNode(
                     subscription.service, subscription.node)
         yield self.subscribe(subscription.service, subscription.node, my_jid)
-        #print '[Pubsub] subscribed'
+        LOGGER.info('subscribed')
 
 

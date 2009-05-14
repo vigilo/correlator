@@ -12,15 +12,15 @@ def test_contexts():
     from vigilo.corr.rulesapi import Api
     api = Api()
     name = str(random.random())
-    ctx, created = api.get_or_create_context(name, 3)
+    ctx, created = api.get_or_create_context(name, 6)
     assert created
     ctx.decr_treshold()
     ai, created = ctx.get_or_create_aggr_id()
     assert created
-    ctx, created = api.get_or_create_context(name, 3)
+    ctx, created = api.get_or_create_context(name, 6)
     assert not created
     tresh = ctx.decr_treshold()
-    assert tresh == 1
+    assert tresh == 4
     ai1, created = ctx.get_or_create_aggr_id()
     assert not created
     assert ai == ai1
