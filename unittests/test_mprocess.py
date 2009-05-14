@@ -6,6 +6,8 @@ import signal
 
 from vigilo.corr.libs import mp
 
+LOGGER = logging.getLogger(__name__)
+
 def run_once(p):
     try:
         p.start()
@@ -20,8 +22,10 @@ def run_once(p):
         p.join()
 
 def setup():
-    # 5 is the 'SUBDEBUG' level.
-    mp.log_to_stderr(logging.INFO)
+    mp.get_logger().propagate = True
+    logging.basicConfig(
+            level=logging.DEBUG,
+            format='%(levelname)s::%(processName)s::%(name)s::%(message)s')
 
 def check_loaded_modules():
     import sys
@@ -72,10 +76,10 @@ def test_pool_passing():
     run_once(p)
 
 def display_signals(prefix):
-    print '%s %s %s' % (prefix, 'SIGINT', signal.getsignal(signal.SIGINT))
-    print '%s %s %s' % (prefix, 'SIGTERM', signal.getsignal(signal.SIGTERM))
-    print '%s %s %s' % (prefix, 'SIGCHLD', signal.getsignal(signal.SIGCHLD))
-    print '%s %s %s' % (prefix, 'SIGPIPE', signal.getsignal(signal.SIGPIPE))
+    LOGGER.info('%s %s %s', prefix, 'SIGINT', signal.getsignal(signal.SIGINT))
+    LOGGER.info('%s %s %s', prefix, 'SIGTERM', signal.getsignal(signal.SIGTERM))
+    LOGGER.info('%s %s %s', prefix, 'SIGCHLD', signal.getsignal(signal.SIGCHLD))
+    LOGGER.info('%s %s %s', prefix, 'SIGPIPE', signal.getsignal(signal.SIGPIPE))
 
 def test_signals():
     display_signals('parent')
