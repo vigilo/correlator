@@ -9,14 +9,15 @@ from . import setup_mc, teardown_mc
 @with_setup(setup_mc, teardown_mc)
 def test_contexts():
     # import it now because we override MEMCACHE_CONN_PORT in setup_mc
-    from vigilo.corr.rulesapi import API
+    from vigilo.corr.rulesapi import Api
+    api = Api()
     name = str(random.random())
-    ctx, created = API.get_or_create_context(name, 3)
+    ctx, created = api.get_or_create_context(name, 3)
     assert created
     ctx.decr_treshold()
     ai, created = ctx.get_or_create_aggr_id()
     assert created
-    ctx, created = API.get_or_create_context(name, 3)
+    ctx, created = api.get_or_create_context(name, 3)
     assert not created
     tresh = ctx.decr_treshold()
     assert tresh == 1

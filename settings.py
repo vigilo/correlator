@@ -4,5 +4,5 @@ MEMCACHE_CONN_HOST = 'localhost'
 # Non-standard, do not interfere with a global instance.
 MEMCACHE_CONN_PORT = 11215
 
-PLUGINS_ENABLED = ( 'vigilo.corr.rules.test', )
+PLUGINS_ENABLED = ( 'vigilo.corr.rules.same_target_same_time_interval', )
 
