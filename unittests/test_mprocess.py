@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import logging
 import signal
 
-from nose.plugins.skip import SkipTest
+from nose.exc import SkipTest
 
 from vigilo.corr.libs import mp
 
@@ -31,6 +31,7 @@ def setup():
 
 def check_loaded_modules():
     import sys
+    # This is because multiprocessing takes advantage of os.fork()
     assert 'tabnanny' in sys.modules
 
 def test_loaded_modules():
