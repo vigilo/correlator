@@ -86,4 +86,28 @@ def test_signals():
     p = mp.Process(target=display_signals, args=('child', ))
     run_once(p)
 
+def use_shared_queue(queue):
+    queue.put('alpha')
+
+def test_shared_queue():
+    queue = mp.Queue()
+    p = mp.Process(target=use_shared_queue, args=(queue, ))
+    run_once(p)
+
+def test_pool_shared_queue():
+    queue = mp.Queue()
+    pool = mp.Pool(2)
+    try:
+        deferred = pool.map_async(use_shared_queue, [queue, queue, queue])
+        # Sadly, either of those calls blocks the current thread,
+        # regardless of timeouts
+        if False:
+            deferred.wait(timeout=1)
+            deferred.get(timeout=1)
+            assert deferred.ready() and deferred.successful()
+        else:
+            assert False
+    finally:
+        pool.terminate()
+
 

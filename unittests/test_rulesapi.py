@@ -10,7 +10,7 @@ from . import setup_mc, teardown_mc
 def test_contexts():
     # import it now because we override MEMCACHE_CONN_PORT in setup_mc
     from vigilo.corr.rulesapi import Api
-    api = Api()
+    api = Api(queue=None)
     name = str(random.random())
     ctx, created = api.get_or_create_context(name, 6)
     assert created
