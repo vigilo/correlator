@@ -95,6 +95,7 @@ def test_shared_queue():
     run_once(p)
 
 def test_pool_shared_queue():
+    # FAILS
     queue = mp.Queue()
     pool = mp.Pool(2)
     try:
@@ -110,4 +111,12 @@ def test_pool_shared_queue():
     finally:
         pool.terminate()
 
+def test_pool_managed_queue():
+    sync_mgr = mp.Manager()
+    # This is not an mp.Queue, simply an out of process Queue.Queue
+    # Also, it works.
+    queue = sync_mgr.Queue()
+    pool = mp.Pool(2)
+    deferred = pool.map_async(use_shared_queue, [queue, queue, queue])
+    deferred.get(timeout=1)
 
