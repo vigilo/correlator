@@ -5,14 +5,14 @@ from __future__ import absolute_import
 Extensible pubsub clients.
 """
 
-import logging
-
 from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.words.protocols.jabber import error
 from wokkel import pubsub, xmppim
 
-LOGGER = logging.getLogger(__name__)
+from vigilo.common.logging import get_logger
+
+LOGGER = get_logger(__name__)
 
 class Subscription(object):
     """

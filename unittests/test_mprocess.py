@@ -8,7 +8,9 @@ from nose.exc import SkipTest
 
 from vigilo.corr.libs import mp
 
-LOGGER = logging.getLogger(__name__)
+from vigilo.common.logging import get_logger
+
+LOGGER = get_logger(__name__)
 
 def run_once(p):
     try:
