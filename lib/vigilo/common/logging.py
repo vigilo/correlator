@@ -23,17 +23,23 @@ def get_logger(name):
 
     Since name should be the package name, a common use pattern is:
         LOGGER = get_logger(__name__)
+
+    Limitations: if logging blocks, we block the twisted reactor.
     """
 
     global tw_obs
     if tw_obs is None:
         # This has the side effect of changing the default logger class
         # to a LoggerAdapter-like that adds processName contextual info.
+        # Must be called early, before this class is instanciated
+        # in getLogger.
         # This has another side-effect of preparing the muliprocessing
         # atexit handlers.
         mp.get_logger()
         # Propagate from 'multiprocessing' to the parent (the root logger)
         mp.get_logger().propagate = True
+        # The blocking issue could be addressed by not logging to stderr,
+        # or not directly (a queue could do). Ctrl-S (XOFF) blocks.
         tw_obs = twisted_logging.PythonLoggingObserver()
         tw_obs.start()
     return logging.getLogger(name)
