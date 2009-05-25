@@ -6,6 +6,8 @@ import signal
 import time
 import socket
 
+from nose import with_setup
+
 from vigilo.corr.conf import settings
 
 mc_pid = None
@@ -40,4 +42,6 @@ def teardown_mc():
     global mc_pid
     os.kill(mc_pid, signal.SIGTERM)
     os.wait() # Avoid zombies. Bad zombies.
+
+with_mc = with_setup(setup_mc, teardown_mc)
 

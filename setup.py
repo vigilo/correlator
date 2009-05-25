@@ -15,6 +15,7 @@ setup(name='vigilo-correlator',
         install_requires=[
             # dashes become underscores
             # order is important (wokkel before Twisted)
+            'coverage',
             'multiprocessing',
             'nose',
             'processing',
