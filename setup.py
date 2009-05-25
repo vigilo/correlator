@@ -10,7 +10,7 @@ setup(name='vigilo-correlator',
         description='vigilo correlation component',
         license='http://www.gnu.org/licenses/gpl-2.0.html',
         long_description='The vigilo correlation engine aggregates vigilo\n'
-        +'alerts to reduce information overload and help pin out\n'
+        +'alerts to reduce information overload and help point out\n'
         +'the cause of a problem.\n',
         install_requires=[
             # dashes become underscores
