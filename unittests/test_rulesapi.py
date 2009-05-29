@@ -3,6 +3,11 @@ from __future__ import absolute_import
 
 import Queue
 import random
+import threading
+
+from nose.tools import *
+
+from vigilo.corr.libs import mp
 
 from . import with_mc
 
@@ -54,5 +59,48 @@ def test_aggr_buffer():
     val = qu.get()
     assert val == "<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='vigilo' id='1'><alert-ref refid='643'/></aggr></item>"
     assert qu.empty()
+
+@with_mc
+def test_strictness():
+    from vigilo.corr.rulesapi import Api
+    api = Api(queue=None)
+    assert_raises(TypeError, lambda: api.get_or_create_context(u'unicode'))
+
+def run_concurrently(parallelism, func, *args, **kwargs):
+    if False:
+        # The GIL means this doesn't work
+        tasks = [
+                threading.Thread(target=func, args=args, kwargs=kwargs)
+                for j in xrange(parallelism)]
+    else:
+        # coverage/tracing doesn't work in subprocesses
+        tasks = [
+                mp.Process(target=func, args=args, kwargs=kwargs)
+                for j in xrange(parallelism)]
+    for t in tasks:
+        t.start()
+    for t in tasks:
+        t.join(.1)
+
+@with_mc
+def test_concurrency():
+    # Check the logs to see if we really exercised concurrency.
+    # Apparently we didn't manage.
+    from vigilo.corr.rulesapi import Api
+
+    def gocai(name):
+        # Don't share libmemcached connections across threads or processes
+        api = Api(queue=None)
+        ctx, created = api.get_or_create_context(name, treshold=6)
+        ctx.get_or_create_aggr_id()
+    def aba(name):
+        api = Api(queue=None)
+        ctx, created = api.get_or_create_context(name, treshold=6)
+        ctx.aggr_buffer_append(4)
+
+    for i in xrange(16):
+        name = str(random.random())
+        run_concurrently(8, gocai, name)
+        run_concurrently(8, aba, name)
 
 

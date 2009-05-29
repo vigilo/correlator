@@ -16,9 +16,10 @@ setup(name='vigilo-correlator',
             # dashes become underscores
             # order is important (wokkel before Twisted)
             'coverage',
-            'multiprocessing',
             'nose',
-            'processing',
+            'pylint',
+
+            'multiprocessing',
             'pylibmc',
             'python_memcached',
             'rel',

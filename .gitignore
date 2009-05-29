@@ -3,7 +3,9 @@
 /bin/ctags
 /bin/python
 /build/lib/vigilo
-/develop-eggs
+/build/bdist.*
+/buildout-g2p.cfg
+/develop-eggs/*.egg-link
 /dist
 /doc/apidoc
 /doc/.build
