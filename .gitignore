@@ -2,9 +2,10 @@
 /bin/correlator
 /bin/ctags
 /bin/python
-/build/lib/vigilo
 /build/bdist.*
+/build/lib/vigilo
 /buildout-g2p.cfg
+/.coverage
 /develop-eggs/*.egg-link
 /dist
 /doc/apidoc
@@ -17,4 +18,3 @@
 /service/memcached/supervise
 /tags
 /TAGS
-/unittests/.coverage
