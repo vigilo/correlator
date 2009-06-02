@@ -8,5 +8,6 @@ MEMCACHE_CONN_PORT = 11215
 PLUGINS_ENABLED = (
     'vigilo.corr.rules.same_target_same_time_interval',
     'vigilo.corr.rules.topo_deps',
+    'vigilo.corr.rules.high_level_state',
     )
 

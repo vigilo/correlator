@@ -75,6 +75,7 @@ class NodeOwner(pubsub.PubSubClient):
                     raise
         # pylint/astng cannot deal
         # http://www.logilab.org/ticket/8771
+        # was supposed to fix this in hg, but hasn't.
         # (and btw, unrelated: http://www.logilab.org/ticket/5010 )
         if (yield ensure(name)):
             return
