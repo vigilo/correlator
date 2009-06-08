@@ -7,6 +7,8 @@ python ./extra/bootstrap.py
 ./bin/python /usr/bin/pylint --rcfile=extra/pylintrc lib/vigilo
 ./bin/python /usr/bin/ipython
 ./bin/python /usr/bin/twistd -ny ./lib/vigilo/corr/twisted_service.tac
+# memdump comes with libmemcached 0.30+
+MEMCACHED_SERVERS=localhost:11215 memdump
 
 
 For pubsub monitoring
