@@ -42,13 +42,8 @@ def test_aggr_buffer():
     ctx.aggr_buffer_append(523)
     vals = ctx.aggr_buffer_clear()
     assert vals == [ '423', '523', ]
-    try:
-        vals = ctx.aggr_buffer_clear()
-        assert vals == []
-    except RuntimeError: # No such buffer. Maybe we shouldn't throw at all.
-        pass
-    else:
-        assert False
+    vals = ctx.aggr_buffer_clear()
+    assert vals == []
     ctx.aggr_buffer_append(423)
     ctx.aggr_buffer_append(523)
     aid = ctx.aggr_buffer_send()
