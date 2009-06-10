@@ -15,7 +15,7 @@ sys.argv[1:0] = [ '-v',
 		'--with-doctest',
 		'--cover-package=vigilo',
 		'--attr=!SEP',
-		'lib', 'unittests', ]
+		]
 
 # Run tests
 nose.main()
