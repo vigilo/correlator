@@ -4,13 +4,18 @@ from __future__ import absolute_import
 import logging
 import signal
 
+# Use those for missing libraries or runtime support
 from nose.exc import SkipTest
+from nose.plugins.attrib import attr
 
 from vigilo.corr.libs import mp
 
 from vigilo.common.logging import get_logger
 
 LOGGER = get_logger(__name__)
+# Someone else's problem
+# Those are bugs in multiprocessing
+SEP = attr('SEP')
 
 def run_once(p):
     try:
@@ -48,12 +53,12 @@ def test_pool():
     pool = mp.Pool(processes=4)
     pool.map(square, [0, 1, 2])
 
+@SEP
 def test_pool_from_process():
     # FAILS with multiprocessing, but not pyprocessing. Flaky.
     # Pools created in a process block when map is used,
     # from the same process.
     # http://bugs.python.org/issue5331
-    raise SkipTest
 
     p = mp.Process(target=test_pool)
     run_once(p)
@@ -64,9 +69,9 @@ def use_global_pool():
     pool = global_pool
     pool.map(square, [0, 1, 2])
 
+@SEP
 def test_global_pool():
     # FAILS
-    raise SkipTest
 
     global global_pool
     pool = mp.Pool(processes=4)
@@ -77,10 +82,10 @@ def test_global_pool():
 def use_passed_pool(pool):
     pool.map(square, [0, 1, 2])
 
+@SEP
 def test_pool_passing():
     # FAILS
     # Blocks, with pyprocessing and multiprocessing both.
-    raise SkipTest
 
     pool = mp.Pool(processes=4)
     p = mp.Process(target=use_passed_pool, args=(pool,))
@@ -105,9 +110,9 @@ def test_shared_queue():
     p = mp.Process(target=use_shared_queue, args=(queue, ))
     run_once(p)
 
+@SEP
 def test_pool_shared_queue():
     # FAILS
-    raise SkipTest
 
     queue = mp.Queue()
     pool = mp.Pool(2)

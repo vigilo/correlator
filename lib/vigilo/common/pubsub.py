@@ -2,13 +2,14 @@
 from __future__ import absolute_import
 
 """
-Extensible pubsub clients.
+Extensible pubsub clients to manage topic nodes.
 """
 
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.words.protocols.jabber import error
 from wokkel import pubsub, xmppim
+from wokkel.generic import parseXml
 
 from vigilo.common.logging import get_logger
 
@@ -149,4 +150,67 @@ class NodeSubscriber(pubsub.PubSubClient):
         yield self.subscribe(subscription.service, subscription.node, my_jid)
         LOGGER.info('subscribed')
 
+
+class QueueToNodeForwarder(pubsub.PubSubClient):
+    """
+    Publishes pubsub items from a queue.
+
+    Consumes serialized xml payloads from a L{Queue.Queue}
+    and publishes to a pubsub topic node.
+    """
+
+    def __init__(self, queue, subscription):
+        self.__queue = queue
+        self.__subscription = subscription
+
+    def consumeQueue(self):
+        # Isn't there a callInThread / callFromThread decorator?
+        while True:
+            # blocks, doesn't time out
+            xml = self.__queue.get(block=True, timeout=None)
+            # Parsing is thread safe I expect
+            dom = parseXml(xml)
+            item = pubsub.Item(payload=dom)
+            # XXX Connection loss might be problematic
+            reactor.callFromThread(self.publish,
+                    self.__subscription.service,
+                    self.__subscription.node,
+                    [dom])
+
+    def connectionInitialized(self):
+        reactor.callInThread(self.consumeQueue)
+
+
+class NodeToQueueForwarder(NodeSubscriber):
+    """
+    Receives messages on the xmpp bus, and passes them to rule processing.
+    """
+
+    def __init__(self, subscription, queue):
+        self.__queue = queue
+        NodeSubscriber.__init__(self, [subscription])
+
+    def itemsReceived(self, event):
+        # See ItemsEvent
+        #event.sender
+        #event.recipient
+        #event.nodeIdentifier
+        #event.headers
+        for item in event.items:
+            # Item is a domish.IElement and a domish.Element
+            # Serialize as XML before queueing,
+            # or we get harmless stderr pollution  × 5 lines:
+            # Exception RuntimeError: 'maximum recursion depth exceeded in __subclasscheck__' in <type 'exceptions.AttributeError'> ignored
+            # Stderr pollution caused by http://bugs.python.org/issue5508
+            # and some touchiness on domish attribute access.
+            xml = item.toXml()
+            LOGGER.debug('Got item: %s', xml)
+            if item.name != 'item':
+                # The alternative is 'retract', which we silently ignore
+                # We receive retractations in FIFO order,
+                # ejabberd keeps 10 items before retracting old items.
+                continue
+            # Might overflow the queue, but I don't think we are
+            # allowed to block.
+            self.__queue.put_nowait(xml)
 

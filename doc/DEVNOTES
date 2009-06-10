@@ -3,6 +3,10 @@
 
 python ./extra/bootstrap.py
 ./bin/buildout
+# That node thing should be configured in /etc/ejabberd/ejabberdctl.cfg
+# Mandriva doesn't define a default, and ends up with inconsistent values.
+sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator localhost coloration
+sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator.tests localhost coloration
 ./bin/python /usr/bin/nosetests -v unittests/
 ./bin/python /usr/bin/pylint --rcfile=extra/pylintrc lib/vigilo
 ./bin/python /usr/bin/ipython
