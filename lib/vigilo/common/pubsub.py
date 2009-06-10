@@ -39,6 +39,11 @@ class Subscription(object):
     def owner(self):
         return self.__owner
 
+    def subscription_with_owner(owner):
+        # Maybe the topic (owner-less) / subscription (owner)
+        # thing could be handled with a zope.interfaces style adapt.
+        return Subscription(self.service, self.node, owner)
+
 class NodeOwner(pubsub.PubSubClient):
     """
     A pubsub client able to own (create and manage) nodes.
