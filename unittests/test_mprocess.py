@@ -42,6 +42,7 @@ http://bugs.python.org/issue5313
             try:
                 #os.close(sys.stdin.fileno())
                 sys.stdin.close()
+                sys.stdin = open(os.devnull)
             except (OSError, ValueError):
                 pass
 
@@ -49,6 +50,7 @@ http://bugs.python.org/issue5313
 
 import logging
 import signal
+import sys
 
 # Use those for missing libraries or runtime support
 from nose.exc import SkipTest
@@ -89,7 +91,6 @@ def teardown():
     sync_mgr.shutdown()
 
 def check_loaded_modules():
-    import sys
     # Evidence that multiprocessing takes advantage of os.fork()
     assert 'tabnanny' in sys.modules
 
@@ -194,10 +195,14 @@ def test_pool_managed_queue():
     deferred.get(timeout=1)
 
 def use_queue(queue):
+    LOGGER.info('use_queue %s %s %s\n',
+            sys.stdin, sys.stdin.fileno(), sys.stdin.closed)
     # IOError
     queue.get(timeout=1.)
 
 def create_queue(success_queue):
+    LOGGER.info('create_queue %s %s %s\n',
+            sys.stdin, sys.stdin.fileno(), sys.stdin.closed)
     queue = mp.Queue()
     sub = mp.Process(target=use_queue, args=(queue,))
     sub.start()

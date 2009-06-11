@@ -5,6 +5,8 @@ from __future__ import absolute_import
 Extensible pubsub clients to manage topic nodes.
 """
 
+import Queue as queue
+
 from twisted.internet import defer, reactor
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.words.protocols.jabber import error
@@ -40,7 +42,7 @@ class Subscription(object):
     def owner(self):
         return self.__owner
 
-    def subscription_with_owner(owner):
+    def subscription_with_owner(self, owner):
         # Maybe the topic (owner-less) / subscription (owner)
         # thing could be handled with a zope.interfaces style adapt.
         return Subscription(self.service, self.node, owner)
@@ -155,30 +157,41 @@ class QueueToNodeForwarder(pubsub.PubSubClient):
     """
     Publishes pubsub items from a queue.
 
-    Consumes serialized xml payloads from a L{Queue.Queue}
+    Consumes serialized L{Pubsub.Item}s from a L{Queue.Queue}
     and publishes to a pubsub topic node.
     """
 
     def __init__(self, queue, subscription):
         self.__queue = queue
         self.__subscription = subscription
+        self.__stop = False
 
     def consumeQueue(self):
         # Isn't there a callInThread / callFromThread decorator?
-        while True:
-            # blocks, doesn't time out
-            xml = self.__queue.get(block=True, timeout=None)
+        while not self.__stop and self.parent is not None:
+            try:
+                # Use a timeout so that we notice when __stop flips.
+                xml = self.__queue.get(block=True, timeout=1.)
+            except queue.Empty:
+                continue
             # Parsing is thread safe I expect
-            dom = parseXml(xml)
-            item = pubsub.Item(payload=dom)
+            item = parseXml(xml)
+            if not (item.uri == pubsub.NS_PUBSUB
+                    and item.name == u'item'):
+                raise TypeError(item, pubsub.Item)
             # XXX Connection loss might be problematic
             reactor.callFromThread(self.publish,
                     self.__subscription.service,
                     self.__subscription.node,
-                    [dom])
+                    [item])
 
     def connectionInitialized(self):
+        super(QueueToNodeForwarder, self).connectionInitialized()
         reactor.callInThread(self.consumeQueue)
+
+    def connectionLost(self, reason):
+        self.__stop = True
+        super(QueueToNodeForwarder, self).connectionLost(reason)
 
 
 class NodeToQueueForwarder(NodeSubscriber):
@@ -188,13 +201,15 @@ class NodeToQueueForwarder(NodeSubscriber):
 
     def __init__(self, subscription, queue):
         self.__queue = queue
+        self.__subscription = subscription
         NodeSubscriber.__init__(self, [subscription])
 
     def itemsReceived(self, event):
         # See ItemsEvent
         #event.sender
         #event.recipient
-        #event.nodeIdentifier
+        if event.nodeIdentifier != self.__subscription.node:
+            return
         #event.headers
         for item in event.items:
             # Item is a domish.IElement and a domish.Element

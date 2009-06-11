@@ -14,6 +14,7 @@
 /ID
 /.installed.cfg
 /lib/*.egg-info
+/.noseids
 /service/correlator/supervise
 /service/memcached/supervise
 /tags

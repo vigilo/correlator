@@ -6,6 +6,7 @@ from settings import *
 # Respect the ejabberd namespacing, for now.
 VIGILO_ALERTS_TOPIC = '/home/localhost/correlator.tests/alerts'
 VIGILO_CORRALERTS_TOPIC = '/home/localhost/correlator.tests/corralerts'
+VIGILO_TESTALERTS_TOPIC = '/home/localhost/correlator.tests/testalerts'
 VIGILO_CORR_JID = JID('correlator.tests@localhost')
 VIGILO_CORR_PASS = 'coloration'
 

@@ -5,7 +5,7 @@ import Queue
 import random
 import threading
 
-from nose.tools import *
+from nose.tools import assert_raises
 
 from vigilo.corr.libs import mp
 
