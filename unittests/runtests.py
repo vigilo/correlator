@@ -17,5 +17,7 @@ sys.argv[1:0] = [ '-v',
 		'--attr=!SEP',
 		]
 
+from twisted.internet.base import DelayedCall
+DelayedCall.debug = True
 # Run tests
 nose.main()

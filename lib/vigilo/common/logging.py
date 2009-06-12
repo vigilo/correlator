@@ -6,6 +6,7 @@ Sets up logging, with twisted and multiprocessing integration.
 """
 
 import logging
+import sys
 
 # slight layering issue, move libs to common?
 from vigilo.corr.libs import mp

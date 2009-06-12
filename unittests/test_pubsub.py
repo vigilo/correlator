@@ -18,6 +18,7 @@ else:
     from nose.twistedtools import reactor, deferred
 
 from twisted.internet import task
+from twisted.internet.base import DelayedCall
 from twisted.internet.defer import Deferred, inlineCallbacks, succeed
 from twisted.internet.threads import deferToThread
 from twisted.words.xish import domish
@@ -38,6 +39,7 @@ test_sub = Subscription(
         settings['VIGILO_TESTALERTS_TOPIC'] + '/' + str(random.random()),
         )
 
+DelayedCall.debug = True
 
 class XmppClient(unittest.TestCase):
     timeout = 2
@@ -105,18 +107,37 @@ class XmppClient(unittest.TestCase):
 
 #class CorrService(unittest.TestCase):
 class CorrService(object):
+    """
+    This test has an Heisenbug.
+
+    Depends on the test runner (trial or nose), the logging,
+    and, if nose is used, whether coverage is used.
+
+    inlineCallbacks gives the wrong backtrace, use trial's debug options to
+    drop into pdb and get inlineCallbacks's deferred and the real backtrace.
+    print deferred._debugInfo._getDebugTracebacks()
+
+    Apparently the connection is found dropped in the connectionInitialized
+    handlers.
+    """
+
+    timeout = 2
+
     def setUp(self):
         class mock_manager(object): pass
         self.manager = mock_manager()
         self.manager.alert_msgs_queue = queue.Queue()
         self.manager.agg_msgs_queue = queue.Queue()
-        self.corr_client = CorrServiceMaker().makeService({'manager': self.manager, })
+        self.corr_client = CorrServiceMaker().makeService(
+                {'manager': self.manager, })
         self.corr_client.startService()
+        self.xmpp_client = self.corr_client.getServiceNamed('xmpp_client')
         # Wait a few seconds so the connection is done.
         # We have no way to get a deferred for startService.
-        return task.deferLater(reactor, 1., lambda: None)
+        return task.deferLater(reactor, 1.5, lambda: None)
 
     def tearDown(self):
+        print threading.enumerate()
         return self.corr_client.stopService()
         pass
 

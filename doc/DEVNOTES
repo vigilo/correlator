@@ -14,6 +14,9 @@ sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" regis
 # memdump comes with libmemcached 0.30+
 MEMCACHED_SERVERS=localhost:11215 memdump
 
+# Two way to run the twisted stuff
+./bin/python ./unittests/runtests.py --with-coverage --cover-erase --cover-inclusive unittests.test_pubsub:XmppClient.testForwarders
+VIGILO_SETTINGS_MODULE=settings_tests ./bin/trial -e  unittests.test_pubsub.XmppClient.testForwarders
 
 For pubsub monitoring
 	http://x60br.berlios.de/
