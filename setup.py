@@ -25,8 +25,13 @@ setup(name='vigilo-correlator',
             'python_libmemcached',
             'PyYAML',
             'rel',
+            'vigilo-common-pubsub',
             'wokkel',
             'Twisted',
+            ],
+        namespace_packages = [
+            'vigilo',
+            'vigilo.common',
             ],
         packages=[
             'vigilo',
