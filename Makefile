@@ -12,17 +12,17 @@ bin/python: bin/buildout
 clean:
 	find $(CURDIR) \( -name "*.pyc" -o -name "*~" \) -delete
 buildclean: clean
-	rm -rf eggs develop-eggs parts .installed.cfg bin lib/vigilo_correlator.egg-info
+	rm -rf eggs develop-eggs parts .installed.cfg bin src/vigilo_correlator.egg-info
 
 apidoc: doc/apidoc/index.html
-doc/apidoc/index.html: lib/vigilo
+doc/apidoc/index.html: src/vigilo
 	rm -rf $(CURDIR)/doc/apidoc/*
-	PYTHONPATH=lib epydoc -o $(dir $@) -v \
+	PYTHONPATH=src epydoc -o $(dir $@) -v \
 		   --name Vigilo --url http://www.projet-vigilo.org \
 		   --docformat=epytext $^
 
 lint: bin/python
-	./bin/python "$$(which pylint)" --rcfile=extra/pylintrc lib/vigilo
+	./bin/python "$$(which pylint)" --rcfile=extra/pylintrc src/vigilo
 
 .PHONY: all clean buildclean apidoc lint
 

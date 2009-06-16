@@ -1,5 +1,5 @@
 # In another shell
-( PATH=/sbin:$PATH; PYTHONPATH=lib runsvdir service; )
+( PATH=/sbin:$PATH; PYTHONPATH=src runsvdir service; )
 
 python ./extra/bootstrap.py
 ./bin/buildout
@@ -8,9 +8,9 @@ python ./extra/bootstrap.py
 sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator localhost coloration
 sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator.tests localhost coloration
 ./bin/python /usr/bin/nosetests -v unittests/
-./bin/python /usr/bin/pylint --rcfile=extra/pylintrc lib/vigilo
+./bin/python /usr/bin/pylint --rcfile=extra/pylintrc src/vigilo
 ./bin/python /usr/bin/ipython
-./bin/python /usr/bin/twistd -ny ./lib/vigilo/corr/twisted_service.tac
+./bin/python /usr/bin/twistd -ny ./src/vigilo/corr/twisted_service.tac
 # memdump comes with libmemcached 0.30+
 MEMCACHED_SERVERS=localhost:11215 memdump
 

@@ -45,6 +45,6 @@ setup(name='vigilo-correlator',
                 'correlator = vigilo.corr.actors.main:main',
                 ],
             },
-        package_dir={'': 'lib'},
+        package_dir={'': 'src'},
         )
 

@@ -13,7 +13,7 @@
 /eggs
 /ID
 /.installed.cfg
-/lib/*.egg-info
+/src/*.egg-info
 /.noseids
 /service/correlator/supervise
 /service/memcached/supervise
