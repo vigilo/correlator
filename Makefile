@@ -25,7 +25,7 @@ lint: bin/python
 	./bin/python "$$(which pylint)" --rcfile=extra/pylintrc src/vigilo
 
 tests: 
-	./unittests/runtests.py
+	./tests/runtests.py
 
 .PHONY: all clean buildclean apidoc lint tests
 

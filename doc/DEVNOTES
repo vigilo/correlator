@@ -8,7 +8,7 @@ python ./extra/bootstrap.py
 sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator localhost coloration
 sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator.tests localhost coloration
 sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register esper localhost prosper
-./bin/python /usr/bin/nosetests -v unittests/
+./bin/python /usr/bin/nosetests -v tests/
 ./bin/python /usr/bin/pylint --rcfile=extra/pylintrc src/vigilo
 ./bin/python /usr/bin/ipython
 ./bin/python /usr/bin/twistd -ny ./src/vigilo/corr/twisted_service.tac
@@ -20,11 +20,11 @@ xmlcatalog --add uri http://www.codesynthesis.com/xmlns/xsstl \
 file:///home/who/var/co/git-svn/esper/xsstl-1.0.0/xsstl.xsd /etc/xml/catalog
 
 # Two ways to run the twisted tests
-./bin/python ./unittests/runtests.py \
+./bin/python ./tests/runtests.py \
 		--with-coverage --cover-erase --cover-inclusive \
-		unittests.test_pubsub:XmppClient.testForwarders
+		tests.test_pubsub:XmppClient.testForwarders
 VIGILO_SETTINGS_MODULE=settings_tests ./bin/trial -e  \
-		unittests.test_pubsub.XmppClient.testForwarders
+		tests.test_pubsub.XmppClient.testForwarders
 
 Pubsub monitoring
 	http://x60br.berlios.de/
