@@ -1,5 +1,5 @@
 # In another shell
-( PATH=/sbin:$PATH; PYTHONPATH=src runsvdir service; )
+( PATH=/sbin:$PATH; PYTHONPATH=. runsvdir service; )
 
 python ./extra/bootstrap.py
 ./bin/buildout
@@ -31,9 +31,9 @@ Pubsub monitoring
 
 Pubsub clients in python
 	twisted + wokkel
-		Use PubSubClient.
+		Use wokkel.pubsub.PubSubClient .
 		PubSubResource and PubSubService are for servers.
-	PubSubClient
+	PubSubClient (not the same as wokkel's)
 		Affero
 		http://github.com/Warbo/pubsubclient
 		http://pubsubclient.sourceforge.net/

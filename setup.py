@@ -43,6 +43,7 @@ setup(name='vigilo-correlator',
         entry_points={
             'console_scripts': [
                 'correlator = vigilo.corr.actors.main:main',
+                'vigilo-config = vigilo.corr.conf:main',
                 ],
             },
         package_dir={'': 'src'},

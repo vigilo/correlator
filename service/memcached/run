@@ -1,5 +1,0 @@
-#!/bin/bash
-cd ../..
-host=$(python -m vigilo.corr.conf --get MEMCACHE_CONN_HOST)
-port=$(python -m vigilo.corr.conf --get MEMCACHE_CONN_PORT)
-exec /usr/sbin/memcached -M -l "$host" -p "$port"
