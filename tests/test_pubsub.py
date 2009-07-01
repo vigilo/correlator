@@ -92,7 +92,8 @@ class XmppClient(unittest.TestCase):
         qtnf.setHandlerParent(self.xmpp_client)
 
         cookie = str(random.random())
-        dom = domish.Element(('vigilo', 'test', ))
+        dom = domish.Element(
+                ('http://www.projet-vigilo.org/xmlns/alerts1', 'alert', ))
         dom['cookie'] = cookie
         item = pubsub.Item(payload=dom)
         in_queue.put_nowait(item.toXml())
