@@ -49,8 +49,10 @@ http://bugs.python.org/issue5313
 """
 
 import logging
+import os
 import signal
 import sys
+from StringIO import StringIO
 
 # Use those for missing libraries or runtime support
 from nose.exc import SkipTest
@@ -219,4 +221,31 @@ def test_deep_queue():
     run_once(proc)
     assert success_queue.get_nowait() is True
 
+class file_like(object):
+    def __init__(self, delegate):
+        self._delegate = delegate
+        self._pid = None
+
+    @property
+    def cache(self):
+        pid = os.getpid()
+        if pid != self._pid:
+            self._pid = pid
+            self._cache = []
+        return self._cache
+
+    def write(self, data):
+        self.cache.append(data)
+
+    def flush(self):
+        self._delegate.write(''.join(self.cache))
+        self._cache = []
+
+def test_flushing():
+    sio = StringIO()
+    flike = file_like(sio)
+    flike.write('foo')
+    proc = mp.Process(target=lambda: flike.flush())
+    flike.flush()
+    assert sio.getvalue() == 'foo'
 
