@@ -27,9 +27,9 @@ from wokkel.generic import parseXml
 from wokkel.test.helpers import TestableRequestHandlerMixin, XmlStreamStub
 
 from vigilo.common.logging import get_logger
-from vigilo.common.pubsub import (
+from vigilo.pubsub import (
         NodeOwner, NodeToQueueForwarder, QueueToNodeForwarder, Subscription, )
-from vigilo.corr.conf import settings
+from vigilo.common.conf import settings
 from vigilo.corr.pubsub import CorrServiceMaker
 
 LOGGER = get_logger(__name__)

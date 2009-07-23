@@ -6,7 +6,7 @@ import sys
 # Import from io if we target 2.6
 from cStringIO import StringIO
 
-from vigilo.corr.conf import settings, settings_raw
+from vigilo.common.conf import settings, settings_raw
 
 from nose.tools import assert_raises
 
@@ -21,14 +21,14 @@ def test_cmdline():
     oldout, sys.stdout = sys.stdout, StringIO()
     try:
         sys.argv[1:] = ['--get', 'MEMCACHE_CONN_HOST', ]
-        runpy.run_module('vigilo.corr.conf',
+        runpy.run_module('vigilo.common.conf',
                 run_name='__main__', alter_sys=True)
         assert sys.stdout.getvalue() == settings['MEMCACHE_CONN_HOST'] + '\n'
         sys.stdout.seek(0)
         sys.stdout.truncate()
 
         sys.argv[1:] = []
-        runpy.run_module('vigilo.corr.conf',
+        runpy.run_module('vigilo.common.conf',
                 run_name='__main__', alter_sys=True)
         assert sys.stdout.getvalue() == ''
         sys.stdout.seek(0)

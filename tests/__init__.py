@@ -8,7 +8,7 @@ import socket
 
 from nose import with_setup
 
-from vigilo.corr.conf import settings
+from vigilo.common.conf import settings
 
 mc_pid = None
 
