@@ -48,11 +48,11 @@ def test_aggr_buffer():
     ctx.aggr_buffer_append(523)
     aid = ctx.aggr_buffer_send()
     val = qu.get()
-    assert val == "<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='vigilo' id='1'><alert-ref refid='423'/><alert-ref refid='523'/></aggr></item>"
+    assert val == u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='1'><alert-ref refid='423'/><alert-ref refid='523'/></aggr></item>"
     assert qu.empty()
     ctx.aggr_append(aid, '643')
     val = qu.get()
-    assert val == "<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='vigilo' id='1'><alert-ref refid='643'/></aggr></item>"
+    assert val == u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='1'><alert-ref refid='643'/></aggr></item>"
     assert qu.empty()
 
 @with_mc
