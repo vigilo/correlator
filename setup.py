@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='vigilo-correlator',
         version='0.1',
