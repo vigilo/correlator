@@ -19,7 +19,7 @@ setup(name='vigilo-correlator',
             'nose',
             'pylint',
 
-            'multiprocessing',
+            'multiprocessing >= 2.6.2.1',
             'python-libmemcached',
             'PyYAML',
             'rel',
