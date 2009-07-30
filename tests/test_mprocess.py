@@ -108,7 +108,6 @@ def test_pool():
     pool = mp.Pool(processes=4)
     pool.map(square, [0, 1, 2])
 
-@SEP
 def test_pool_from_process():
     # FAILS with multiprocessing, but not pyprocessing. Flaky.
     # Pools created in a process block when map is used,
@@ -213,7 +212,6 @@ def create_queue(success_queue):
     success = queue.empty()
     success_queue.put(success)
 
-@SEP
 def test_deep_queue():
     # http://bugs.python.org/issue5155
     success_queue = sync_mgr.Queue()
