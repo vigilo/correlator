@@ -21,6 +21,7 @@ setup(name='vigilo-correlator',
 
             'multiprocessing >= 2.6.2.1',
             'python-libmemcached',
+            'python-daemon',
             'PyYAML',
             'rel',
             'vigilo-common',
@@ -39,7 +40,7 @@ setup(name='vigilo-correlator',
             ],
         entry_points={
             'console_scripts': [
-                'correlator = vigilo.corr.actors.main:main',
+                'correlator = vigilo.corr.actors.main:main_cmdline',
                 ],
             },
         package_dir={'': 'src'},
