@@ -82,10 +82,6 @@ def run_once(p):
 
 sync_mgr = None
 def setup():
-    mp.get_logger().propagate = True
-    logging.basicConfig(
-            level=logging.DEBUG,
-            format='%(levelname)s::%(processName)s::%(name)s::%(message)s')
     global sync_mgr
     sync_mgr = mp.Manager()
 
