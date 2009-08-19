@@ -1,12 +1,13 @@
 NAME = correlator
+GLUE = ../glue
 
 all:
 	@echo "Template Makefile, to be filled with build and install targets"
 
-bin/buildout:
-	python extra/bootstrap.py
+$(GLUE)/bin/buildout:
+	make -C $(GLUE) bin/buildout
 
-bin/python: bin/buildout
+$(GLUE)/bin/python: $(GLUE)/bin/buildout
 	./bin/buildout
 
 clean:
@@ -21,11 +22,11 @@ doc/apidoc/index.html: src/vigilo
 		   --name Vigilo --url http://www.projet-vigilo.org \
 		   --docformat=epytext $^
 
-lint: bin/python
-	./bin/python "$$(which pylint)" --rcfile=extra/pylintrc src/vigilo
+lint: $(GLUE)/bin/python
+	$(GLUE)/bin/python "$$(which pylint)" --rcfile=$(GLUE)/extra/pylintrc src/vigilo
 
-tests: 
-	./tests/runtests.py
+tests: $(GLUE)/bin/python
+	PYTHONPATH=$(GLUE) VIGILO_SETTINGS_MODULE=settings_tests $(GLUE)/bin/python "$$(which nosetests)" tests
 
 .PHONY: all clean buildclean apidoc lint tests
 
