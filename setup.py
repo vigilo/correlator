@@ -2,6 +2,12 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
 from setuptools import setup
 
+tests_require = [
+        'coverage',
+        'nose',
+        'pylint',
+        ]
+
 setup(name='vigilo-correlator',
         version='0.1',
         author='Gabriel de Perthuis',
@@ -15,10 +21,6 @@ setup(name='vigilo-correlator',
         install_requires=[
             # dashes become underscores
             # order is important (wokkel before Twisted)
-            'coverage',
-            'nose',
-            'pylint',
-
             'multiprocessing >= 2.6.2.1',
             'python-libmemcached',
             'python-daemon',
@@ -29,6 +31,9 @@ setup(name='vigilo-correlator',
             'wokkel',
             'Twisted',
             ],
+        extras_require={
+            'tests': tests_require,
+            },
         namespace_packages = [
             'vigilo',
             ],
@@ -41,6 +46,7 @@ setup(name='vigilo-correlator',
         entry_points={
             'console_scripts': [
                 'correlator = vigilo.corr.actors.main:main_cmdline',
+                'runtests-correlator = vigilo.corr.tests.runtests:runtests [tests]',
                 ],
             },
         package_dir={'': 'src'},
