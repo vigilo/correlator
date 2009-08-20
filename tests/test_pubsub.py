@@ -35,7 +35,7 @@ from vigilo.corr.pubsub import CorrServiceMaker
 LOGGER = get_logger(__name__)
 
 test_sub = Subscription(
-        settings['XMPP_PUBSUB_SERVICE'],
+        JID(settings['XMPP_PUBSUB_SERVICE']),
         settings['VIGILO_TESTALERTS_TOPIC'] + '/' + str(random.random()),
         )
 
@@ -54,7 +54,7 @@ class XmppClient(unittest.TestCase):
             self.protocol.connectionInitialized()
 
         self.xmpp_client = client.XMPPClient(
-                settings['VIGILO_CORR_JID'],
+                JID(settings['VIGILO_CORR_JID']),
                 settings['VIGILO_CORR_PASS'],
                 settings['XMPP_SERVER_HOST'],
                 )
