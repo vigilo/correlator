@@ -12,10 +12,10 @@ clean:
 buildclean: clean
 	rm -rf eggs develop-eggs parts .installed.cfg bin src/vigilo_correlator.egg-info
 
-apidoc: doc/apidoc/index.html
+apidoc: doc/apidoc/index.html $(BUILDENV)/bin/python
 doc/apidoc/index.html: src/vigilo
 	rm -rf $(CURDIR)/doc/apidoc/*
-	PYTHONPATH=src epydoc -o $(dir $@) -v \
+	PYTHONPATH=$(BUILDENV) $(BUILDENV)/bin/python "$$(which epydoc)" -o $(dir $@) -v \
 		   --name Vigilo --url http://www.projet-vigilo.org \
 		   --docformat=epytext $^
 
