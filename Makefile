@@ -24,9 +24,7 @@ lint: $(BUILDENV)/bin/python
 
 tests: $(BUILDENV)/bin/python
 	PYTHONPATH=$(BUILDENV) VIGILO_SETTINGS_MODULE=settings_tests \
-		$(BUILDENV)/bin/nosetests --with-coverage --cover-inclusive \
-			--cover-erase --cover-package=vigilo.corr \
-			vigilo.corr.tests
+		$(BUILDENV)/bin/runtests-correlator
 
 .PHONY: all clean buildclean apidoc lint tests
 
