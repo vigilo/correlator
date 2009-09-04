@@ -16,8 +16,11 @@ sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" regis
 MEMCACHED_SERVERS=localhost:11215 memdump
 
 # Global XML catalog
-xmlcatalog --add uri http://www.codesynthesis.com/xmlns/xsstl \
-file:///home/who/var/co/git-svn/esper/xsstl-1.0.0/xsstl.xsd /etc/xml/catalog
+sudo xmlcatalog --noout \
+    --add rewriteURI \
+    http://www.codesynthesis.com/projects/xsstl/ \
+    file:///$HOME/var/co/git-svn/vigilo-base/pubsub/src/vigilo/pubsub/data/xsstl/ \
+    /etc/xml/catalog
 
 # Two ways to run the twisted tests
 ./bin/python ./tests/runtests.py \

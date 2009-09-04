@@ -21,7 +21,7 @@ setup(name='vigilo-correlator',
         install_requires=[
             # dashes become underscores
             # order is important (wokkel before Twisted)
-            # 'lxml', # ElementTree for now
+            'lxml', # ElementTree-compatible, validation…
             'multiprocessing >= 2.6.2.1',
             'python-libmemcached',
             'python-daemon',
