@@ -4,6 +4,7 @@ import logging
 MEMCACHE_CONN_TYPE = 'inet'
 PLUGINS_ENABLED = ()
 LOGGING_PLUGINS = (
+        'vigilo.pubsub.logging',
         'vigilo.corr.logging',
         )
 LOGGING_SETTINGS = {}
