@@ -23,6 +23,7 @@ setup(name='vigilo-correlator',
             # order is important (wokkel before Twisted)
             'lxml', # ElementTree-compatible, validation…
             'multiprocessing >= 2.6.2.1',
+            'psycopg2',
             'python-libmemcached',
             'python-daemon',
             'PyYAML',
