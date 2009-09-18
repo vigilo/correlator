@@ -1,6 +1,7 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
 import logging
 
+MEMCACHE_SRV_COMMAND = '/usr/sbin/memcached'
 MEMCACHE_CONN_TYPE = 'inet'
 PLUGINS_ENABLED = ()
 LOGGING_PLUGINS = (
