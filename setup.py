@@ -21,6 +21,7 @@ setup(name='vigilo-correlator',
         install_requires=[
             # dashes become underscores
             # order is important (wokkel before Twisted)
+            'setuptools',
             'lxml', # ElementTree-compatible, validation…
             'multiprocessing >= 2.6.2.1',
             'psycopg2',
@@ -33,6 +34,7 @@ setup(name='vigilo-correlator',
             'vigilo-pubsub',
             'wokkel',
             'Twisted',
+            'docutils',
             ],
         extras_require={
             'tests': tests_require,
