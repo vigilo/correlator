@@ -51,7 +51,7 @@ setup(name='vigilo-correlator',
         entry_points={
             'console_scripts': [
                 'correlator = vigilo.corr.actors.main:main_cmdline',
-                'runtests-correlator = vigilo.corr.tests.runtests:runtests [tests]',
+                'runtests-correlator = vigilo.corr.tests:runtests [tests]',
                 ],
             },
         package_dir={'': 'src'},
