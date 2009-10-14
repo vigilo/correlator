@@ -35,6 +35,7 @@ setup(name='vigilo-correlator',
             'wokkel',
             'Twisted',
             'docutils',
+            'vigilo-connector',
             ],
         extras_require={
             'tests': tests_require,
