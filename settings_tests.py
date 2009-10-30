@@ -15,7 +15,17 @@ LOGGING_SYSLOG = False
 ## Set to None to connect using the CORR_JID host and SRV records.
 XMPP_SERVER_HOST = 'localhost'
 XMPP_PUBSUB_SERVICE = 'pubsub.localhost'
-#
-VIGILO_TESTALERTS_TOPIC = '/home/localhost/correlator.tests/testalerts'
+
+# Nœuds XMPP de tests.
+VIGILO_CORRELATOR_TOPIC_OWNER = [
+    '/home/localhost/correlator.tests/event',
+]
+
 VIGILO_CORR_JID = 'correlator.tests@localhost'
 VIGILO_CORR_PASS = 'coloration'
+
+VIGILO_MODELS_BDD_BASENAME = ''
+VIGILO_SQLALCHEMY = {
+    'url': 'sqlite:///:memory:',
+}
+
