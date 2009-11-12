@@ -29,3 +29,6 @@ VIGILO_SQLALCHEMY = {
     'url': 'sqlite:///:memory:',
 }
 
+NAGIOS_HLS_JID = 'hls@localhost'
+NAGIOS_HLS_HOST = 'HLS'
+
