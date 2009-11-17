@@ -36,6 +36,7 @@ setup(name='vigilo-correlator',
             'Twisted',
             'docutils',
             'vigilo-connector',
+            'networkx',
             ],
         extras_require={
             'tests': tests_require,
