@@ -10,10 +10,10 @@ MEMCACHE_CONN_PORT = 11215
 
 PLUGINS_ENABLED = (
         'vigilo.corr.rules.priority',
-        'vigilo.corr.rules.high_level_state',
+#        'vigilo.corr.rules.high_level_state',
 #        'vigilo.corr.rules.same_target_same_time_interval',
 #        'vigilo.corr.rules.test',
-        'vigilo.corr.rules.topo_deps',
+#        'vigilo.corr.rules.topo_deps',
         'vigilo.corr.rules.hls_deps',
         'vigilo.corr.rules.lls_deps',
         'vigilo.corr.rules.update_attribute',
@@ -33,6 +33,7 @@ LOGGING_LEVELS = {
         'rum.basefactory': logging.INFO,
         'twisted': logging.INFO,
         'vigilo.pubsub': logging.INFO,
+        'vigilo.corr.registry': logging.DEBUG,
         'vigilo.corr.db_insertion': logging.DEBUG,
         'vigilo.corr.correvent': logging.DEBUG,
         'vigilo.corr.pubsub': logging.INFO,
