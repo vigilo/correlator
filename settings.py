@@ -75,6 +75,7 @@ VIGILO_CORRELATOR_TOPIC_OWNER = [
 VIGILO_CORRELATOR_TOPIC_PUBLISHER = {
     'correvent': '/home/localhost/correlator/correvent',
     'aggr': '/home/localhost/correlator/aggr',
+    'delaggr': '/home/localhost/correlator/delaggr',
 }
 
 VIGILO_CORR_JID = 'correlator@localhost'
