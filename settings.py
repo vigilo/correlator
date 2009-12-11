@@ -39,7 +39,7 @@ LOGGING_LEVELS = {
         'vigilo.corr.pubsub': logging.INFO,
         'vigilo.corr.context': logging.INFO,
         'vigilo.corr.actors.twisted': logging.INFO,
-        'vigilo.corr.actors.rule_dispatcher': logging.INFO,
+        'vigilo.corr.actors.rule_dispatcher': logging.DEBUG,
         'vigilo.corr.actors.rule_runner': logging.INFO,
         'vigilo.corr.rules': logging.INFO,
         'vigilo.corr.rulesapi': logging.INFO,
