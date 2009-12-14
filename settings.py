@@ -9,7 +9,6 @@ MEMCACHE_CONN_HOST = '127.0.0.1'
 MEMCACHE_CONN_PORT = 11215
 
 PLUGINS_ENABLED = (
-        'vigilo.corr.rules.priority',
 #        'vigilo.corr.rules.high_level_state',
 #        'vigilo.corr.rules.same_target_same_time_interval',
 #        'vigilo.corr.rules.test',
@@ -18,6 +17,7 @@ PLUGINS_ENABLED = (
         'vigilo.corr.rules.lls_deps',
         'vigilo.corr.rules.update_attribute',
         'vigilo.corr.rules.update_occurrences_count',
+        'vigilo.corr.rules.priority',
         )
 LOGGING_PLUGINS = (
         'vigilo.pubsub.logging',
@@ -63,19 +63,21 @@ XMPP_PUBSUB_SERVICE = 'pubsub.localhost'
 
 # Liste des nœuds sur lesquels le corrélateur est consommateur.
 VIGILO_CORRELATOR_TOPIC_CONSUMER = [
-    '/home/localhost/connectorx/state',
     '/home/localhost/connectorx/event',
 ]
 # Liste des nœuds sur lesquels le corrélateur est producteur.
 VIGILO_CORRELATOR_TOPIC_OWNER = [
     '/home/localhost/correlator/correvent',
     '/home/localhost/correlator/aggr',
+    '/home/localhost/correlator/delaggr',
+    '/home/localhost/correlator/state',
 ]
 # Indique le nœud cible du message en fonction du type.
 VIGILO_CORRELATOR_TOPIC_PUBLISHER = {
     'correvent': '/home/localhost/correlator/correvent',
     'aggr': '/home/localhost/correlator/aggr',
     'delaggr': '/home/localhost/correlator/delaggr',
+    'state': '/home/localhost/correlator/state',
 }
 
 VIGILO_CORR_JID = 'correlator@localhost'
@@ -93,4 +95,9 @@ VIGILO_SQLALCHEMY = {
 
 NAGIOS_HLS_JID = 'connector-nagios@localhost'
 NAGIOS_HLS_HOST = 'HLS'
+
+# La priorité associée à une alerte sur un
+# hôte/service technique qui n'impacte aucun
+# service de haut niveau.
+UNKNOWN_PRIORITY_VALUE = 4
 
