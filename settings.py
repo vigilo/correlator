@@ -26,7 +26,7 @@ LOGGING_PLUGINS = (
 LOGGING_SETTINGS = {
         # 5 is the 'SUBDEBUG' level.
         'level': logging.INFO,
-        'format': '%(levelname)s::%%(processName)s::%(name)s::%(message)s',
+        'format': '[%(created)f] %(levelname)s::%%(processName)s::%(name)s::%(message)s',
         }
 LOGGING_LEVELS = {
         'multiprocessing': logging.INFO,
