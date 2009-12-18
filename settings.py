@@ -101,3 +101,5 @@ NAGIOS_HLS_HOST = 'HLS'
 # service de haut niveau.
 UNKNOWN_PRIORITY_VALUE = 4
 
+PRIORITY_ORDER = 'asc'
+
