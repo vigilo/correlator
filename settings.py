@@ -33,11 +33,14 @@ LOGGING_LEVELS = {
         'rum.basefactory': logging.INFO,
         'twisted': logging.INFO,
         'vigilo.pubsub': logging.INFO,
+        'vigilo.corr.publish_messages': logging.DEBUG,
         'vigilo.corr.registry': logging.DEBUG,
         'vigilo.corr.db_insertion': logging.DEBUG,
         'vigilo.corr.correvent': logging.DEBUG,
+        'vigilo.corr.handle_downtime': logging.DEBUG,
         'vigilo.corr.pubsub': logging.INFO,
         'vigilo.corr.context': logging.INFO,
+        'vigilo.corr.topology': logging.DEBUG,
         'vigilo.corr.actors.twisted': logging.INFO,
         'vigilo.corr.actors.rule_dispatcher': logging.DEBUG,
         'vigilo.corr.actors.rule_runner': logging.INFO,
@@ -45,7 +48,7 @@ LOGGING_LEVELS = {
         'vigilo.corr.rulesapi': logging.INFO,
         'vigilo.corr.rules.topo_deps': logging.DEBUG,
         'vigilo.corr.rules.hls_deps': logging.DEBUG,
-#        'vigilo.corr.rules.lls_deps': logging.DEBUG,
+        'vigilo.corr.rules.lls_deps': logging.DEBUG,
         'vigilo.corr.rules.update_attribute': logging.DEBUG,
         'vigilo.corr.rules.update_occurrences_count': logging.DEBUG,
         #'vigilo.corr.rules.high_level_state': logging.DEBUG,
@@ -57,13 +60,17 @@ LOG_TRAFFIC = True
 VALIDATE_MESSAGES = False
 
 # Set to None to connect using the CORR_JID host and SRV records.
-XMPP_SERVER_HOST = 'localhost'
-#XMPP_SERVER_HOST = 'vigilo-dev'
+#XMPP_SERVER_HOST = 'localhost'
+XMPP_SERVER_HOST = 'vigilo-dev'
 XMPP_PUBSUB_SERVICE = 'pubsub.localhost'
 
 # Liste des nœuds sur lesquels le corrélateur est consommateur.
 VIGILO_CORRELATOR_TOPIC_CONSUMER = [
+#    '/home/localhost/connectorx/state',
     '/home/localhost/connectorx/event',
+    '/home/localhost/connectorx/downtime',
+#    '/home/localhost/connector-nagios/state',
+#    '/home/localhost/connector-nagios/event',
 ]
 # Liste des nœuds sur lesquels le corrélateur est producteur.
 VIGILO_CORRELATOR_TOPIC_OWNER = [
@@ -94,6 +101,7 @@ VIGILO_SQLALCHEMY = {
 }
 
 NAGIOS_HLS_JID = 'connector-nagios@localhost'
+#NAGIOS_HLS_JID = 'connectorx@localhost'
 NAGIOS_HLS_HOST = 'HLS'
 
 # La priorité associée à une alerte sur un
