@@ -4,16 +4,7 @@ import logging
 MEMCACHE_SRV_COMMAND = '/usr/sbin/memcached'
 MEMCACHE_CONN_TYPE = 'inet'
 PLUGINS_ENABLED = (
-#        'vigilo.corr.rules.high_level_state',
-#        'vigilo.corr.rules.same_target_same_time_interval',
-#        'vigilo.corr.rules.test',
-#        'vigilo.corr.rules.topo_deps',
-        'vigilo.corr.rules.hls_deps',
-        'vigilo.corr.rules.lls_deps',
-        'vigilo.corr.rules.update_attribute',
-        'vigilo.corr.rules.update_occurrences_count',
-        'vigilo.corr.rules.priority',
-        )
+)
 LOGGING_PLUGINS = (
         'vigilo.pubsub.logging',
         'vigilo.corr.logging',
