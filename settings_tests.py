@@ -6,9 +6,9 @@ MEMCACHE_CONN_TYPE = 'inet'
 PLUGINS_ENABLED = (
 )
 LOGGING_PLUGINS = (
-        'vigilo.pubsub.logging',
-        'vigilo.corr.logging',
-        )
+    'vigilo.pubsub.logging',
+    'vigilo.corr.logging',
+)
 LOGGING_SETTINGS = {}
 LOGGING_LEVELS = {}
 LOGGING_SYSLOG = False
