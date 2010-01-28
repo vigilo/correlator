@@ -37,3 +37,6 @@ NAGIOS_HLS_HOST = 'HLS'
 PRIORITY_ORDER = 'desc'
 UNKNOWN_PRIORITY_VALUE = 4
 
+# Durée d'exécution des règles avant timeout, en secondes
+VIGILO_CORR_RULES_TIMEOUT = 1
+
