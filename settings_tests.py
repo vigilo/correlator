@@ -7,7 +7,7 @@ PLUGINS_ENABLED = (
 )
 LOGGING_PLUGINS = (
     'vigilo.pubsub.logging',
-    'vigilo.corr.logging',
+    'vigilo.corr.twisted_logging',
 )
 LOGGING_SETTINGS = {}
 LOGGING_LEVELS = {}

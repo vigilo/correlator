@@ -3,10 +3,10 @@
 from setuptools import setup
 
 tests_require = [
-        'coverage',
-        'nose',
-        'pylint',
-        ]
+    'coverage',
+    'nose',
+    'pylint',
+]
 
 setup(name='vigilo-correlator',
         version='0.1',

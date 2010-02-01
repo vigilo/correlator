@@ -21,7 +21,7 @@ PLUGINS_ENABLED = (
         )
 LOGGING_PLUGINS = (
         'vigilo.pubsub.logging',
-        'vigilo.corr.logging',
+        'vigilo.corr.twisted_logging',
         )
 LOGGING_SETTINGS = {
         # 5 is the 'SUBDEBUG' level.
@@ -115,4 +115,5 @@ VIGILO_CORRELATOR_SYSLOG_DATA_FACILITY = 'local2'
 VIGILO_CORRELATOR_SYSLOG_DATA_LEVEL = logging.INFO
 
 VIGILO_CORRELATOR_QUEUE_SIZE = 100
+VIGILO_CORR_RULES_TIMEOUT = 2
 
