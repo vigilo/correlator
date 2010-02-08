@@ -92,7 +92,6 @@ class TestRegistry(unittest.TestCase):
         # On simule un échec de la règle r51 et son élimination du pool.
         # Comme r51 a échoué, r61 NE DOIT PAS apparaître ensuite.
         rules_tree.remove_rule('r51')
-        self.assertValues([], rules.next())
 
         # On vérifie qu'il n'y a plus d'autres règles à exécuter.
         self.assertRaises(StopIteration, rules.next)

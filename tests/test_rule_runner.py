@@ -26,24 +26,23 @@ class TimeoutRule(Rule):
 
     def process(self, api, idnt, payload):
         """ Traitement du message par la règle. Ici une boucle infinie """
-        LOGGER.critical(_("___Debut de l'execution de la regle de test___"))
-#        sleep(settings['VIGILO_CORR_RULES_TIMEOUT'] + 30)
         while True:
             sleep(1)
-        LOGGER.critical(_("___Fin de l'execution de la regle de test___"))
         return ENOERROR
 
-def register(registry):
-    """Enregistre la règle."""
-    registry.rules.register(TimeoutRule())
+class ExceptionRule(Rule):
+    """ Règle conçue pour lever une exception """
+
+    def process(self, api, idnt, payload):
+        """ Traitement du message par la règle. Ici on lève une exception """
+        raise ValueError, "Exception"
+        return ENOERROR
 
 class TestUpdateAttributeRule(unittest.TestCase):
     """ Classe de test du rule_runner """
     
     def test_rule_timeout(self):
-        """
-        Teste le code de retour de l'exécution d'une règle en cas de timeout.
-        """
+        """Code de retour d'une règle en cas de timeout"""
         
         registry = get_registry()
         registry.rules.clear()
@@ -56,7 +55,27 @@ class TestUpdateAttributeRule(unittest.TestCase):
         
         result = rule_runner.process(("TimeoutRule", message))
         
-        self.assertEqual(result, ('TimeoutRule', ETIMEOUT))
+        self.assertEqual(result, ('TimeoutRule', ETIMEOUT, None))
+    
+    def test_rule_exception(self):
+        """Code de retour d'une règle en cas d'exception"""
+        
+        registry = get_registry()
+        registry.rules.clear()
+        registry.rules.register(ExceptionRule())
+        message = u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='foo'><superceded>423</superceded><superceded>523</superceded></aggr></item>"
+        
+        rule_runner.api = None
+        out_queue = mp.Queue()
+        rule_runner.init(out_queue)
+        
+        result = rule_runner.process(("ExceptionRule", message))
+        
+        self.assertEqual(result[0], 'ExceptionRule')
+        self.assertEqual(result[1], EEXCEPTION)
+        self.assertTrue(result[2])
+        self.assertTrue(isinstance(result[2], ValueError))
+        self.assertEqual(str(result[2]), 'Exception')
         
         
         
