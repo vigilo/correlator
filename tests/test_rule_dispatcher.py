@@ -8,8 +8,7 @@ from vigilo.corr.xml import NS_EVENTS
 
 from vigilo.models import HighLevelService, LowLevelService, Host, \
                             StateName, Dependency, Event, CorrEvent
-from vigilo.models.session import DBSession
-from vigilo.models.vigilo_bdd_config import metadata
+from vigilo.models.configure import DBSession
 
 from vigilo.corr.connect import connect
 from vigilo.corr.libs import mp

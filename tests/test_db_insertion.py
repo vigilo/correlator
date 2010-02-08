@@ -14,7 +14,7 @@ from utils import setup_db, teardown_db
 from vigilo.models import State, StateName, Event, \
                             LowLevelService, HighLevelService, Host, \
                             CorrEvent
-from vigilo.models.session import DBSession
+from vigilo.models.configure import DBSession
 from vigilo.common.conf import settings
 
 class TestDbInsertion(unittest.TestCase):

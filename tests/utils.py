@@ -11,10 +11,7 @@ import sys
 import nose
 
 from vigilo.common.conf import settings
-from vigilo.models.vigilo_bdd_config import metadata
-from vigilo.models.session import DBSession
-
-metadata.bind = DBSession.bind
+from vigilo.models.configure import metadata, DBSession, configure_db
 
 mc_pid = None
 
@@ -40,9 +37,9 @@ def setup_mc():
     from vigilo.common.conf import settings
 
     global mc_pid
-    settings._Settings__dct['MEMCACHE_CONN_HOST'] = "127.0.0.1"
+    settings['MEMCACHE_CONN_HOST'] = "127.0.0.1"
     port = get_available_port()
-    settings._Settings__dct['MEMCACHE_CONN_PORT'] = port
+    settings['MEMCACHE_CONN_PORT'] = port
     mc_pid = subprocess.Popen([settings["MEMCACHE_SRV_COMMAND"],
                                "-l", "127.0.0.1",
                                "-p", str(port)],
@@ -66,6 +63,10 @@ with_mc = nose.with_setup(setup_mc, teardown_mc)
 #Create an empty database before we start our tests for this module
 def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
+    from vigilo.common.conf import settings
+
+    configure_db(settings, 'VIGILO_SQLALCHEMY_')
+#    db_basename = settings['VIGILO_DB_BASENAME']
     metadata.create_all()
     
 #Teardown that database 

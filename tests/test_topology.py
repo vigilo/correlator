@@ -4,7 +4,7 @@ from datetime import datetime
 import unittest
 import nose
 
-from vigilo.models.session import DBSession
+from vigilo.models.configure import DBSession
 from vigilo.models import Host, LowLevelService, Dependency
 from vigilo.models import Event, CorrEvent, StateName
 

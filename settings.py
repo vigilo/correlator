@@ -60,8 +60,8 @@ LOG_TRAFFIC = True
 VALIDATE_MESSAGES = False
 
 # Set to None to connect using the CORR_JID host and SRV records.
-#XMPP_SERVER_HOST = 'localhost'
-XMPP_SERVER_HOST = 'vigilo-dev'
+XMPP_SERVER_HOST = 'localhost'
+#XMPP_SERVER_HOST = 'vigilo-dev'
 XMPP_PUBSUB_SERVICE = 'pubsub.localhost'
 
 # Liste des nœuds sur lesquels le corrélateur est consommateur.
@@ -94,10 +94,8 @@ VIGILO_CORRELATOR_BACKUP_FILE = '/var/lib/vigilo/correlator/correlator.sqlite'
 VIGILO_CORRELATOR_BACKUP_TABLE_FROMBUS = 'frombus'
 VIGILO_CORRELATOR_BACKUP_TABLE_TOBUS = 'tobus'
 
-VIGILO_MODELS_BDD_BASENAME = ''
-VIGILO_SQLALCHEMY = {
-    'url': 'postgres://vigiboard:tandreja@localhost/vigiboard',
-}
+VIGILO_DB_BASENAME = ''
+VIGILO_SQLALCHEMY_url = 'postgres://vigilo:vigilo@localhost/vigilo'
 
 NAGIOS_HLS_JID = 'connector-nagios@localhost'
 #NAGIOS_HLS_JID = 'connectorx@localhost'

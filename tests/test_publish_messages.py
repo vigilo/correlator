@@ -10,7 +10,7 @@ from vigilo.corr.publish_messages import publish_aggregate, \
                                             publish_state
 from utils import setup_db, teardown_db
   
-from vigilo.models.session import DBSession
+from vigilo.models.configure import DBSession
 from vigilo.models import Host, HighLevelService, LowLevelService
 from vigilo.models import State, StateName
 
