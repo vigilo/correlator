@@ -66,7 +66,7 @@ class TestRuleDispatcher(unittest.TestCase):
         if host_name:
             tag.addContent(host_name)
         else:
-            tag.addContent(settings['NAGIOS_HLS_HOST'])
+            tag.addContent(settings['correlator']['NAGIOS_HLS_HOST'])
         # Ajout de la balise service
         tag = event.addElement('service')
         tag.addContent(service_name)

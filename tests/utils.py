@@ -37,10 +37,10 @@ def setup_mc():
     from vigilo.common.conf import settings
 
     global mc_pid
-    settings['MEMCACHE_CONN_HOST'] = "127.0.0.1"
+    settings['correlator']['MEMCACHE_CONN_HOST'] = "127.0.0.1"
     port = get_available_port()
-    settings['MEMCACHE_CONN_PORT'] = port
-    mc_pid = subprocess.Popen([settings["MEMCACHE_SRV_COMMAND"],
+    settings['correlator']['MEMCACHE_CONN_PORT'] = port
+    mc_pid = subprocess.Popen([settings['correlator']["MEMCACHE_SRV_COMMAND"],
                                "-l", "127.0.0.1",
                                "-p", str(port)],
                                close_fds=True).pid
@@ -65,8 +65,8 @@ def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
     from vigilo.common.conf import settings
 
-    configure_db(settings, 'VIGILO_SQLALCHEMY_')
-#    db_basename = settings['VIGILO_DB_BASENAME']
+    configure_db(settings['correlator'], 'VIGILO_SQLALCHEMY_')
+#    db_basename = settings['correlator']['VIGILO_DB_BASENAME']
     metadata.create_all()
     
 #Teardown that database 

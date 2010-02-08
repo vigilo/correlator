@@ -50,14 +50,14 @@ class XmppClient(unittest.TestCase):
             self.protocol.connectionInitialized()
 
         self.xmpp_client = client.XMPPClient(
-                JID(settings['VIGILO_CORR_JID']),
-                settings['VIGILO_CORR_PASS'],
-                settings['XMPP_SERVER_HOST'],
+                JID(settings['correlator']['VIGILO_CORR_JID']),
+                settings['correlator']['VIGILO_CORR_PASS'],
+                settings['correlator']['XMPP_SERVER_HOST'],
                 )
         self.xmpp_client.logTraffic = True
         self.xmpp_client.startService()
 
-        list_nodeOwner = settings['VIGILO_CORRELATOR_TOPIC_OWNER']
+        list_nodeOwner = settings['correlator']['VIGILO_CORRELATOR_TOPIC_OWNER']
         verifyNode = VerificationNode(
                         list_nodeOwner,
                         list_nodeOwner,
@@ -94,8 +94,8 @@ class XmppClient(unittest.TestCase):
                 in_queue, ':memory:', 'correlator',
                 # On redirige la sortie de QueueToNodeForwarder
                 # vers l'entrée de NodeToQueueForwarder.
-                {'event': settings['VIGILO_CORRELATOR_TOPIC_OWNER'][0]},
-                JID(settings['XMPP_PUBSUB_SERVICE']),
+                {'event': settings['correlator']['VIGILO_CORRELATOR_TOPIC_OWNER'][0]},
+                JID(settings['correlator']['XMPP_PUBSUB_SERVICE']),
                 )
         qtnf.setHandlerParent(self.xmpp_client)
 
