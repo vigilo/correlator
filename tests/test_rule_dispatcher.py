@@ -276,7 +276,7 @@ class TestRuleDispatcher(unittest.TestCase):
 
     def test_event_succession_1(self):
         """
-        Traitement d'une succession d'événements (1/2)
+        Traitement d'une succession d'événements bruts (1/2)
         
         LLS1 dépend de LLS11.
         
@@ -363,7 +363,7 @@ class TestRuleDispatcher(unittest.TestCase):
 
     def test_event_succession_2(self):
         """
-        Traitement d'une succession d'événements (2/2)
+        Traitement d'une succession d'événements bruts (2/2)
         
         LLS1 dépend de LLS11 et de LLS12.
         LLS11 et LLS12 dépendent de LLS21.

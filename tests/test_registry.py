@@ -79,7 +79,7 @@ class TestRegistry(unittest.TestCase):
                 self.assertTrue(i in value, repr(value))
 
     def test_rule_steps(self):
-        """Vérifie les règles exécutées à chaque étape."""
+        """Vérifie les règles exécutées à chaque étape"""
         rules_tree = self.registry.rules.step_rules
         rules = rules_tree.rules
 

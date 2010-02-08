@@ -151,7 +151,7 @@ class TestMergeAggregateFunction(unittest.TestCase):
         teardown_db()
     
     def test_aggregates_merging(self):
-        """Test de la fusion de 2 agrégats"""
+        """Fusion de 2 agrégats"""
         
         # Création de 4 couples host/service, 
         # 4 événéments et 2 agrégats dans la BDD.

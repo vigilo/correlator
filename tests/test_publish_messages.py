@@ -39,10 +39,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         self.queue = Queue()
     
     def test_publish_aggregate(self):
-        """
-        Test de la publication sur le bus XMPP d'une liste d'alertes
-        brutes à associer avec une liste d'alertes corrélées.
-        """
+        """Publication XMPP d'alertes à ajouter à des évènements corrélés"""
         publish_aggregate(self.queue, [1, 2], [1, 2, 3, 4]) 
         
         message = [u"<aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1'>"
@@ -53,10 +50,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         self.assertEqual(self.queue.buffer, message)
         
     def test_delete_published_aggregates(self):
-        """
-        Test de la publication sur le bus XMPP d'une liste d'alertes
-        corrélées à supprimer (ce qui survient après une fusion).
-        """
+        """Publication XMPP d'une liste d'évènements corrélés à supprimer"""
         delete_published_aggregates(self.queue, [1, 2])
         
         message = [u"<delaggr xmlns='http://www.projet-vigilo.org/xmlns/"
@@ -66,10 +60,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         self.assertEqual(self.queue.buffer, message)
     
     def test_publish_state(self):
-        """
-        Test de la publication sur le bus XMPP de l'état d'un hôte,
-        d'un service de haut niveau, ou d'un service de bas niveau.
-        """
+        """Publication XMPP de l'état d'un item"""
         
         # Initialisation de la BDD
         setup_db()

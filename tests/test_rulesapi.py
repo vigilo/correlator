@@ -28,7 +28,7 @@ class TestApiFunctions(unittest.TestCase):
         teardown_mc()
 
     def test_contexts(self):
-        """Tests portant sur le contexte de corrélation."""
+        """Création d'un contexte associé à un nom quelconque"""
         # import it now because we override MEMCACHE_CONN_PORT in setup_mc
         from vigilo.corr.rulesapi import Api
         api = Api(queue=None)
@@ -54,10 +54,7 @@ class TestApiFunctions(unittest.TestCase):
             t.join(.1)
 
     def test_concurrency(self):
-        """
-        Teste le comportement du corrélateur en présence
-        de nombreux processus concurrents.
-        """
+        """Comportement du corrélateur en cas de concurrence"""
 
         # Check the logs to see if we really exercised concurrency.
         # Apparently we didn't manage.

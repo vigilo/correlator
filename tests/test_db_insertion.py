@@ -69,9 +69,7 @@ class TestDbInsertion(unittest.TestCase):
 
 
     def test_insert_lls_event(self):
-        """
-        Teste l'insertion d'un évènement sur un service de bas niveau.
-        """
+        """Insertion d'un évènement brut concernant un SBN"""
 
         self.make_dependancies()
 
@@ -123,9 +121,7 @@ class TestDbInsertion(unittest.TestCase):
                             state.message)
 
     def test_insert_hls_event(self):
-        """
-        Teste l'insertion d'un évènement sur un service de haut niveau.
-        """
+        """Insertion d'un évènement brut concernant un SHN"""
 
         self.make_dependancies()
 
@@ -150,7 +146,7 @@ class TestDbInsertion(unittest.TestCase):
         assert idevent is None
 
     def test_insert_host_event(self):
-        """Teste l'insertion d'un évènement sur un hôte."""
+        """Insertion d'un évènement brut concernant un hôte"""
 
         self.make_dependancies()
 
@@ -276,9 +272,7 @@ class TestDbInsertion(unittest.TestCase):
 #            "Expected 3 entries in history, got %d" % len(history))
 
     def test_add_to_agregate(self):
-        """
-        Test de l'ajout d'un événement à un agrégat existant.
-        """   
+        """Ajout d'un événement brut à un évènement corrélé déjà existant"""
         # On crée 2 couples host/service.
         host1 = Host(
             name = u'messagerie',

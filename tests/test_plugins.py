@@ -8,7 +8,7 @@ from vigilo.corr.pluginmanager import load_plugin
 from vigilo.corr.registry import get_registry
 
 def test_plugin_loading():
-    """Teste le chargement des plugins du corrélateurs."""
+    """Chargement des plugins du corrélateur"""
 
     # Loading of plugins listed in settings['PLUGINS_ENABLED']
     # is done at registry initialisation.

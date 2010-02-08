@@ -220,7 +220,7 @@ class TestTopologyFunctions(unittest.TestCase):
         teardown_db()
 
     def test_instanciation(self):
-        """Test de création d'une instance de la classe"""
+        """Instance de la classe 'Topology'"""
         
         # On instancie la classe topology.
         topology = Topology()
@@ -250,9 +250,7 @@ class TestTopologyFunctions(unittest.TestCase):
         self.assertEqual(edges, edge_list)
         
     def test_first_predecessors_aggregates(self):  
-        """
-        Test de récupération des premiers agrégats dont dépend une alerte.
-        """ 
+        """Récupération des premiers agrégats dont dépend une alerte brute""" 
         
         # On instancie la classe topology.
         topology = Topology()
@@ -284,9 +282,7 @@ class TestTopologyFunctions(unittest.TestCase):
         self.assertEqual(aggregates_id, [self.events_aggregate2.idcorrevent])
     
     def test_first_successors_aggregates(self):  
-        """
-        Test de récupération des premiers agrégats dépendant d'une alerte.
-        """ 
+        """Récupération des premiers agrégats dépendant d'une alerte brute""" 
         
         # On instancie la classe topology.
         topology = Topology()
