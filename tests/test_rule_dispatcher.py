@@ -2,7 +2,7 @@
 """Teste le fonctionnement du rule dispatcher."""
 import unittest
 import transaction
-
+import errno
 from datetime import datetime
 
 from twisted.words.xish import domish
