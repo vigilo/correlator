@@ -220,7 +220,7 @@ class TestTopologyFunctions(unittest.TestCase):
         teardown_db()
 
     def test_instanciation(self):
-        """Instance de la classe 'Topology'"""
+        """Instanciation de la classe 'Topology'"""
         
         # On instancie la classe topology.
         topology = Topology()
