@@ -73,3 +73,7 @@ def setup_db():
 def teardown_db():
     """Supprime toutes les tables du modèle de la BDD."""
     metadata.drop_all()
+#    try:
+#        os.remove(settings['VIGILO_SQLALCHEMY'])
+#    except IOError:
+#        pass

@@ -18,8 +18,7 @@ from vigilo.corr.connect import connect
 from vigilo.corr.libs import mp
 from vigilo.corr.actors.rule_dispatcher import handle_bus_message, \
                                                     handle_rules_errors, \
-                                                    create_rule_runners_pool, \
-                                                    DEBUG
+                                                    create_rule_runners_pool
 from vigilo.corr.actors import rule_runner
 
 from vigilo.corr.registry import Registry, get_registry
@@ -37,6 +36,7 @@ from vigilo.common.conf import settings
 
 class TestRuleDispatcher(unittest.TestCase):
     """Classe de test du rule_dispatcher."""
+    timeout = 10
 
     def register_rules(self):
         """Procède à l'enregistrement des règles à tester."""
@@ -251,12 +251,13 @@ class TestRuleDispatcher(unittest.TestCase):
         
         # Instanciation du pool de processus utilisé par le rule_dispatcher.
         self.rule_runners_pool = None
-        if not DEBUG:
-            # On crée un pool de processus qui 
-            # sera utilisé par le rule_dispatcher.
-            rule_runner.api = None
-            self.rule_runners_pool = \
-                create_rule_runners_pool(self.manager.out_queue)
+        
+        # Lecture de la configuration pour déterminer
+        # si l'on est en mode debugging ou non.
+        try:
+            self.debugging = settings['correlator'].as_bool('debugging')
+        except KeyError:
+            self.debugging = False
 
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
@@ -269,7 +270,14 @@ class TestRuleDispatcher(unittest.TestCase):
         
         if self.rule_runners_pool:
             self.rule_runners_pool.close()
-            self.rule_runners_pool.join()
+            notintr = False
+            while not notintr:
+                try:
+                    self.rule_runners_pool.join()
+                    notintr = True
+                except OSError, ose:
+                    if ose.errno != errno.EINTR:
+                        raise ose
         
         from vigilo.corr.actors import rule_runner
         rule_runner.api = None
@@ -284,6 +292,15 @@ class TestRuleDispatcher(unittest.TestCase):
         Puis une deuxième sur LLS11.
         Et enfin une nouvelle sur LLS1.
         """
+        
+        # Initialisation du pool de processus utilisé par le
+        # rule_dispatcher, dans le cas où l'on utilise multiprocessing.
+        if not self.debugging:
+            # On crée un pool de processus qui 
+            # sera utilisé par le rule_dispatcher.
+            rule_runner.api = None
+            self.rule_runners_pool = \
+                create_rule_runners_pool(self.manager.out_queue)
 
         # Insertion de données dans la base.
         self.make_dependencies()
@@ -373,6 +390,15 @@ class TestRuleDispatcher(unittest.TestCase):
         Puis, on reçoit une nouvelle alerte sur LLS1.
         Enfin, une alerte arrive sur LLS21 
         """
+        
+        # Initialisation du pool de processus utilisé par le
+        # rule_dispatcher, dans le cas où l'on utilise multiprocessing.
+        if not self.debugging:
+            # On crée un pool de processus qui 
+            # sera utilisé par le rule_dispatcher.
+            rule_runner.api = None
+            self.rule_runners_pool = \
+                create_rule_runners_pool(self.manager.out_queue)
 
         # Insertion de données dans la base.
         self.make_dependencies()
@@ -519,8 +545,19 @@ class TestRuleDispatcher(unittest.TestCase):
         
         # On réinstancie l'arbre des règles.
         rules_graph = Registry.global_instance().rules.step_rules
-        # On ré-initialise le pool de processus
-        self.rule_runners_pool = None
+        # On arrête le pool de processus et on le ré-initialise
+        
+        if self.rule_runners_pool:
+            self.rule_runners_pool.close()
+            notintr = False
+            while not notintr:
+                try:
+                    self.rule_runners_pool.join()
+                    notintr = True
+                except OSError, ose:
+                    if ose.errno != errno.EINTR:
+                        raise ose
+            self.rule_runners_pool = None
         
         # On simule le traitement d'une règle qui lève une exception.
         results = [("HighLevelServiceDepsRule", rulesapi.EEXCEPTION, None)]
