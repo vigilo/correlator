@@ -133,7 +133,7 @@ class TestDbInsertion(unittest.TestCase):
     <service>Load</service>
     <state>WARNING</state>
     <message>WARNING: Load average is above 4 (4.5)</message>
-</event>""" % {'xmlns': NS_EVENTS, 'hls_host': settings['correlator']['NAGIOS_HLS_HOST']}
+</event>""" % {'xmlns': NS_EVENTS, 'hls_host': settings['correlator']['nagios_hls_host']}
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))

@@ -169,7 +169,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         DBSession.add(state2)
         DBSession.flush()
         
-        info_dictionary = {"host": settings['correlator']['NAGIOS_HLS_HOST'],
+        info_dictionary = {"host": settings['correlator']['nagios_hls_host'],
                            "service": "Connexion",
                            "timestamp": state2.timestamp,
                            "state": StateName.value_to_statename(state2.state),
@@ -180,7 +180,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         
         message = [u"<state xmlns='http://www.projet-vigilo.org/xmlns/state1'>"
             "<timestamp>" + str(int_timestamp) + "</timestamp>"
-            "<host>" + settings['correlator']['NAGIOS_HLS_HOST'] + "</host>"
+            "<host>" + settings['correlator']['nagios_hls_host'] + "</host>"
             "<service>Connexion</service>"
             "<state>UNKNOWN</state>"
             "<message>UNKNOWN: Connection is in an unknown state</message>"

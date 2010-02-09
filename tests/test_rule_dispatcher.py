@@ -2,7 +2,9 @@
 """Teste le fonctionnement du rule dispatcher."""
 import unittest
 import transaction
+
 import errno
+
 from datetime import datetime
 
 from twisted.words.xish import domish
@@ -73,7 +75,7 @@ class TestRuleDispatcher(unittest.TestCase):
         if host_name:
             tag.addContent(host_name)
         else:
-            tag.addContent(settings['correlator']['NAGIOS_HLS_HOST'])
+            tag.addContent(settings['correlator']['nagios_hls_host'])
         # Ajout de la balise service
         tag = event.addElement('service')
         tag.addContent(service_name)
@@ -255,7 +257,7 @@ class TestRuleDispatcher(unittest.TestCase):
         # Lecture de la configuration pour déterminer
         # si l'on est en mode debugging ou non.
         try:
-            self.debugging = settings['correlator'].as_bool('debugging')
+            self.debugging = settings['correlator'].as_bool('debug')
         except KeyError:
             self.debugging = False
 
