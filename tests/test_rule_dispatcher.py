@@ -90,7 +90,7 @@ class TestRuleDispatcher(unittest.TestCase):
         
         # On "envoie" le message sur le bus
         self.manager.in_queue.put_nowait(payload)
-        
+
         # On lit le message sur le bus en utilisant la
         # fonction handle_bus_message du rule_dispatcher.
         self.rule_runners_pool = handle_bus_message(self.manager, 
@@ -244,7 +244,8 @@ class TestRuleDispatcher(unittest.TestCase):
         self.manager = mp.Manager()
         self.manager.in_queue = mp.Queue()
         self.manager.out_queue = mp.Queue()
-        
+        self.manager.exit = mp.Event()
+
         # Instanciation d'une connection à MemCacheD.
         self.conn = connect()
         
