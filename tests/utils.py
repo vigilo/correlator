@@ -37,10 +37,10 @@ def setup_mc():
     from vigilo.common.conf import settings
 
     global mc_pid
-    settings['correlator']['memcache_conn_host'] = "127.0.0.1"
+    settings['correlator']['memcached_host'] = "127.0.0.1"
     port = get_available_port()
-    settings['correlator']['memcache_conn_port'] = port
-    mc_pid = subprocess.Popen([settings['correlator']["memcache_srv_command"],
+    settings['correlator']['memcached_port'] = port
+    mc_pid = subprocess.Popen([settings['correlator']["memcached_command"],
                                "-l", "127.0.0.1",
                                "-p", str(port)],
                                close_fds=True).pid
@@ -65,14 +65,11 @@ def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
     from vigilo.common.conf import settings
 
-    configure_db(settings['correlator'], 'vigilo_sqlalchemy_')
+    configure_db(settings['correlator'], 'sqlalchemy_')
     metadata.create_all()
     
 #Teardown that database 
 def teardown_db():
     """Supprime toutes les tables du modèle de la BDD."""
     metadata.drop_all()
-#    try:
-#        os.remove(settings['VIGILO_SQLALCHEMY'])
-#    except IOError:
-#        pass
+

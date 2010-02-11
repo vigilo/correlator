@@ -19,8 +19,6 @@ from vigilo.common.gettext import translate
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
-from vigilo.common.conf import settings
-
 class TimeoutRule(Rule):
     """ Règle conçue pour s'exécuter indéfiniment """
 

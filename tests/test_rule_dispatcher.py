@@ -30,7 +30,7 @@ from vigilo.corr.rules.update_attribute import UpdateAttributeRule
 from vigilo.corr.rules.update_occurrences_count import \
                                         UpdateOccurrencesCountRule
 from vigilo.corr.rules.priority import PriorityRule
-from utils import setup_mc, teardown_mc, settings
+from utils import setup_mc, teardown_mc
 from utils import setup_db, teardown_db
 
 from vigilo.common.conf import settings
