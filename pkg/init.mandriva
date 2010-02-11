@@ -1,0 +1,96 @@
+#! /bin/sh
+# 
+# vigilo-correlator       Init script for the Vigilo correlator
+#
+#
+
+### BEGIN INIT INFO
+# Provides: vigilo-correlator
+# Required-Start: $network
+# Should-Start: $named
+# Required-Stop: $network
+# Should-Stop: $named
+# Default-Start: 3 4 5
+# Short-Description: Vigilo correlator
+# Description: Vigilo event correlator
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+DAEMON=/usr/bin/vigilo-correlator
+NAME=vigilo-correlator
+LOCK_FILE=/var/lock/subsys/$NAME
+
+USER=nobody
+PID_FILE=/var/run/$NAME/$NAME.pid
+OPTIONS="--daemon"
+
+if [ -f /etc/sysconfig/$NAME ] ; then
+	. /etc/sysconfig/$NAME
+fi
+if [ -f /etc/init.d/functions ] ; then
+	. /etc/init.d/functions
+fi
+
+export PID_FILE NAGIOS_PIPE
+
+test -x $DAEMON || exit 0
+
+start() {
+	[ -f $LOCK_FILE ] && return
+
+	echo -n "Starting $NAME: "
+	# use --user to run the daemon under the specified uid
+	daemon $DAEMON $OPTIONS
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && touch $LOCK_FILE
+}
+
+stop() {
+	echo -n "Shutting down $NAME: "
+	killproc $NAME
+	RETVAL=$?
+	echo
+	[ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
+}
+
+reload() {
+	echo -n "Reloading $NAME: "
+	killproc $NAME -HUP
+	RETVAL=$?
+	echo
+}
+
+
+
+case "$1" in
+	start)
+		start
+	;;
+	stop) 
+		stop
+	;;
+	status)
+		status $NAME
+	;;
+	reload)
+		reload
+	;;
+	restart)
+		stop
+		start
+	;;
+	condrestart)
+		if [ -f $LOCK_FILE ]; then
+			stop
+			start
+		fi
+	;;
+	*)    
+		echo "Usage: $0 {start|stop|restart|reload|condrestart|status}" >&2
+		RETVAL=1
+	;;
+esac
+
+exit $RETVAL
+

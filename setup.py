@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
+import os
 from setuptools import setup
 
 tests_require = [
@@ -8,10 +9,13 @@ tests_require = [
     'pylint',
 ]
 
+sysconfdir = os.getenv("SYSCONFDIR", "/etc")
+localstatedir = os.getenv("LOCALSTATEDIR", "/var")
+
 setup(name='vigilo-correlator',
         version='0.1',
-        author='Gabriel de Perthuis',
-        author_email='gabriel.de-perthuis@c-s.fr',
+        author='Vigilo Team',
+        author_email='contact@projet-vigilo.org',
         url='http://www.projet-vigilo.org/',
         description='vigilo correlation component',
         license='http://www.gnu.org/licenses/gpl-2.0.html',
@@ -25,10 +29,8 @@ setup(name='vigilo-correlator',
             'lxml', # ElementTree-compatible, validation…
             'multiprocessing >= 2.6.2.1',
             'psycopg2',
-            'python-libmemcached',
             'python-memcached',
             'python-daemon',
-            'PyYAML',
             'rel',
             'vigilo-common',
             'vigilo-models',
@@ -53,9 +55,14 @@ setup(name='vigilo-correlator',
             ],
         entry_points={
             'console_scripts': [
-                'correlator = vigilo.corr.actors.main:main_cmdline',
+                'vigilo-correlator = vigilo.corr.actors.main:main_cmdline',
                 ],
             },
         package_dir={'': 'src'},
+        data_files=[
+                    (os.path.join(sysconfdir, "vigilo/correlator"),
+                        ["settings.ini"]),
+                    (os.path.join(localstatedir, "lib/vigilo/correlator"), []),
+                   ],
         )
 

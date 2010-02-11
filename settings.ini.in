@@ -1,15 +1,15 @@
 [bus]
 log_traffic = True
-host = vigilo-dev
+host = localhost
 service = pubsub.localhost
 jid = correlator@localhost
 password = correlator
 
-watched_topics = /home/localhost/connectorx/event, /home/localhost/connectorx/downtime
+watched_topics = /home/localhost/connector-nagios/event, /home/localhost/connector-nagios/downtime
 owned_topics = /home/localhost/correlator/correvent, /home/localhost/correlator/aggr, /home/localhost/correlator/delaggr, /home/localhost/correlator/state
 
 [connector]
-backup_file = /var/lib/vigilo/correlator/correlator.sqlite
+backup_file = @LOCALSTATEDIR@/lib/vigilo/correlator/correlator.sqlite
 backup_table_from_bus = frombus
 backup_table_to_bus = tobus
 
