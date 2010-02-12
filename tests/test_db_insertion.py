@@ -16,6 +16,7 @@ from vigilo.models import State, StateName, Event, \
                             CorrEvent
 from vigilo.models.configure import DBSession
 from vigilo.common.conf import settings
+settings.load_module(__name__)
 
 class TestDbInsertion(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""

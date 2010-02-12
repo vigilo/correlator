@@ -34,6 +34,7 @@ from utils import setup_mc, teardown_mc
 from utils import setup_db, teardown_db
 
 from vigilo.common.conf import settings
+settings.load_module(__name__)
 
 
 class TestRuleDispatcher(unittest.TestCase):

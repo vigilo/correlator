@@ -30,6 +30,7 @@ from vigilo.common.logging import get_logger
 from vigilo.connector.nodetoqueuefw import NodeToQueueForwarder
 from vigilo.connector.queuetonodefw import QueueToNodeForwarder
 from vigilo.common.conf import settings
+settings.load_module(__name__)
 from vigilo.corr.pubsub import CorrServiceMaker
 from vigilo.corr.xml import NS_EVENTS
 

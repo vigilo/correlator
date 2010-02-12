@@ -11,6 +11,7 @@ import sys
 import nose
 
 from vigilo.common.conf import settings
+settings.load_module(__name__)
 from vigilo.models.configure import metadata, DBSession, configure_db
 
 mc_pid = None

@@ -18,6 +18,7 @@ from datetime import datetime
 from time import mktime
 
 from vigilo.common.conf import settings
+settings.load_module(__name__)
 
 
 class Queue():
