@@ -66,7 +66,7 @@ def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
     from vigilo.common.conf import settings
 
-    configure_db(settings['correlator'], 'sqlalchemy_')
+    configure_db(settings['database'], 'sqlalchemy_')
     metadata.create_all()
     
 #Teardown that database 
