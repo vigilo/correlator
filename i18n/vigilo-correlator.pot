@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: vigilo.corr\n"
         "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-        "POT-Creation-Date: 2010-02-15 13:30+0100\n"
+        "POT-Creation-Date: 2010-02-15 17:07+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,17 +34,16 @@ msgstr  ""
 
 #: src/vigilo/corr/actors/rule_runner.py:128
 msgid   "while processing"
-msgstr  "pendant l'exécution de"
+msgstr  ""
 
 #: src/vigilo/corr/actors/rule_runner.py:133
 #, python-format
-msgid   "The rule \"%s\" did not return any value, assuming ENOERROR."
-msgstr  "La règle \"%s\" n'a rien retourné, on utilise "
-		"la valeur de retour par défaut ENOERROR."
+msgid   "The rule '%s' did not return any value, assuming ENOERROR."
+msgstr  ""
 
 #: src/vigilo/corr/actors/rule_runner.py:137
 msgid   "##### rule_runner: process ends #####"
-msgstr  "##### rule_runner: fin du processus #####"
+msgstr  ""
 
 #: src/vigilo/corr/actors/twisted.py:25
 msgid   "Stopping the Twisted PubSub component"
@@ -158,7 +157,7 @@ msgstr  ""
 
 #: src/vigilo/corr/compute_hls_states.py:363
 #, python-format
-msgid   "Setting weight for \"%s\" to None"
+msgid   "Setting weight for '%s' to None"
 msgstr  ""
 
 #: src/vigilo/corr/correvent.py:69
