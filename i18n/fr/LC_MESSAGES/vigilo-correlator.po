@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: vigilo.corr\n"
         "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-        "POT-Creation-Date: 2010-02-15 13:05+0100\n"
+        "POT-Creation-Date: 2010-02-15 13:30+0100\n"
         "PO-Revision-Date: 2010-02-15 09:31+0100\n"
         "Last-Translator: Automatically generated\n"
         "Language-Team: none\n"
@@ -26,27 +26,24 @@ msgstr  "##### rule_runner: début du processus #####"
 
 #: src/vigilo/corr/actors/rule_runner.py:106
 #, python-format
-msgid   "Process id: %(pid)r | Parent id: %(ppid)r | "
-msgstr  "Id du processus : %(pid)r | Id du processus parent : %(ppid)r | "
+msgid   "Process id: %(pid)r | Parent id: %(ppid)r | Rule name: %(name)s"
+msgstr  "Id du processus : %(pid)r | Id du processus parent: %(ppid)r | "
+		"Nom de la règle : %(name)s"
 
-#: src/vigilo/corr/actors/rule_runner.py:121
 #: src/vigilo/corr/actors/rule_runner.py:120
 msgid   "##### KeyboardInterrupt #####"
-msgstr  ""
+msgstr  "##### Interruption clavier #####"
 
-#: src/vigilo/corr/actors/rule_runner.py:129
 #: src/vigilo/corr/actors/rule_runner.py:128
 msgid   "while processing"
-msgstr  ""
+msgstr  "pendant l'exécution de"
 
-#: src/vigilo/corr/actors/rule_runner.py:134
 #: src/vigilo/corr/actors/rule_runner.py:133
 #, python-format
 msgid   "The rule \"%s\" did not return any value, assuming ENOERROR."
-msgstr  "La règle \"%s\" n'a rien retourné, on utilise la valeur de retour par "
-        "défaut ENOERROR."
+msgstr  "La règle \"%s\" n'a rien retourné, on utilise "
+		"la valeur de retour par défaut ENOERROR."
 
-#: src/vigilo/corr/actors/rule_runner.py:138
 #: src/vigilo/corr/actors/rule_runner.py:137
 msgid   "##### rule_runner: process ends #####"
 msgstr  "##### rule_runner: fin du processus #####"
@@ -55,7 +52,7 @@ msgstr  "##### rule_runner: fin du processus #####"
 msgid   "Stopping the Twisted PubSub component"
 msgstr  "Arrêt du composant Twisted PubSub"
 
-#: src/vigilo/corr/actors/main.py:42 src/vigilo/corr/actors/main.py:43
+#: src/vigilo/corr/actors/main.py:43
 msgid   "The topology has been reloaded."
 msgstr  "L'arbre topologique a été reconstruit."
 
@@ -81,15 +78,15 @@ msgstr  "Arrêt du processus principal."
 
 #: src/vigilo/corr/actors/main.py:123
 msgid   "Could not connect to memcached server, make sure it is running"
-msgstr  "Connexion impossible avec le serveur memcached, veuillez vous assurer "
-        "qu'il soit démarré."
+msgstr  "Connexion impossible avec le serveur memcached, veuillez vous "
+        "assurer qu'il soit démarré."
 
 #: src/vigilo/corr/actors/rule_dispatcher.py:98
 msgid   "No information from Vigiconf concerning the topology's last "
         "modification date. Therefore the topology has NOT been rebuilt."
 msgstr  "Aucune information en provenance de Vigiconf concernant la date de "
-        "dernière modification de la topologie du parc. Par conséquent l'arbre "
-        "topologique n'a PAS été reconstruit."
+        "dernière modification de la topologie du parc. Par conséquent "
+        "l'arbre topologique n'a PAS été reconstruit."
 
 #: src/vigilo/corr/actors/rule_dispatcher.py:110
 msgid   "Topology has been reloaded."
@@ -130,8 +127,8 @@ msgstr  "Les poids des dépendances sont les suivants : %r"
 
 #: src/vigilo/corr/compute_hls_states.py:180
 #, python-format
-msgid   "High-level service %(name)r: weight = %(weight)d, state = %(state)r (%"
-        "(output)r)"
+msgid   "High-level service %(name)r: weight = %(weight)d, state = %(state)r "
+        "(%(output)r)"
 msgstr  "Service de haut niveau %(name)r : poids = %(weight)d, état = %(state)"
         "r (%(output)r)"
 
@@ -163,8 +160,8 @@ msgstr  "Copie du chemin"
 
 #: src/vigilo/corr/compute_hls_states.py:328
 #, python-format
-msgid   "HLS %(hls)r is impacted by item (%(host)r, "
-msgstr  "Le SHN %(hls)r est impacté par l'item (%(host)r, "
+msgid   "HLS %(hls)r is impacted by item (%(host)r, %(service)r)"
+msgstr  "Le SHN %(hls1)r est impacté par l'item (%(host)r, %(service)r)r"
 
 #: src/vigilo/corr/compute_hls_states.py:363
 #, python-format
@@ -188,13 +185,19 @@ msgstr  "Mise à jour d'un événement corrélé existant (%r)s"
 #: src/vigilo/corr/correvent.py:104
 #, python-format
 msgid   "Got a reference to a nonexistent correlated event (%r), adding as new"
-msgstr  "L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à "
-        "la BDD."
+msgstr  "L'événement corrélé référencé (%r) n'existe pas, "
+		"il est donc ajouté à la BDD."
 
 #: src/vigilo/corr/correvent.py:115
 #, python-format
 msgid   "Raw event ignored. Reason: status = %r"
 msgstr  "Événement brut ignoré. Raison : statut = %r"
+
+#: src/vigilo/corr/correvent.py:142
+#, python-format
+msgid   "Got a reference to a nonexistent correlated "
+		"event (%r), skipping this aggregate"
+msgstr  "L'événement corrélé référencé (%r) n'existe pas, il est donc ignoré."
 
 #: src/vigilo/corr/correvent.py:184
 msgid   "Creating new correlated event"
@@ -218,8 +221,8 @@ msgid   "Successfully registered rule %r"
 msgstr  "Enregistrement de la règle %r réussi"
 
 #: src/vigilo/corr/registry.py:173
-msgid   "Singleton has already been instanciated, ignoring attempt to create a "
-        "new instance."
+msgid   "Singleton has already been instanciated, "
+		"ignoring attempt to create a new instance."
 msgstr  "Le singleton a déjà été instancié, tentative de ré-instanciation "
         "ignorée"
 
@@ -229,8 +232,11 @@ msgid   "insert_event: Received an event about a HLS (%r)"
 msgstr  "insert_event : Réception d'un événement concernant un SHN (%r)"
 
 #: src/vigilo/corr/db_insertion.py:52
-msgid   "Got a reference to a non configured item "
-msgstr  "L'item concerné n'a pas été configuré (il n'existe pas dans la BDD)."
+#, python-format
+msgid   "Got a reference to a non configured item (%(host)r, %(service)r), "
+        "skipping event"
+msgstr  "L'item référencé (%(host)r, %(service)r) n'existe pas, "
+		"l'événement est donc ignoré."
 
 #: src/vigilo/corr/db_insertion.py:84
 #, python-format
@@ -243,8 +249,8 @@ msgstr  "insert_event : création d'un nouvel événement"
 
 #: src/vigilo/corr/db_insertion.py:97
 msgid   "insert_event: multiple matching events found, skipping."
-msgstr  "insert_event : plusieurs événements concernant l'item ont été trouvé, "
-        "message ignoré."
+msgstr  "insert_event : plusieurs événements concernant "
+		"l'item ont été trouvé, message ignoré."
 
 #: src/vigilo/corr/db_insertion.py:124
 #, python-format
@@ -261,37 +267,21 @@ msgstr  "insert_state: %r"
 msgid   "add_to_aggregate: %r"
 msgstr  "add_to_aggregate: %r"
 
-#: src/vigilo/corr/rules/test.py:25
-#, python-format
-msgid   "id %(id)s payload %(payload)s"
-msgstr  "id %(id)s message %(payload)s"
-
-#: src/vigilo/corr/rules/update_occurrences_count.py:63
-#, python-format
-msgid   "Host: %(hostname)r, service: %(service)r, "
-msgstr  "Hôte : %(hostname)r, service : %(service)r, "
-
-#: src/vigilo/corr/rules/update_attribute.py:57
-#, python-format
-msgid   "Host: %(hostname)r, service: %(servicename)r, "
-msgstr  "Hôte : %(hostname)r, service : %(servicename)r, "
-
-#: src/vigilo/corr/rules/hls_deps.py:84
-#, python-format
-msgid   "Impacted HLS = %(affected_hls)r for (%(hostname)r, "
-msgstr  "SHN impactés = %(affected_hls)r pour l'hôte (%(hostname)r, "
-
-#: src/vigilo/corr/correvent.py:142
-#, python-format
-msgid   "Got a reference to a nonexistent correlated event (%r), skipping this "
-        "aggregate"
-msgstr  "L'événement corrélé référencé (%r) n'existe pas, il est donc ignoré."
+#: src/vigilo/corr/db_insertion.py:208
+msgid   "merge_aggregates: Got a reference to a nonexistent source aggregate, "
+        "aborting"
+msgstr  "L'événement corrélé référencé (%r) n'existe pas, opération annulée"
 
 #: src/vigilo/corr/db_insertion.py:218
 #, python-format
 msgid   "merge_aggregates: Got a reference to a nonexistent destination "
         "aggregate %r, aborting"
 msgstr  "L'événement corrélé référencé (%r) n'existe pas, opération annulée"
+
+#: src/vigilo/corr/rules/test.py:25
+#, python-format
+msgid   "id %(id)s payload %(payload)s"
+msgstr  "id %(id)s message %(payload)s"
 
 #: src/vigilo/corr/rules/priority.py:66
 #, python-format
@@ -302,14 +292,25 @@ msgstr  "La priorité de l'événement corrélé causé par (%(hostname)r, %"
 
 #: src/vigilo/corr/rules/priority.py:104
 #, python-format
-msgid   "The priority of the correlated event(s) %(updated)d has been updated, "
-        "based on information about the HLS %(hls)r"
+msgid   "The priority of the correlated event(s) %(updated)d has been "
+		"updated, based on information about the HLS %(hls)r"
 msgstr  "Mise à jour de la priorité des événements corrélés %(updated)d, en "
         "fonction des informations concernant le SHN %(hls)r renseignées dans "
         "la BDD."
 
-#: src/vigilo/corr/db_insertion.py:208
-#, fuzzy
-msgid   "merge_aggregates: Got a reference to a nonexistent source aggregate, "
-        "aborting"
-msgstr  "L'événement corrélé référencé (%r) n'existe pas, opération annulée"
+#: src/vigilo/corr/rules/update_occurrences_count.py:63
+#, python-format
+msgid   "Host: %(hostname)r, service: %(service)r, occurrences: %(occurences)r"
+msgstr  "Hôte : %(hostname)r, service : %(service)r, "
+		"occurrences: %(occurences)r"
+
+#: src/vigilo/corr/rules/update_attribute.py:57
+#, python-format
+msgid   "Host: %(hostname)r, service: %(servicename)r, update on correvent: %"
+        "(correventid)r"
+msgstr  "Hôte : %(hostname)r, service : %(servicename)r, "
+		"mise à jour de l'événement corrélé %(correventid)r"
+
+#: src/vigilo/corr/rules/hls_deps.py:84
+msgid   "Impacted HLS = %(affected_hls)r for (%(hostname)r, %r(servicename))"
+msgstr  "HLS impactés par (%(hostname)r, %r(servicename)) = %(affected_hls)r"
