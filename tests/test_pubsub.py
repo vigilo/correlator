@@ -110,7 +110,7 @@ class XmppClient(unittest.TestCase):
 
         # On tente de récupérer l'évènement via le NodeToQueueForwarder.
         # Causes pylint to crash: http://www.logilab.org/ticket/8771
-        out_xml = yield deferToThread(lambda: out_queue.get(timeout=1.4))
+        out_xml = yield deferToThread(lambda: out_queue.get(timeout=2.0))
         item = parseXml(out_xml)
 
         # On vérifie que ce qui a été reçu correspond à ce qui a été envoyé.

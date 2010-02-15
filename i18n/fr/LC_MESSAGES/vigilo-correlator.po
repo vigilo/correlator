@@ -1,0 +1,315 @@
+# French translations for PACKAGE package
+# Traductions françaises du paquet PACKAGE.
+# Copyright (C) 2010 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2010.
+#
+msgid   ""
+msgstr  "Project-Id-Version: vigilo.corr\n"
+        "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
+        "POT-Creation-Date: 2010-02-15 13:05+0100\n"
+        "PO-Revision-Date: 2010-02-15 09:31+0100\n"
+        "Last-Translator: Automatically generated\n"
+        "Language-Team: none\n"
+        "MIME-Version: 1.0\n"
+        "Content-Type: text/plain; charset=UTF-8\n"
+        "Content-Transfer-Encoding: 8bit\n"
+        "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: src/vigilo/corr/actors/rule_runner.py:42
+msgid   "Rule killed (timeout)"
+msgstr  "La règle a été tuée (temps d'attente dépassé)"
+
+#: src/vigilo/corr/actors/rule_runner.py:105
+msgid   "##### rule_runner: process begins #####"
+msgstr  "##### rule_runner: début du processus #####"
+
+#: src/vigilo/corr/actors/rule_runner.py:106
+#, python-format
+msgid   "Process id: %(pid)r | Parent id: %(ppid)r | "
+msgstr  "Id du processus : %(pid)r | Id du processus parent : %(ppid)r | "
+
+#: src/vigilo/corr/actors/rule_runner.py:121
+#: src/vigilo/corr/actors/rule_runner.py:120
+msgid   "##### KeyboardInterrupt #####"
+msgstr  ""
+
+#: src/vigilo/corr/actors/rule_runner.py:129
+#: src/vigilo/corr/actors/rule_runner.py:128
+msgid   "while processing"
+msgstr  ""
+
+#: src/vigilo/corr/actors/rule_runner.py:134
+#: src/vigilo/corr/actors/rule_runner.py:133
+#, python-format
+msgid   "The rule \"%s\" did not return any value, assuming ENOERROR."
+msgstr  "La règle \"%s\" n'a rien retourné, on utilise la valeur de retour par "
+        "défaut ENOERROR."
+
+#: src/vigilo/corr/actors/rule_runner.py:138
+#: src/vigilo/corr/actors/rule_runner.py:137
+msgid   "##### rule_runner: process ends #####"
+msgstr  "##### rule_runner: fin du processus #####"
+
+#: src/vigilo/corr/actors/twisted.py:25
+msgid   "Stopping the Twisted PubSub component"
+msgstr  "Arrêt du composant Twisted PubSub"
+
+#: src/vigilo/corr/actors/main.py:42 src/vigilo/corr/actors/main.py:43
+msgid   "The topology has been reloaded."
+msgstr  "L'arbre topologique a été reconstruit."
+
+#: src/vigilo/corr/actors/main.py:90
+msgid   "Sending shutdown message to QueueToNodeForwarder."
+msgstr  "Envoi d'un message d'arrêt au QueueToNodeForwarder."
+
+#: src/vigilo/corr/actors/main.py:97
+msgid   "Asking the Rule dispatcher to gracefully exit."
+msgstr  "Demande d'arrêt du rule_dispatcher."
+
+#: src/vigilo/corr/actors/main.py:105
+msgid   "Terminated the Rule dispatcher"
+msgstr  "Arrêt du rule_dispatcher."
+
+#: src/vigilo/corr/actors/main.py:107
+msgid   "Joined with the Rule dispatcher"
+msgstr  "Terminaison des processus-fils du rule_dispatcher."
+
+#: src/vigilo/corr/actors/main.py:113
+msgid   "Stopping the main process."
+msgstr  "Arrêt du processus principal."
+
+#: src/vigilo/corr/actors/main.py:123
+msgid   "Could not connect to memcached server, make sure it is running"
+msgstr  "Connexion impossible avec le serveur memcached, veuillez vous assurer "
+        "qu'il soit démarré."
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:98
+msgid   "No information from Vigiconf concerning the topology's last "
+        "modification date. Therefore the topology has NOT been rebuilt."
+msgstr  "Aucune information en provenance de Vigiconf concernant la date de "
+        "dernière modification de la topologie du parc. Par conséquent l'arbre "
+        "topologique n'a PAS été reconstruit."
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:110
+msgid   "Topology has been reloaded."
+msgstr  "L'arbre topologique a été reconstruit."
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:131
+#, python-format
+msgid   "##### Rule %(name)r -> Result : %(result)r #####"
+msgstr  "##### Règle %(name)r -> Résultat : %(result)r #####"
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:134
+#, python-format
+msgid   "##### Exception raised : %r #####"
+msgstr  "##### Exception levée : %r #####"
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:236
+#, python-format
+msgid   "Spawning for payload: %s"
+msgstr  "Traitement du message : %s"
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:241
+#, python-format
+msgid   "Running rules from step #%(step)d: %(rules)r"
+msgstr  "Exécution des règles de l'étape #%(step)d : %(rules)r"
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:378
+msgid   "Received request to shutdown the Rule dispatcher."
+msgstr  "Demande d'arrêt du rule_dispatcher reçue."
+
+#: src/vigilo/corr/actors/rule_dispatcher.py:392
+msgid   "Stopping the Rule dispatcher."
+msgstr  "Arrêt du rule_dispatcher."
+
+#: src/vigilo/corr/compute_hls_states.py:142
+#, python-format
+msgid   "Dependancies have the following weights: %r"
+msgstr  "Les poids des dépendances sont les suivants : %r"
+
+#: src/vigilo/corr/compute_hls_states.py:180
+#, python-format
+msgid   "High-level service %(name)r: weight = %(weight)d, state = %(state)r (%"
+        "(output)r)"
+msgstr  "Service de haut niveau %(name)r : poids = %(weight)d, état = %(state)"
+        "r (%(output)r)"
+
+#: src/vigilo/corr/compute_hls_states.py:231
+#, python-format
+msgid   "End of impact for HLS %r"
+msgstr  "Le service de haut niveau %r n'est plus impacté."
+
+#: src/vigilo/corr/compute_hls_states.py:249
+#, python-format
+msgid   "End of impact for item (%(hostname)r, %(servicename)r)"
+msgstr  "L'item (%(hostname)r, %(servicename)r) n'est plus impacté."
+
+#: src/vigilo/corr/compute_hls_states.py:268
+#, python-format
+msgid   "HLS %(hls1)r is impacted by HLS %(hls2)r"
+msgstr  "Le SHN %(hls1)r est impacté par le SHN %(hls2)r"
+
+#: src/vigilo/corr/compute_hls_states.py:284
+#, python-format
+msgid   "The HLS %r already belonged to this impacted path, ignoring request "
+        "to add it again."
+msgstr  "Le SHN %r fait déjà partie de ce chemin d'impact, la requête d'ajout "
+        "est par conséquent ignorée."
+
+#: src/vigilo/corr/compute_hls_states.py:313
+msgid   "Copying path"
+msgstr  "Copie du chemin"
+
+#: src/vigilo/corr/compute_hls_states.py:328
+#, python-format
+msgid   "HLS %(hls)r is impacted by item (%(host)r, "
+msgstr  "Le SHN %(hls)r est impacté par l'item (%(host)r, "
+
+#: src/vigilo/corr/compute_hls_states.py:363
+#, python-format
+msgid   "Setting weight for \"%s\" to None"
+msgstr  "Changement du poids de \"%s\" en 'None'"
+
+#: src/vigilo/corr/correvent.py:69
+#, python-format
+msgid   "Payload: %s"
+msgstr  "Message: %s"
+
+#: src/vigilo/corr/correvent.py:72
+msgid   "Got invalid raw event ID (None), skipping event"
+msgstr  "L'identifiant de l'événement brut est incorrect, événement ignoré."
+
+#: src/vigilo/corr/correvent.py:101
+#, python-format
+msgid   "Updating existing correlated event (%r)"
+msgstr  "Mise à jour d'un événement corrélé existant (%r)s"
+
+#: src/vigilo/corr/correvent.py:104
+#, python-format
+msgid   "Got a reference to a nonexistent correlated event (%r), adding as new"
+msgstr  "L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à "
+        "la BDD."
+
+#: src/vigilo/corr/correvent.py:115
+#, python-format
+msgid   "Raw event ignored. Reason: status = %r"
+msgstr  "Événement brut ignoré. Raison : statut = %r"
+
+#: src/vigilo/corr/correvent.py:184
+msgid   "Creating new correlated event"
+msgstr  "Création d'un nouvel événement corrélé"
+
+#: src/vigilo/corr/registry.py:55
+#, python-format
+msgid   "Rule %r has already been registered, ignoring attempt to re-register "
+        "it."
+msgstr  "La règle %r a déjà été enregistrée, tentative de ré-enregistrement "
+        "ignorée."
+
+#: src/vigilo/corr/registry.py:63
+#, python-format
+msgid   "The rule %(depended)r must be loaded before %(dependent)r."
+msgstr  "La règle %(depended)r doit être chargée avant  %(dependent)r."
+
+#: src/vigilo/corr/registry.py:93
+#, python-format
+msgid   "Successfully registered rule %r"
+msgstr  "Enregistrement de la règle %r réussi"
+
+#: src/vigilo/corr/registry.py:173
+msgid   "Singleton has already been instanciated, ignoring attempt to create a "
+        "new instance."
+msgstr  "Le singleton a déjà été instancié, tentative de ré-instanciation "
+        "ignorée"
+
+#: src/vigilo/corr/db_insertion.py:44
+#, python-format
+msgid   "insert_event: Received an event about a HLS (%r)"
+msgstr  "insert_event : Réception d'un événement concernant un SHN (%r)"
+
+#: src/vigilo/corr/db_insertion.py:52
+msgid   "Got a reference to a non configured item "
+msgstr  "L'item concerné n'a pas été configuré (il n'existe pas dans la BDD)."
+
+#: src/vigilo/corr/db_insertion.py:84
+#, python-format
+msgid   "insert_event: updating event %r"
+msgstr  "insert_event : mise à jour de l'événement %r"
+
+#: src/vigilo/corr/db_insertion.py:94
+msgid   "insert_event: creating new event "
+msgstr  "insert_event : création d'un nouvel événement"
+
+#: src/vigilo/corr/db_insertion.py:97
+msgid   "insert_event: multiple matching events found, skipping."
+msgstr  "insert_event : plusieurs événements concernant l'item ont été trouvé, "
+        "message ignoré."
+
+#: src/vigilo/corr/db_insertion.py:124
+#, python-format
+msgid   "insert_event: %r"
+msgstr  "insert_event: %r"
+
+#: src/vigilo/corr/db_insertion.py:166
+#, python-format
+msgid   "insert_state: %r"
+msgstr  "insert_state: %r"
+
+#: src/vigilo/corr/db_insertion.py:185
+#, python-format
+msgid   "add_to_aggregate: %r"
+msgstr  "add_to_aggregate: %r"
+
+#: src/vigilo/corr/rules/test.py:25
+#, python-format
+msgid   "id %(id)s payload %(payload)s"
+msgstr  "id %(id)s message %(payload)s"
+
+#: src/vigilo/corr/rules/update_occurrences_count.py:63
+#, python-format
+msgid   "Host: %(hostname)r, service: %(service)r, "
+msgstr  "Hôte : %(hostname)r, service : %(service)r, "
+
+#: src/vigilo/corr/rules/update_attribute.py:57
+#, python-format
+msgid   "Host: %(hostname)r, service: %(servicename)r, "
+msgstr  "Hôte : %(hostname)r, service : %(servicename)r, "
+
+#: src/vigilo/corr/rules/hls_deps.py:84
+#, python-format
+msgid   "Impacted HLS = %(affected_hls)r for (%(hostname)r, "
+msgstr  "SHN impactés = %(affected_hls)r pour l'hôte (%(hostname)r, "
+
+#: src/vigilo/corr/correvent.py:142
+#, python-format
+msgid   "Got a reference to a nonexistent correlated event (%r), skipping this "
+        "aggregate"
+msgstr  "L'événement corrélé référencé (%r) n'existe pas, il est donc ignoré."
+
+#: src/vigilo/corr/db_insertion.py:218
+#, python-format
+msgid   "merge_aggregates: Got a reference to a nonexistent destination "
+        "aggregate %r, aborting"
+msgstr  "L'événement corrélé référencé (%r) n'existe pas, opération annulée"
+
+#: src/vigilo/corr/rules/priority.py:66
+#, python-format
+msgid   "The priority for the alert on (%(hostname)r, %(servicename)r) is %"
+        "(priority)r."
+msgstr  "La priorité de l'événement corrélé causé par (%(hostname)r, %"
+        "(servicename)r) est %(priority)r."
+
+#: src/vigilo/corr/rules/priority.py:104
+#, python-format
+msgid   "The priority of the correlated event(s) %(updated)d has been updated, "
+        "based on information about the HLS %(hls)r"
+msgstr  "Mise à jour de la priorité des événements corrélés %(updated)d, en "
+        "fonction des informations concernant le SHN %(hls)r renseignées dans "
+        "la BDD."
+
+#: src/vigilo/corr/db_insertion.py:208
+#, fuzzy
+msgid   "merge_aggregates: Got a reference to a nonexistent source aggregate, "
+        "aborting"
+msgstr  "L'événement corrélé référencé (%r) n'existe pas, opération annulée"
