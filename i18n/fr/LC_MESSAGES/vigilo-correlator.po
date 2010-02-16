@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: vigilo.corr\n"
         "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-        "POT-Creation-Date: 2010-02-15 17:07+0100\n"
+        "POT-Creation-Date: 2010-02-16 10:56+0100\n"
         "PO-Revision-Date: 2010-02-15 09:31+0100\n"
         "Last-Translator: Automatically generated\n"
         "Language-Team: none\n"
@@ -41,8 +41,8 @@ msgstr  "pendant l'exécution de"
 #: src/vigilo/corr/actors/rule_runner.py:133
 #, python-format
 msgid   "The rule '%s' did not return any value, assuming ENOERROR."
-msgstr  "La règle '%s' n'a rien retourné, on utilise "
-		"la valeur de retour par défaut ENOERROR."
+msgstr  "La règle '%s' n'a rien retourné, on utilise la valeur de retour par "
+        "défaut ENOERROR."
 
 #: src/vigilo/corr/actors/rule_runner.py:137
 msgid   "##### rule_runner: process ends #####"
@@ -300,9 +300,10 @@ msgstr  "Mise à jour de la priorité des événements corrélés %(updated)d, e
 
 #: src/vigilo/corr/rules/update_occurrences_count.py:63
 #, python-format
-msgid   "Host: %(hostname)r, service: %(service)r, occurrences: %(occurences)r"
-msgstr  "Hôte : %(hostname)r, service : %(service)r, occurrences: %(occurences)"
-        "r"
+msgid   "Host: %(hostname)r, service: %(servicename)r, occurrences: %"
+        "(occurrences)r"
+msgstr  "Hôte : %(hostname)r, service : %(servicename)r, occurrences: %"
+        "(occurrences)r"
 
 #: src/vigilo/corr/rules/update_attribute.py:57
 #, python-format
@@ -312,5 +313,6 @@ msgstr  "Hôte : %(hostname)r, service : %(servicename)r, mise à jour de "
         "l'événement corrélé %(correventid)r"
 
 #: src/vigilo/corr/rules/hls_deps.py:84
-msgid   "Impacted HLS = %(affected_hls)r for (%(hostname)r, %r(servicename))"
-msgstr  "HLS impactés par (%(hostname)r, %r(servicename)) = %(affected_hls)r"
+#, python-format
+msgid   "Impacted HLS = %(affected_hls)r for (%(hostname)r, %(servicename)r)"
+msgstr  "HLS impactés par (%(hostname)r, %(servicename)r) = %(affected_hls)r"

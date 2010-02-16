@@ -7,7 +7,7 @@
 msgid   ""
 msgstr  "Project-Id-Version: vigilo.corr\n"
         "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-        "POT-Creation-Date: 2010-02-15 17:07+0100\n"
+        "POT-Creation-Date: 2010-02-16 10:56+0100\n"
         "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
         "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
         "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -284,7 +284,8 @@ msgstr  ""
 
 #: src/vigilo/corr/rules/update_occurrences_count.py:63
 #, python-format
-msgid   "Host: %(hostname)r, service: %(service)r, occurrences: %(occurences)r"
+msgid   "Host: %(hostname)r, service: %(servicename)r, occurrences: %"
+        "(occurrences)r"
 msgstr  ""
 
 #: src/vigilo/corr/rules/update_attribute.py:57
@@ -294,5 +295,6 @@ msgid   "Host: %(hostname)r, service: %(servicename)r, update on correvent: %"
 msgstr  ""
 
 #: src/vigilo/corr/rules/hls_deps.py:84
-msgid   "Impacted HLS = %(affected_hls)r for (%(hostname)r, %r(servicename))"
+#, python-format
+msgid   "Impacted HLS = %(affected_hls)r for (%(hostname)r, %(servicename)r)"
 msgstr  ""
