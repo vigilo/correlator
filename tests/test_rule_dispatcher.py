@@ -89,11 +89,9 @@ class TestRuleDispatcher(unittest.TestCase):
         # Conversion en XML
         payload = item.toXml()
         
-        # On "envoie" le message sur le bus
+        # On force le traitement du message,
+        # comme s'il provenait du bus XMPP.
         self.manager.in_queue.put_nowait(payload)
-
-        # On lit le message sur le bus en utilisant la
-        # fonction handle_bus_message du rule_dispatcher.
         self.rule_runners_pool = handle_bus_message(self.manager, 
             self.conn, None, self.rule_runners_pool)
 
@@ -255,13 +253,10 @@ class TestRuleDispatcher(unittest.TestCase):
         
         # Instanciation du pool de processus utilisé par le rule_dispatcher.
         self.rule_runners_pool = None
-        
-        # Lecture de la configuration pour déterminer
-        # si l'on est en mode debugging ou non.
-        try:
-            self.debugging = settings['correlator'].as_bool('debug')
-        except KeyError:
-            self.debugging = False
+
+        # Pose problème à cause de multiprocessing
+        # lorsque ce flag est mis à True.
+        self.debugging = True
 
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
@@ -273,18 +268,12 @@ class TestRuleDispatcher(unittest.TestCase):
         teardown_mc()
         
         if self.rule_runners_pool:
-            self.rule_runners_pool.close()
-            notintr = False
-            while not notintr:
-                try:
-                    self.rule_runners_pool.join()
-                    notintr = True
-                except OSError, ose:
-                    if ose.errno != errno.EINTR:
-                        raise ose
+            self.rule_runners_pool.terminate()
+            self.rule_runners_pool.join()
         
         from vigilo.corr.actors import rule_runner
         rule_runner.api = None
+        self.manager.shutdown()
 
     def test_event_succession_1(self):
         """
@@ -344,7 +333,7 @@ class TestRuleDispatcher(unittest.TestCase):
         # TODO: Corriger le problème avec les sessions
         DBSession.add(self.lls1)
         
-        # On recoit sur le bus un message "CRITICAL" concernant lls1.
+        # On reçoit sur le bus un message "CRITICAL" concernant lls1.
         self.generate_message("CRITICAL", hostname, lls1_name)
         
         # On compte le nombre d'événements dans la table Event.
