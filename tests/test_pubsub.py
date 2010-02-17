@@ -10,9 +10,7 @@ from twisted.trial import unittest
 from twisted.internet import reactor
 unittest.TestCase.timeout = 5
 
-from twisted.internet import task
-from twisted.internet.base import DelayedCall
-from twisted.internet.defer import Deferred, inlineCallbacks
+from twisted.internet.defer import Deferred
 from twisted.internet.threads import deferToThread
 from twisted.words.xish import domish
 from twisted.words.protocols.jabber.jid import JID
@@ -26,12 +24,9 @@ from vigilo.pubsub.checknode import VerificationNode
 from vigilo.common.logging import get_logger
 from vigilo.connector.nodetoqueuefw import NodeToQueueForwarder
 from vigilo.connector.queuetonodefw import QueueToNodeForwarder
-from vigilo.corr.pubsub import CorrServiceMaker
 from vigilo.corr.xml import NS_EVENTS
 
 LOGGER = get_logger(__name__)
-
-DelayedCall.debug = True
 
 class TestForwarders(unittest.TestCase):
     """Teste les échangeurs (forwarders) de messages."""
@@ -75,7 +70,6 @@ class TestForwarders(unittest.TestCase):
         # We have no way to get a deferred for startService,
         # which would have been quicker.
         #return deferToThread(lambda: time.sleep(1.5))
-        #return task.deferLater(reactor, 1., lambda: None)
         return conn_deferred
 
     def tearDown(self):
