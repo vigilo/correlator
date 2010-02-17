@@ -1,19 +1,14 @@
+# -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
+"""Tests sur la communication avec le bus XMPP."""
 
 import Queue as queue
 import random
 import threading
 
-# trial seems a more featureful option than nose's twisted plugin
-# OTOH, it is much less convenient, especially since the reactor
-# is stopped during tests.
-if True:
-    from twisted.trial import unittest
-    from twisted.internet import reactor
-    unittest.TestCase.timeout = 5
-else:
-    import unittest
-    from nose.twistedtools import reactor
+from twisted.trial import unittest
+from twisted.internet import reactor
+unittest.TestCase.timeout = 5
 
 from twisted.internet import task
 from twisted.internet.base import DelayedCall
@@ -25,12 +20,12 @@ from wokkel import client, subprotocols
 from wokkel.generic import parseXml
 from wokkel.test.helpers import XmlStreamStub
 
+from vigilo.common.conf import settings
+settings.load_module(__name__)
 from vigilo.pubsub.checknode import VerificationNode
 from vigilo.common.logging import get_logger
 from vigilo.connector.nodetoqueuefw import NodeToQueueForwarder
 from vigilo.connector.queuetonodefw import QueueToNodeForwarder
-from vigilo.common.conf import settings
-settings.load_module(__name__)
 from vigilo.corr.pubsub import CorrServiceMaker
 from vigilo.corr.xml import NS_EVENTS
 
@@ -38,10 +33,13 @@ LOGGER = get_logger(__name__)
 
 DelayedCall.debug = True
 
-class XmppClient(unittest.TestCase):
+class TestForwarders(unittest.TestCase):
+    """Teste les échangeurs (forwarders) de messages."""
     timeout = 2
 
     def setUp(self):
+        """Initialisation du test."""
+
         # Mocks the behaviour of XMPPClient. No TCP connections made.
         # A bit useless for integration tests;
         # we use high-level apis and need the real deal.
@@ -81,9 +79,9 @@ class XmppClient(unittest.TestCase):
         return conn_deferred
 
     def tearDown(self):
+        """Destruction des objets de test."""
         return self.xmpp_client.stopService()
 
-    @inlineCallbacks
     def testForwarders(self):
         """Transferts entre bus XMPP et file de messages du corrélateur"""
         in_queue = queue.Queue()
@@ -119,5 +117,6 @@ class XmppClient(unittest.TestCase):
 
         ntqf.disownHandlerParent(self.xmpp_client)
         qtnf.disownHandlerParent(self.xmpp_client)
-
+        in_queue.close()
+        out_queue.close()
 

@@ -35,8 +35,6 @@ def get_available_port():
 
 def setup_mc():
     """Lance un serveur memcached pour les tests."""
-    from vigilo.common.conf import settings
-
     global mc_pid
     settings['correlator']['memcached_host'] = "127.0.0.1"
     port = get_available_port()
@@ -64,8 +62,6 @@ with_mc = nose.with_setup(setup_mc, teardown_mc)
 #Create an empty database before we start our tests for this module
 def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
-    from vigilo.common.conf import settings
-
     configure_db(settings['database'], 'sqlalchemy_')
     metadata.create_all()
     

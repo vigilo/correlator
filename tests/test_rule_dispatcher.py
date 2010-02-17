@@ -91,9 +91,8 @@ class TestRuleDispatcher(unittest.TestCase):
         
         # On force le traitement du message,
         # comme s'il provenait du bus XMPP.
-        self.manager.in_queue.put_nowait(payload)
         self.rule_runners_pool = handle_bus_message(self.manager, 
-            self.conn, None, self.rule_runners_pool)
+            self.conn, None, self.rule_runners_pool, payload)
 
 
     def make_dependencies(self):
@@ -243,7 +242,6 @@ class TestRuleDispatcher(unittest.TestCase):
         self.manager = mp.Manager()
         self.manager.in_queue = mp.Queue()
         self.manager.out_queue = mp.Queue()
-        self.manager.exit = mp.Event()
 
         # Instanciation d'une connection à MemCacheD.
         self.conn = connect()
@@ -255,7 +253,7 @@ class TestRuleDispatcher(unittest.TestCase):
         self.rule_runners_pool = None
 
         # Pose problème à cause de multiprocessing
-        # lorsque ce flag est mis à True.
+        # lorsque ce flag est mis à False.
         self.debugging = True
 
     def tearDown(self):
