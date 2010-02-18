@@ -105,9 +105,11 @@ def process(args):
     
     LOGGER.debug(_(u'##### rule_runner: process begins #####'))
     LOGGER.debug(_(u'Process id: %(pid)r | Parent id: %(ppid)r | '
-                   'Rule name: %(name)s' % {'pid': os.getpid(),
-                                            'ppid': os.getppid(),
-                                            'name': rule_name,}))
+                   'Rule name: %(name)s') % {
+                    'pid': os.getpid(),
+                    'ppid': os.getppid(),
+                    'name': rule_name,
+                })
     
     signal.signal(signal.SIGALRM, sigalrm_handler)
     

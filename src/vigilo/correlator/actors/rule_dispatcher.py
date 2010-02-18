@@ -128,10 +128,12 @@ def handle_rules_errors(results, rules_graph, out_queue, rule_runners_pool):
     
     # On vérifie le code de retour de chacune des règles
     for (rule_name, result, ex) in results:
-        LOGGER.debug(_("##### Rule %(name)r -> Result : %(result)r #####" 
-            % {"name": rule_name, "result": result,}))
+        LOGGER.debug(_("##### Rule %(name)r -> Result : %(result)r #####") % {
+                        "name": rule_name,
+                        "result": result,
+                    })
         if ex:
-            LOGGER.debug(_("##### Exception raised : %r #####" % (ex, )))
+            LOGGER.debug(_("##### Exception raised : %r #####") % ex)
         # Si une erreur s'est produite,
         if result != rulesapi.ENOERROR:
             # On retire la règle du graphe 
@@ -362,7 +364,8 @@ def main(manager):
         else:
             # Si le message demande l'arrêt, on s'arrête.
             if xml == None:
-                LOGGER.debug(_('Received request to shutdown the Rule dispatcher.'))
+                LOGGER.debug(_('Received request to shutdown '
+                                'the Rule dispatcher.'))
                 break
 
             rule_runners_pool = handle_bus_message(manager,
