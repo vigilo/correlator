@@ -24,7 +24,7 @@ from vigilo.pubsub.checknode import VerificationNode
 from vigilo.common.logging import get_logger
 from vigilo.connector.nodetoqueuefw import NodeToQueueForwarder
 from vigilo.connector.queuetonodefw import QueueToNodeForwarder
-from vigilo.corr.xml import NS_EVENTS
+from vigilo.correlator.xml import NS_EVENTS
 
 LOGGER = get_logger(__name__)
 

@@ -8,28 +8,28 @@ import errno
 from datetime import datetime
 
 from twisted.words.xish import domish
-from vigilo.corr.xml import NS_EVENTS
+from vigilo.correlator.xml import NS_EVENTS
 
-from vigilo.corr import rulesapi
+from vigilo.correlator import rulesapi
 
 from vigilo.models import HighLevelService, LowLevelService, Host, \
                             StateName, Dependency, Event, CorrEvent, Change
 from vigilo.models.configure import DBSession
 
-from vigilo.corr.connect import connect
-from vigilo.corr.libs import mp
-from vigilo.corr.actors.rule_dispatcher import handle_bus_message, \
+from vigilo.correlator.connect import connect
+from vigilo.correlator.libs import mp
+from vigilo.correlator.actors.rule_dispatcher import handle_bus_message, \
                                                     handle_rules_errors, \
                                                     create_rule_runners_pool
-from vigilo.corr.actors import rule_runner
+from vigilo.correlator.actors import rule_runner
 
-from vigilo.corr.registry import Registry, get_registry
-from vigilo.corr.rules.hls_deps import HighLevelServiceDepsRule
-from vigilo.corr.rules.lls_deps import LowLevelServiceDepsRule
-from vigilo.corr.rules.update_attribute import UpdateAttributeRule
-from vigilo.corr.rules.update_occurrences_count import \
+from vigilo.correlator.registry import Registry, get_registry
+from vigilo.correlator.rules.hls_deps import HighLevelServiceDepsRule
+from vigilo.correlator.rules.lls_deps import LowLevelServiceDepsRule
+from vigilo.correlator.rules.update_attribute import UpdateAttributeRule
+from vigilo.correlator.rules.update_occurrences_count import \
                                         UpdateOccurrencesCountRule
-from vigilo.corr.rules.priority import PriorityRule
+from vigilo.correlator.rules.priority import PriorityRule
 from utils import setup_mc, teardown_mc
 from utils import setup_db, teardown_db
 
@@ -269,7 +269,7 @@ class TestRuleDispatcher(unittest.TestCase):
             self.rule_runners_pool.terminate()
             self.rule_runners_pool.join()
         
-        from vigilo.corr.actors import rule_runner
+        from vigilo.correlator.actors import rule_runner
         rule_runner.api = None
         self.manager.shutdown()
 

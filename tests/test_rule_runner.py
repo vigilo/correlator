@@ -5,13 +5,13 @@ Test du rule_runner.
 import unittest
 from time import sleep
 
-from vigilo.corr.libs import mp
+from vigilo.correlator.libs import mp
 
-from vigilo.corr.rule import Rule
+from vigilo.correlator.rule import Rule
 
-from vigilo.corr.actors import rule_runner
-from vigilo.corr.registry import get_registry
-from vigilo.corr.rulesapi import ENOERROR, ETIMEOUT, EEXCEPTION
+from vigilo.correlator.actors import rule_runner
+from vigilo.correlator.registry import get_registry
+from vigilo.correlator.rulesapi import ENOERROR, ETIMEOUT, EEXCEPTION
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate

@@ -5,7 +5,7 @@ Test du module publish_messages.
 
 import unittest
 
-from vigilo.corr.publish_messages import publish_aggregate, \
+from vigilo.correlator.publish_messages import publish_aggregate, \
                                             delete_published_aggregates, \
                                             publish_state
 from utils import setup_db, teardown_db

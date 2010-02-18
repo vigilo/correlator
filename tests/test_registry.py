@@ -2,8 +2,8 @@
 """Tests pour le registre des règles de corrélation."""
 import unittest
 
-from vigilo.corr.registry import get_registry
-from vigilo.corr.rule import Rule
+from vigilo.correlator.registry import get_registry
+from vigilo.correlator.rule import Rule
 
 def rule_maker(name, deps):
     """

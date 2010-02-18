@@ -6,7 +6,7 @@ Test de la fonction merge_aggregates.
 from datetime import datetime
 import unittest
 
-from vigilo.corr.db_insertion import merge_aggregates
+from vigilo.correlator.db_insertion import merge_aggregates
 from utils import setup_db, teardown_db
 
 from vigilo.models.configure import DBSession

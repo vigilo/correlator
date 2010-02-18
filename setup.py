@@ -49,13 +49,13 @@ setup(name='vigilo-correlator',
             ],
         packages=[
             'vigilo',
-            'vigilo.corr',
-            'vigilo.corr.actors',
-            'vigilo.corr.rules',
+            'vigilo.correlator',
+            'vigilo.correlator.actors',
+            'vigilo.correlator.rules',
             ],
         entry_points={
             'console_scripts': [
-                'vigilo-correlator = vigilo.corr.actors.main:main_cmdline',
+                'vigilo-correlator = vigilo.correlator.actors.main:main_cmdline',
                 ],
             },
         package_dir={'': 'src'},

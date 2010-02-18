@@ -4,11 +4,11 @@ from datetime import datetime
 import unittest
 import time
 
-from vigilo.corr.actors.rule_dispatcher import extract_information
-from vigilo.corr.db_insertion import insert_event, insert_state, \
+from vigilo.correlator.actors.rule_dispatcher import extract_information
+from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                         add_to_aggregate
-from vigilo.corr.libs import etree
-from vigilo.corr.xml import NS_EVENTS
+from vigilo.correlator.libs import etree
+from vigilo.correlator.xml import NS_EVENTS
 from utils import setup_db, teardown_db
 
 from vigilo.models import State, StateName, Event, \

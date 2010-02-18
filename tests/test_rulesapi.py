@@ -10,7 +10,7 @@ from vigilo.models.configure import DBSession
 
 from utils import setup_mc, teardown_mc
 from utils import setup_db, teardown_db
-from vigilo.corr.libs import mp
+from vigilo.correlator.libs import mp
 
 class TestApiFunctions(unittest.TestCase): 
     """Tests portant sur le contexte et l'API des règles de corrélation."""
@@ -30,7 +30,7 @@ class TestApiFunctions(unittest.TestCase):
     def test_contexts(self):
         """Création d'un contexte associé à un nom quelconque"""
         # import it now because we override MEMCACHE_CONN_PORT in setup_mc
-        from vigilo.corr.rulesapi import Api
+        from vigilo.correlator.rulesapi import Api
         api = Api(queue=None)
         name = str(random.random())
         ctx = api.get_or_create_context(name)
@@ -58,7 +58,7 @@ class TestApiFunctions(unittest.TestCase):
 
         # Check the logs to see if we really exercised concurrency.
         # Apparently we didn't manage.
-        from vigilo.corr.rulesapi import Api
+        from vigilo.correlator.rulesapi import Api
     
         def create_context(name):
             """Crée un contexte portant le nom passé en paramètre."""

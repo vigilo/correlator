@@ -8,7 +8,7 @@ from vigilo.models.configure import DBSession
 from vigilo.models import Host, LowLevelService, Dependency
 from vigilo.models import Event, CorrEvent, StateName
 
-from vigilo.corr.topology import Topology
+from vigilo.correlator.topology import Topology
 from utils import setup_db, teardown_db
     
 class TestTopologyFunctions(unittest.TestCase):
