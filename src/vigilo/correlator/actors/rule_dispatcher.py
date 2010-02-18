@@ -236,7 +236,8 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
             # TODO: le choix du "chunksize" est arbitraire (défaut = 1).
             # Il faudrait en faire une option de la configuration.
             results = rule_runners_pool.imap_unordered( \
-                        rule_runner.process, work_units, chunksize=10)
+                rule_runner.process, work_units, 
+                chunksize = settings['correlator'].as_int('map_chunksize'))
 
             # On vérifie le code de retour de chacune des règles
             rule_runners_pool = handle_rules_errors(results, rules_graph, 

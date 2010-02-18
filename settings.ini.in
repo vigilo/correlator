@@ -28,6 +28,8 @@ validate_messages = False
 nagios_hls_jid = connector-nagios@localhost
 nagios_hls_host = HLS
 
+map_chunksize = 1
+
 queue_size = 100
 rules_timeout = 2
 
