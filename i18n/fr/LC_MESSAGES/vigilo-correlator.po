@@ -161,7 +161,7 @@ msgstr  "Copie du chemin"
 #: src/vigilo/corr/compute_hls_states.py:328
 #, python-format
 msgid   "HLS %(hls)r is impacted by item (%(host)r, %(service)r)"
-msgstr  "Le SHN %(hls1)r est impacté par l'item (%(host)r, %(service)r)r"
+msgstr  "Le SHN %(hls)r est impacté par l'item (%(host)r, %(service)r)r"
 
 #: src/vigilo/corr/compute_hls_states.py:363
 #, python-format
