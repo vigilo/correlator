@@ -1,7 +1,7 @@
 %define module  correlator
 %define name    vigilo-%{module}
 %define version 1.0
-%define release 1
+%define release 2
 
 Name:       %{name}
 Summary:    Vigilo correlator
