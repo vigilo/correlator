@@ -41,7 +41,7 @@ def insert_event(info_dictionary):
     
     # S'il s'agit d'un événement concernant un HLS.
     if not info_dictionary["host"]:
-        LOGGER.critical(_('insert_event: Received an event about a HLS (%r)' % 
+        LOGGER.critical(_('Received request to add an event on HLS "%s"' %
                             info_dictionary["service"]))
         return None
     
@@ -85,7 +85,11 @@ def insert_event(info_dictionary):
     # Si aucun événement correpondant à cet item ne figure dans la base
     except NoResultFound:
         # Si l'état de cette alerte est 'OK', on l'ignore
-        if info_dictionary["state"] == "OK":
+        if info_dictionary["state"] == "OK" or \
+            info_dictionary["state"] == "UP":
+            LOGGER.info(_('Ignoring request to create a new event '
+                            'with state "%s" (nothing alarming here)') %
+                            info_dictionary['state'])
             return None
         # Sinon, il s'agit d'un nouvel incident, on le prépare.
         event = Event()
@@ -94,8 +98,7 @@ def insert_event(info_dictionary):
         LOGGER.debug(_('insert_event: creating new event '))
     except MultipleResultsFound:
         # Si plusieurs événements ont été trouvés
-        LOGGER.error(_('insert_event: multiple matching events found,'
-                       ' skipping.'))
+        LOGGER.error(_('Multiple matching events found, skipping.'))
         return None
     else:
         # Il s'agit d'une mise à jour.
@@ -121,7 +124,7 @@ def insert_event(info_dictionary):
 
     # On capture les erreurs qui sont permanentes.
     except (IntegrityError, InvalidRequestError), e:
-        LOGGER.error(_('insert_event: %r' % e))
+        LOGGER.exception(_('Got exception'))
         return None
     else:
         return event.idevent

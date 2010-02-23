@@ -93,9 +93,10 @@ def check_topology(last_topology_update):
             
     # Si aucune date n'a été insérée par Vigiconf
     if not last_topology_modification:
-        # On loggue un message d'erreur, et on ne
-        # reconstruit donc pas l'arbre topologique.
-        LOGGER.error(_("No information from Vigiconf concerning the "
+        # On affiche un message mais on ne
+        # reconstruit pas l'arbre topologique
+        # (inutile, car il est déjà à jour).
+        LOGGER.info(_("No information from Vigiconf concerning the "
                        "topology's last modification date. Therefore the "
                        "topology has NOT been rebuilt."))
         return

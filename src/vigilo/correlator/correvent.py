@@ -68,8 +68,17 @@ def make_correvent(manager, conn, xml):
     
     LOGGER.debug(_("Payload: %s") % (xml, ))
 
+    # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :
+    # - l'alerte brute portait sur un HLS; dans ce cas il ne s'agit pas
+    #   vraiment d'une erreur (on ne doit pas enregistrer d'événement corrélé).
+    # - l'alerte brute portait sur un élément non configuré; dans ce cas il
+    #   s'agit d'une véritable erreur, mais le log est déjà enregistré dans
+    #   db_insertion.py. Inutile de répéter les logs ici.
+    # - l'alerte indique un état UP/OK et aucun événement déjà ouvert n'a pu
+    #   être trouvé. Inutile d'alerter l'opérateur lorsque tout va bien.
+    #   Un log est enregistré dans db_insertion.py et on peut ignorer le
+    #   problème ici.
     if raw_event_id is None:
-        LOGGER.error(_('Got invalid raw event ID (None), skipping event'))
         return
     
     # On détermine le nouvel état de chacun des HLS 
