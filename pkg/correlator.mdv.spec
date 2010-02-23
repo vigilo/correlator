@@ -19,7 +19,6 @@ Requires:   python >= 2.5
 Requires:   python-setuptools
 Requires:   vigilo-common vigilo-pubsub vigilo-connector vigilo-models
 Requires:   python-daemon lxml multiprocessing networkx rel
-Requires:   python-twisted-words python-twisted-names wokkel
 
 Requires(pre): rpm-helper
 
