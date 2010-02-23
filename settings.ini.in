@@ -76,7 +76,7 @@ handlers=
 
 [logger_syslog]
 level=DEBUG
-qualname=vigilo.corr.syslog
+qualname=vigilo.correlator.syslog
 propagate=0
 handlers=syslog
 

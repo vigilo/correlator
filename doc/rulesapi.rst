@@ -1,6 +1,6 @@
-:mod:`vigilo.corr.rulesapi` -- API for rules
+:mod:`vigilo.correlator.rulesapi` -- API for rules
 ==================================================
 
-.. automodule:: vigilo.corr.rulesapi
+.. automodule:: vigilo.correlator.rulesapi
    :members:
 
