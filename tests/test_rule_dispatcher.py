@@ -240,7 +240,7 @@ class TestRuleDispatcher(unittest.TestCase):
 
         # Instanciation d'un manager.
         self.manager = mp.Manager()
-        self.manager.in_queue = mp.Queue()
+        self.manager.in_queue = None
         self.manager.out_queue = mp.Queue()
 
         # Instanciation d'une connection à MemCacheD.
@@ -271,6 +271,8 @@ class TestRuleDispatcher(unittest.TestCase):
         
         from vigilo.correlator.actors import rule_runner
         rule_runner.api = None
+
+        self.manager.out_queue.close()
         self.manager.shutdown()
 
     def test_event_succession_1(self):

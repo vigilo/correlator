@@ -40,6 +40,5 @@ clean: clean_python
 	rm -f settings.ini
 
 include ../glue/Makefile.common
-MODULE := vigilo.corr
 lint: lint_pylint
 tests: tests_nose
