@@ -138,7 +138,8 @@ class TestTopologyFunctions(unittest.TestCase):
         self.event1 = Event(
             idsupitem = self.service3.idservice, 
             current_state = 2,
-            message = 'WARNING: RAM is overloaded'
+            message = 'WARNING: RAM is overloaded',
+            timestamp = datetime.now(),
         )
         DBSession.add(self.event1)
         DBSession.flush()
@@ -146,7 +147,8 @@ class TestTopologyFunctions(unittest.TestCase):
         self.event2 = Event(
             idsupitem = self.service4.idservice, 
             current_state = 2,
-            message = 'WARNING: eth0 is down'
+            message = 'WARNING: eth0 is down',
+            timestamp = datetime.now(),
         )
         DBSession.add(self.event2)
         DBSession.flush()
@@ -299,7 +301,8 @@ class TestTopologyFunctions(unittest.TestCase):
         self.event3 = Event(
             idsupitem = self.service1.idservice, 
             current_state = 2,
-            message = 'WARNING: Processes are not responding'
+            message = 'WARNING: Processes are not responding',
+            timestamp = datetime.now(),
         )
         DBSession.add(self.event3)
         DBSession.flush()

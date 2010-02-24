@@ -311,7 +311,8 @@ class TestDbInsertion(unittest.TestCase):
         event2 = Event(
             idsupitem = service2.idservice,
             current_state = 2,
-            message = 'WARNING: CPU is overloaded'
+            message = 'WARNING: CPU is overloaded',
+            timestamp = datetime.now(),
         )
         DBSession.add(event2)
         DBSession.flush()
@@ -333,7 +334,8 @@ class TestDbInsertion(unittest.TestCase):
         event1 = Event(
             idsupitem = service1.idservice,
             current_state = 2,
-            message = 'WARNING: Processes are not responding'
+            message = 'WARNING: Processes are not responding',
+            timestamp = datetime.now(),
         )
         DBSession.add(event1)
         DBSession.flush()

@@ -75,7 +75,8 @@ def create_topology_and_events():
     event1 = Event(
         supitem = service1,
         current_state = 2,
-        message = 'WARNING: Processes are not responding'
+        message = 'WARNING: Processes are not responding',
+        timestamp = datetime.now(),
     )
     DBSession.add(event1)
     DBSession.flush()
@@ -83,7 +84,8 @@ def create_topology_and_events():
     event2 = Event(
         supitem = service2,
         current_state = 2,
-        message = 'WARNING: CPU is overloaded'
+        message = 'WARNING: CPU is overloaded',
+        timestamp = datetime.now(),
     )
     DBSession.add(event2)
     DBSession.flush()
@@ -91,7 +93,8 @@ def create_topology_and_events():
     event3 = Event(
         supitem = service3,
         current_state = 2,
-        message = 'WARNING: RAM is overloaded'
+        message = 'WARNING: RAM is overloaded',
+        timestamp = datetime.now(),
     )
         
     DBSession.add(event3)
@@ -100,7 +103,8 @@ def create_topology_and_events():
     event4 = Event(
         supitem = service4,
         current_state = 2,
-        message = 'WARNING: eth0 is down'
+        message = 'WARNING: eth0 is down',
+        timestamp = datetime.now(),
     )
     
     DBSession.add(event4)
