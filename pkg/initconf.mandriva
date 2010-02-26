@@ -2,3 +2,5 @@
 
 #OPTIONS="--daemon"
 
+# User to run as
+#USER="vigilo-correlator"

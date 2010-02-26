@@ -20,7 +20,7 @@ DAEMON=/usr/bin/vigilo-correlator
 NAME=vigilo-correlator
 LOCK_FILE=/var/lock/subsys/$NAME
 
-USER=nobody
+USER=$NAME
 PID_FILE=/var/run/$NAME/$NAME.pid
 OPTIONS="--daemon"
 
@@ -31,7 +31,7 @@ if [ -f /etc/init.d/functions ] ; then
 	. /etc/init.d/functions
 fi
 
-export PID_FILE NAGIOS_PIPE
+export USER PID_FILE
 
 test -x $DAEMON || exit 0
 
@@ -39,8 +39,7 @@ start() {
 	[ -f $LOCK_FILE ] && return
 
 	echo -n "Starting $NAME: "
-	# use --user to run the daemon under the specified uid
-	daemon $DAEMON $OPTIONS
+	daemon --user $USER $DAEMON --pidfile $PID_FILE $OPTIONS
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && touch $LOCK_FILE
@@ -48,7 +47,7 @@ start() {
 
 stop() {
 	echo -n "Shutting down $NAME: "
-	killproc $NAME
+	killproc -p $PID_FILE $NAME
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
@@ -56,7 +55,7 @@ stop() {
 
 reload() {
 	echo -n "Reloading $NAME: "
-	killproc $NAME -HUP
+	killproc -p $PID_FILE $NAME -HUP
 	RETVAL=$?
 	echo
 }
@@ -71,7 +70,7 @@ case "$1" in
 		stop
 	;;
 	status)
-		status $NAME
+		status -p $PID_FILE $NAME
 	;;
 	reload)
 		reload
@@ -93,4 +92,3 @@ case "$1" in
 esac
 
 exit $RETVAL
-

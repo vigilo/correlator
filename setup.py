@@ -63,6 +63,7 @@ setup(name='vigilo-correlator',
                     (os.path.join(sysconfdir, "vigilo/correlator"),
                         ["settings.ini"]),
                     (os.path.join(localstatedir, "lib/vigilo/correlator"), []),
+                    (os.path.join(localstatedir, "run/vigilo-correlator"), []),
                    ],
         )
 

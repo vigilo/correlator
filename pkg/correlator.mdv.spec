@@ -20,6 +20,8 @@ Requires:   python-setuptools
 Requires:   vigilo-common vigilo-pubsub vigilo-connector vigilo-models
 Requires:   python-daemon lxml networkx
 Requires:   python-multiprocessing python-rel
+# Dependance de python-rel
+Requires:   python-pyevent
 
 Requires(pre): rpm-helper
 
@@ -48,12 +50,9 @@ make install \
 # Mandriva splits Twisted
 sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/site-packages/vigilo_correlator-*-py*.egg-info/requires.txt
 
-# Listed explicitely in %%files as %%config:
-grep -v '^%{_sysconfdir}/vigilo/' INSTALLED_FILES \
-	| grep -v '^%{_sysconfdir}/sysconfig' \
-	> INSTALLED_FILES.filtered
-mv -f INSTALLED_FILES.filtered INSTALLED_FILES
 
+%pre
+%_pre_useradd %{name} %{_localstatedir}/lib/vigilo/%{module} /bin/false
 
 %post
 %_post_service %{name}
@@ -65,12 +64,20 @@ mv -f INSTALLED_FILES.filtered INSTALLED_FILES
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%files -f INSTALLED_FILES
+%files
 %defattr(-,root,root)
 %doc COPYING doc/*
+%{_bindir}/%{name}
+%{_initrddir}/%{name}
 %dir %{_sysconfdir}/vigilo
 %config(noreplace) %{_sysconfdir}/vigilo/%{module}
 %config(noreplace) %{_sysconfdir}/sysconfig/*
+%{python_sitelib}/vigilo
+%{python_sitelib}/*.egg-info
+%{python_sitelib}/*-nspkg.pth
+%dir %{_localstatedir}/lib/vigilo
+%attr(-,%{name},%{name}) %{_localstatedir}/lib/vigilo/%{module}
+%attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
 
 
 %changelog
