@@ -144,6 +144,8 @@ def handle_rules_errors(results, rules_graph, out_queue, rule_runners_pool):
             regenerate_pool = True
     
     if regenerate_pool:
+        LOGGER.info(_('At least one of the rules failed, '
+                        'recreating worker processes.'))
         if rule_runners_pool:
             rule_runners_pool.terminate()
             rule_runners_pool.join()

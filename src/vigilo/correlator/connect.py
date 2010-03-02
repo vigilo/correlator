@@ -9,6 +9,11 @@ __all__ = ( 'connect', )
 
 from .libs import mc
 
+from vigilo.common.logging import get_logger
+LOGGER = get_logger(__name__)
+from vigilo.common.gettext import translate
+_ = translate(__name__)
+
 def __connect():
     """
     Renvoie une connection au serveur memcached.
@@ -31,6 +36,7 @@ def __connect():
             else:
                 # Si l'ajout échoue, la connexion est probablement
                 # morte, donc on la clôt.
+                LOGGER.error(_('Lost connection to memcached! Reconnecting...'))
                 conn.disconnect_all()
         
         from vigilo.common.conf import settings

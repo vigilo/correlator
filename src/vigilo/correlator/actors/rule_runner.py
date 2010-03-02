@@ -40,7 +40,6 @@ class TimeoutError(Exception):
 
 def sigalrm_handler(*args):
     """Routine pour le traitement du signal SIGALRM."""
-    LOGGER.error(_("Rule killed (timeout)"))
     raise TimeoutError
 
 @contextmanager
@@ -123,6 +122,7 @@ def process(args):
         LOGGER.debug(_(u'##### KeyboardInterrupt #####'))
         sys.exit(0)
     except TimeoutError:
+        LOGGER.error(_("The rule timed out (%r)") % rule_name)
         result = rulesapi.ETIMEOUT
     # @TODO Est-ce qu'on devrait capturer
     #   les exceptions de manière sélective ?
