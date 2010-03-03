@@ -39,6 +39,6 @@ install: settings.ini
 clean: clean_python
 	rm -f settings.ini
 
-include ../glue/Makefile.common
+include buildenv/Makefile.common
 lint: lint_pylint
 tests: tests_nose
