@@ -176,7 +176,7 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
     # On initialise le contexte et on y insère 
     # les informations de l'alerte traitée.
     idnt = dom.get('id')
-    ctx = Context.get_or_create(conn, manager.out_queue, idnt)
+    ctx = Context.get_or_create(manager.out_queue, idnt)
     ctx.hostname = info_dictionary["host"]
     ctx.servicename = info_dictionary["service"]
     ctx.statename = info_dictionary["state"]
@@ -373,6 +373,8 @@ def main(manager):
             if xml == None:
                 LOGGER.debug(_('Received request to shutdown '
                                 'the Rule dispatcher.'))
+                if rule_runners_pool:
+                    rule_runners_pool.close()
                 break
 
             rule_runners_pool = handle_bus_message(manager,

@@ -18,7 +18,6 @@ from twisted.internet import reactor
 from vigilo.correlator.actors.pool import VigiloProcess
 from vigilo.correlator.libs import mp
 
-from vigilo.correlator.connect import connect
 from vigilo.common.gettext import translate
 from vigilo.common.logging import get_logger
 
@@ -77,14 +76,13 @@ def start():
 
     def sigterm_handler(signum, stack):
         from twisted.internet import reactor
-        import time
         signal.signal(signum, signal.SIG_IGN)
 
         LOGGER.debug(_('Asking the Rule dispatcher to gracefully exit.'))
-        manager.in_queue.put_nowait(None)
+        manager.in_queue.put(None)
 
         LOGGER.debug(_('Sending shutdown message to QueueToNodeForwarder.'))
-        manager.out_queue.put_nowait(None)
+        manager.out_queue.put(None)
 
         reactor.stop()
 
@@ -93,12 +91,26 @@ def start():
 
     # Mise en place des routines de traitement des signaux.
     try:
+        # Affiche des informations pour chaque processus
+        # en cours d'exécution. Susceptible de faire
+        # planter les processus d'exécution des règles.
         signal.signal(signal.SIGUSR1, log_debug_info)
+
+        # Le signal SIGHUP servira à recharger la topologie
+        # (utilisé par les scripts d'ini lors d'un reload).
         signal.signal(signal.SIGHUP, sighup_handler)
+
+        # Chacun de ces signaux peut être utilisé pour
+        # demander l'arrêt du corrélateur.
+        # Par défaut, kill(1) envoie un signal SIGINT.
+        # Depuis le scripts d'init, on envoie SIGTERM.
+        # Si utilisé avec un pipe, on recevra SIGPIPE.
         signal.signal(signal.SIGINT, sigterm_handler)
         signal.signal(signal.SIGTERM, sigterm_handler)
+        signal.signal(signal.SIGPIPE, sigterm_handler)
     except ValueError:
-        pass
+        LOGGER.error(_('Could not set signal handlers. The correlator '
+                        'may not be able to shutdown cleanly'))
 
     rrp.start()
     twisted.main(manager)
@@ -116,6 +128,7 @@ def start():
     manager.in_queue.close()
     manager.out_queue.close()
     manager.shutdown()
+
     LOGGER.debug(_('Stopping the main process.'))
 
     try:

@@ -30,7 +30,7 @@ def __connect():
             # On teste l'état de la connexion en ajoutant
             # une valeur quelconque avec une durée avant
             # expiration d'une (1) seconde.
-            if conn.add('vigilo', '', 1):
+            if conn.set('vigilo', '', 1):
                 yield conn
                 continue
             else:
@@ -56,7 +56,11 @@ def __connect():
             conn = mc.Client([conn_str], behaviors={'support_cas': 1})
 
         elif mc_type == 'memcache':
-            conn = mc.Client([conn_str])
+            try:
+                debug = settings['correlator'].as_bool('memcached_debug')
+            except KeyError:
+                debug = False
+            conn = mc.Client([conn_str], debug=int(debug))
             conn.behaviors = {'support_cas': 1}
 
         else:

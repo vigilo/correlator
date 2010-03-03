@@ -24,7 +24,7 @@ def main_cmdline(*args):
         # On tente d'établir une connexion au serveur memcached
         # et d'enregistrer une clé dedans. Teste la connectivité.
         mc_conn = connect()
-        if not mc_conn.add('vigilo', '', 1):
+        if not mc_conn.set('vigilo', '', 1):
             LOGGER.critical(_("Could not connect to memcached server, "
                                 "make sure it is running"))
             return 1

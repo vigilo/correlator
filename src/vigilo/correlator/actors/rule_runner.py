@@ -127,7 +127,8 @@ def process(args):
     # @TODO Est-ce qu'on devrait capturer
     #   les exceptions de manière sélective ?
     except Exception, e:
-        # Don't raise it again, or we'll lose this pool process.
+        # On ne doit pas propager l'exception via "raise",
+        # sans quoi on perdrait le groupe de processus.
         LOGGER.exception(_('while processing'))
         result = rulesapi.EEXCEPTION
         ex = e

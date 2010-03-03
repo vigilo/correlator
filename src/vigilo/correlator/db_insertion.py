@@ -201,7 +201,12 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
     @return: Liste des ids des alertes brutes déplacées.
     @rtype: Liste de C{int}
     """
-  
+    sourceaggregateid = int(sourceaggregateid)
+    LOGGER.debug(_('Merging aggregate #%(src)d with aggregate #%(dest)d') % {
+                    'src': sourceaggregateid,
+                    'dest': destinationaggregateid,
+                })
+
     # Récupère l'agrégat source depuis la BDD.
     try:
         source_aggregate = DBSession.query(CorrEvent

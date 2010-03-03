@@ -10,6 +10,7 @@ from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
 from vigilo.correlator.topology import Topology
+from vigilo.correlator.connect import connect
 
 try:
     import cPickle as pickle
@@ -61,11 +62,10 @@ class Context(object):
     
     """
 
-    def __init__(self, conn, queue, idnt):
+    def __init__(self, queue, idnt):
         """
         Represents a context object.
 
-        conn is a memcached connection.
         queue is used to send alert messages.
         idnt is the context id, used to lookup an existing context or create a
         new one.
@@ -74,12 +74,11 @@ class Context(object):
         on the memcached side, until you call get_or_create.
         """
 
-        self.__conn = conn
         self.__queue = queue
         self.__id = str(idnt)
 
     @classmethod
-    def get_or_create(cls, conn, queue, idnt):
+    def get_or_create(cls, queue, idnt):
         """
         Get, or if necessary create, a context.
 
@@ -91,18 +90,17 @@ class Context(object):
         creates the memcached data.
         """
 
-        return cls(conn, queue, idnt)
+        return cls(queue, idnt)
 
     def __get_priority(self):
         """Renvoie la priorité de l'évènement corrélé traité."""
-        result = self.__conn.get(PRIORITY_PREFIX + self.__id)
+        result = connect().get(PRIORITY_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
     def __set_priority(self, value):
         """Change la priorité de l'évènement corrélé traité."""
-        res = self.__conn.set(
-                        PRIORITY_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(PRIORITY_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     priority = property(
                 __get_priority,
@@ -110,14 +108,13 @@ class Context(object):
 
     def __get_occurrences_count(self):
         """Renvoie le nombre d'occurrences de l'alerte."""
-        result = self.__conn.get(OCCURRENCES_PREFIX + self.__id)
+        result = connect().get(OCCURRENCES_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
     def __set_occurrences_count(self, value):
         """Change le nombre d'occurrences de l'alerte."""
-        res = self.__conn.set(
-                    OCCURRENCES_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(OCCURRENCES_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     occurrences_count = property(
                             __get_occurrences_count,
@@ -125,14 +122,13 @@ class Context(object):
 
     def __get_update_id(self):
         """Renvoie l'identifiant de mise à jour de l'alerte corrélée."""
-        result = self.__conn.get(UPDATE_PREFIX + self.__id)
+        result = connect().get(UPDATE_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
     def __set_update_id(self, value):
         """Change l'identifiant de mise à jour de l'alerte corrélée."""
-        res = self.__conn.set(
-                        UPDATE_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(UPDATE_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     update_id = property(
                     __get_update_id,
@@ -140,14 +136,13 @@ class Context(object):
 
     def __get_impacted_hls(self):
         """Renvoie la liste des services de haut niveau impactés."""
-        value = self.__conn.get(IMPACTED_HLS_PREFIX + self.__id)
+        value = connect().get(IMPACTED_HLS_PREFIX + self.__id)
         if value is not None:
             return pickle.loads(value)
         return None
     def __set_impacted_hls(self, value):
         """Change la liste des services de haut niveau impactés."""
-        res = self.__conn.set(
-                        IMPACTED_HLS_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(IMPACTED_HLS_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     impacted_hls = property(
                     __get_impacted_hls,
@@ -156,10 +151,11 @@ class Context(object):
     @property
     def topology(self):
         """Get the topology associated with this context."""
-        topology = self.__conn.get(TOPOLOGY_PREFIX)
+        conn = connect()
+        topology = conn.get(TOPOLOGY_PREFIX)
         if not topology:
             topology = Topology()        
-            self.__conn.add(TOPOLOGY_PREFIX, pickle.dumps(topology))
+            conn.add(TOPOLOGY_PREFIX, pickle.dumps(topology))
             self.__set_last_topology_update(datetime.now())
         else:
             topology = pickle.loads(topology)
@@ -171,7 +167,7 @@ class Context(object):
         Get the name of the host of the service
         associated with this context.
         """
-        result = self.__conn.get(HOSTNAME_PREFIX + self.__id)
+        result = connect().get(HOSTNAME_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
@@ -180,8 +176,7 @@ class Context(object):
         Set the name of the host of the service
         associated with this context.
         """
-        res = self.__conn.set(
-                        HOSTNAME_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(HOSTNAME_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     hostname = property(
                     __get_hostname,
@@ -189,14 +184,13 @@ class Context(object):
 
     def __get_servicename(self):
         """Get the name of the service associated with this context."""
-        result = self.__conn.get(SERVICENAME_PREFIX + self.__id)
+        result = connect().get(SERVICENAME_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
     def __set_servicename(self, value):
         """Set the name of the service associated with this context."""
-        res = self.__conn.set(
-                    SERVICENAME_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(SERVICENAME_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     servicename = property(
                     __get_servicename,
@@ -204,14 +198,13 @@ class Context(object):
 
     def __get_statename(self):
         """Renvoie le nom de l'état courant du service."""
-        result = self.__conn.get(STATENAME_PREFIX + self.__id)
+        result = connect().get(STATENAME_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
     def __set_statename(self, value):
         """Change le nom de l'état courant du service."""
-        res = self.__conn.set(
-                        STATENAME_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(STATENAME_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     statename = property(
                     __get_statename,
@@ -221,7 +214,7 @@ class Context(object):
         """
         Renvoie la liste des agrégats auxquels doit être rattaché l'événement.
         """
-        result = self.__conn.get(PREDECESSORS_AGGREGATES_PREFIX + self.__id)
+        result = connect().get(PREDECESSORS_AGGREGATES_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
@@ -229,7 +222,7 @@ class Context(object):
         """
         Modifie la liste des agrégats auxquels doit être rattaché l'événement.
         """
-        res = self.__conn.set(PREDECESSORS_AGGREGATES_PREFIX +
+        res = connect().set(PREDECESSORS_AGGREGATES_PREFIX +
                                 self.__id, pickle.dumps(value))
         assert(res != 0)
     predecessors_aggregates = property(
@@ -241,7 +234,7 @@ class Context(object):
         Renvoie la liste des aggrégats devant être fusionnés avec celui de
         l'événement courant.
         """
-        result = self.__conn.get(SUCCESSORS_AGGREGATES_PREFIX + self.__id)
+        result = connect().get(SUCCESSORS_AGGREGATES_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
@@ -250,7 +243,7 @@ class Context(object):
         Modifie la liste des aggrégats devant être fusionnés avec celui de
         l'événement courant.
         """
-        res = self.__conn.set(
+        res = connect().set(
             SUCCESSORS_AGGREGATES_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     successors_aggregates = property(
@@ -259,14 +252,13 @@ class Context(object):
 
     def __get_raw_event_id(self):
         """Renvoie l'identifiant de l'événement brut."""
-        result = self.__conn.get(RAW_EVENT_ID_PREFIX + self.__id)
+        result = connect().get(RAW_EVENT_ID_PREFIX + self.__id)
         if result is not None:
             return pickle.loads(result)
         return None
     def __set_raw_event_id(self, value):
         """Change l'identifiant de l'événement brut."""
-        res = self.__conn.set(
-                        RAW_EVENT_ID_PREFIX + self.__id, pickle.dumps(value))
+        res = connect().set(RAW_EVENT_ID_PREFIX + self.__id, pickle.dumps(value))
         assert(res != 0)
     raw_event_id = property(
                             __get_raw_event_id,
@@ -274,13 +266,13 @@ class Context(object):
 
     def __get_last_topology_update(self):
         """Renvoie la date de dernière mise à jour de l'arbre topologique."""
-        result = self.__conn.get(TOPOLOGY_LAST_UPDATE_PREFIX)
+        result = connect().get(TOPOLOGY_LAST_UPDATE_PREFIX)
         if result is not None:
             return pickle.loads(result)
         return None
     def __set_last_topology_update(self, value):
         """Change la date de dernière mise à jour de l'arbre topologique."""
-        res = self.__conn.set(TOPOLOGY_LAST_UPDATE_PREFIX, pickle.dumps(value))
+        res = connect().set(TOPOLOGY_LAST_UPDATE_PREFIX, pickle.dumps(value))
         assert(res != 0)
     last_topology_update = property(
                             __get_last_topology_update,

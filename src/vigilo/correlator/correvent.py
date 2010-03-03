@@ -62,7 +62,7 @@ def make_correvent(manager, conn, xml):
 
     idnt = dom.get('id')
     dom = dom[0]
-    ctx = Context.get_or_create(conn, manager.out_queue, idnt)
+    ctx = Context.get_or_create(manager.out_queue, idnt)
     xml = etree.tostring(dom)
     raw_event_id = ctx.raw_event_id
     
