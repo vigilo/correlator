@@ -115,9 +115,27 @@ def create_rule_runners_pool(out_queue):
     Création du pool de processus utilisé par le rule_dispatcher.
     Suppression de l'ancien s'il en existait un.
     """
-        
+    try:
+        # Si "rule_runners_count" a été défini dans la configuration,
+        # on honore sa valeur.
+        processes = settings['correlator'].as_int('rule_runners_count')
+    except KeyError:
+        try:
+            # Sinon, on tente d'être malin en utilisant
+            # tous les processeurs à disposition.
+            processes = mp.cpu_count()
+        except NotImplementedError:
+            # Et sinon, on utilise une valeur par défaut
+            # complètement arbitraire.
+            processes = 4
+        finally:
+            LOGGER.info(_('You did not set the number of rule runners to use. '
+                        'I chose to use %d. Set "rule_runners_count" in the '
+                        'settings if this unacceptable.') % processes)
+
+    # Crée un nouveau pool de processus compatibles avec Twisted.
     return VigiloPool(
-        processes = 4,
+        processes = processes,
         initializer = rule_runner.init,
         initargs = (out_queue, )
     )
