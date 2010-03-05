@@ -12,6 +12,8 @@ from utils import setup_mc, teardown_mc
 from utils import setup_db, teardown_db
 from vigilo.correlator.libs import mp
 
+from vigilo.correlator.context import Context
+
 class TestApiFunctions(unittest.TestCase): 
     """Tests portant sur le contexte et l'API des règles de corrélation."""
     
@@ -29,11 +31,8 @@ class TestApiFunctions(unittest.TestCase):
 
     def test_contexts(self):
         """Création d'un contexte associé à un nom quelconque"""
-        # import it now because we override MEMCACHE_CONN_PORT in setup_mc
-        from vigilo.correlator.rulesapi import Api
-        api = Api(queue=None)
         name = str(random.random())
-        ctx = api.get_or_create_context(name)
+        ctx = Context(name)
         assert ctx
 
     def run_concurrently(self, parallelism, func, *args, **kwargs):
@@ -55,16 +54,10 @@ class TestApiFunctions(unittest.TestCase):
 
     def test_concurrency(self):
         """Comportement du corrélateur en cas de concurrence"""
-
-        # Check the logs to see if we really exercised concurrency.
-        # Apparently we didn't manage.
-        from vigilo.correlator.rulesapi import Api
     
         def create_context(name):
             """Crée un contexte portant le nom passé en paramètre."""
-            # Don't share libmemcached connections across threads or processes
-            api = Api(queue=None)
-            ctx = api.get_or_create_context(name)
+            ctx = Context(name)
 
         for i in xrange(16):
             name = str(random.random())

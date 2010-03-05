@@ -20,61 +20,57 @@ class MemcachedConnectionError(Exception):
     """Exception levée lorsque le serveur MemcacheD est inaccessible."""
     pass 
 
-class MemcachedConnection():
+class MemcachedConnection(object):
     """
     Classe gérant la connexion et les échanges avec
     le serveur MemcacheD. Hérite de la classe mc.
     """
     
+     # Attribut statique de classe
+    instance = None
+    
+    def __new__(cls):
+        """
+        Constructeur
+        
+        @return: Une instance de la classe L{cls}.
+        @rtype: L{cls}
+        """
+        if cls.instance is None:
+            # Construction de l'objet..
+            cls.instance = object.__new__(cls)
+            # Initialisation de l'attribut contenant la connexion.
+            cls.instance.__connection = None
+        return cls.instance
+    
     def __init__(self):
         """
         Initialisation de la connexion.
         """
-        
-        # Initialisation de l'attribut contenant la connexion.
-        self.__connection = None
     
-    def __connect(self):
+    def connect(self):
         """
         Établit la connexion.
         """
-        
-        # Si la connexion n'est pas déjà établie
-        if not self.is_connection_established():
-            
-            # Clôture d'une éventuelle connection ouverte
-            # précédemment et devenue inopérante.
-            if self.__connection:
-                self.__connection.disconnect_all()
-        
-            # Récupération des informations de connection.
-            host = settings['correlator']['memcached_host']
-            port = settings['correlator'].as_int('memcached_port')
-            conn_str = '%s:%d' % (host, port)
+
+        # Clôture d'une éventuelle connection ouverte
+        # précédemment et devenue inopérante.
+        if self.__connection:
+            # Si la connexion est en fait encore active on ne fait rien.
+            if self.__connection.set('vigilo', 1):
+                return
+            self.__connection.disconnect_all()
     
-            # Établissement de la connexion.
-            LOGGER.info(_("Establishing connection to memcached server..."))
-            self.__connection = mc.Client([conn_str])
-            self.__connection.behaviors = {'support_cas': 1}
-            
-            # Si la connexion n'a pas pu être établie
-            if not self.is_connection_established():
-                # On lève une exception
-                LOGGER.critical(_("Could not connect to memcached server, "
-                                  "make sure it is running"))
-                raise MemcachedConnectionError
-    
-    def is_connection_established(self):
-        """
-        Vérifie que la connexion est bien établie.
-        
-        @return: True si la connexion est bien établie, False le cas échéant.
-        @rtype: C{bool}
-        """
-        
-        if not self.__connection or not self.__connection.set('vigilo', 1):
-            return False
-        return True
+        # Récupération des informations de connection.
+        host = settings['correlator']['memcached_host']
+        port = settings['correlator'].as_int('memcached_port')
+        conn_str = '%s:%d' % (host, port)
+
+        # Établissement de la connexion.
+        LOGGER.info(_("Establishing connection to MemcacheD"
+                      " server (%s)...") % (conn_str, ))
+        self.__connection = mc.Client([conn_str])
+        self.__connection.behaviors = {'support_cas': 1}
     
     def set(self, key, value):
         """
@@ -85,19 +81,43 @@ class MemcachedConnection():
         @param value: La valeur à enregistrer.
         @type value: C{str}
         
+        @raise MemcachedConnectionError: Exception levée
+        lorsque la connexion au serveur MemcacheD est inopérante.
+        
         @return: Un entier non nul si l'enregistrement a réussi.
         @rtype: C{int}
         """
         
-        # On établit la connection au serveur
-        # Memcached si elle n'est pas déjà opérante.
-        self.__connect()
+        # On établit la connection au serveur Memcached si nécessaire.
+        if not self.__connection:
+            self.connect()
         
         # On sérialise la valeur 'value' avant son enregistrement
         value = pickle.dumps(value)
         
         # On associe la valeur 'value' à la clé 'key'.
-        return self.__connection.set(key, value)
+        result = self.__connection.set(key, value)
+        
+        # Si l'enregistrement a échoué on doit
+        # s'assurer que la connexion est bien opérante :
+        if not result:
+            
+            # On tente de rétablir la connection au serveur MemcacheD.
+            self.connect()
+            
+            # On essaye une nouvelle fois d'associer
+            # la valeur 'value' à la clé 'key'.
+            result = self.__connection.set(key, value)
+        
+            # Si l'enregistrement a de nouveau échoué
+            if not result:
+                # On lève une exception
+                LOGGER.critical(_("Could not connect to memcached server, "
+                                  "make sure it is running"))
+                raise MemcachedConnectionError
+            
+        return result
+            
     
     def get(self, key):
         """
@@ -107,20 +127,45 @@ class MemcachedConnection():
         @param key: La clé dans laquelle enregistrer la valeur.
         @type key: C{str}
         
+        @raise MemcachedConnectionError: Exception levée
+        lorsque la connexion au serveur MemcacheD est inopérante.
+        
         @return: La valeur associée à la clé 'key', ou None.
         @rtype: C{str} || None
         """
         
-        # On établit la connection au serveur
-        # Memcached si elle n'est pas déjà opérante.
-        self.__connect()
+        # On établit la connection au serveur Memcached si nécessaire.
+        if not self.__connection:
+            self.connect()
         
         # On récupère la valeur associée à la clé 'key'.
         result = self.__connection.get(key)
         
-        # On "dé-sérialise" la valeur avant de la retourner
+        # Si l'opération a échoué on doit s'assurer
+        # que la connexion est bien opérante :
         if not result:
-            return None
+            
+            # On tente de rétablir la connection au serveur MemcacheD.
+            self.connect()
+            
+            # On essaye une nouvelle fois de récupèrer
+            # la valeur associée à la clé 'key'.
+            result = self.__connection.get(key)
+        
+            # Si l'opération a de nouveau échoué
+            if not result:
+                # On fait ici la distinction entre le cas de
+                # l'erreur de connexion et celui de la clé
+                # manquante, distinction que MemcacheD ne fait pas.
+                if self.__connection.set('vigilo', 1):
+                    return None
+
+                # On lève une exception
+                LOGGER.critical(_("Could not connect to memcached server, "
+                                  "make sure it is running"))
+                raise MemcachedConnectionError
+        
+        # On "dé-sérialise" la valeur avant de la retourner
         return pickle.loads(result)
     
     def delete(self, key):
@@ -130,14 +175,36 @@ class MemcachedConnection():
         @param key: La clé à supprimer.
         @type key: C{str}
         
+        @raise MemcachedConnectionError: Exception levée
+        lorsque la connexion au serveur MemcacheD est inopérante.
+        
         @return: Un entier non nul si la suppression a réussi.
         @rtype: C{int}
         """
         
-        # On établit la connection au serveur
-        # Memcached si elle n'est pas déjà opérante.
-        self.__connect()
+        # On établit la connection au serveur Memcached si nécessaire.
+        if not self.__connection:
+            self.connect()
         
         # On supprime la clé 'key' et la valeur qui lui est associée.
-        return self.__connection.delete(key)
+        result = self.__connection.delete(key)
+        
+        # Si la suppression a échoué on doit s'assurer
+        # que la connexion est bien opérante :
+        if not result:
+            
+            # On tente de rétablir la connection au serveur MemcacheD.
+            self.connect()
+            
+            # On essaye une nouvelle fois de supprimer la clé 'key'.
+            result = self.__connection.delete(key)
+        
+            # Si la suppression a de nouveau échoué
+            if not result:
+                # On lève une exception
+                LOGGER.critical(_("Could not connect to memcached server, "
+                                  "make sure it is running"))
+                raise MemcachedConnectionError
+            
+        return result
 

@@ -4,6 +4,7 @@
 Exécution des règles du corrélateur
 """
 import os
+import signal
 import errno
 import Queue
 import warnings
@@ -11,7 +12,7 @@ import pkg_resources
 import transaction
 
 from vigilo.correlator.actors.pool import VigiloPool
-from vigilo.correlator.libs import etree
+from vigilo.correlator.libs import etree, mp
 from vigilo.correlator.xml import namespaced_tag, NS_EVENTS
 from vigilo.correlator import rulesapi
 #from vigilo.correlator.xml import NS_DOWNTIME
@@ -19,7 +20,8 @@ from vigilo.correlator import rulesapi
 from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
 
-from vigilo.correlator.connect import connect
+from vigilo.correlator.memcached_connection import MemcachedConnection, \
+                                                    MemcachedConnectionError
 from vigilo.correlator.context import Context, TOPOLOGY_PREFIX
 
 #from vigilo.correlator.handle_downtime import handle_downtime
@@ -40,10 +42,20 @@ from vigilo.common.gettext import translate
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
+def stop_correlator():
+    """Déclenche l'arrêt du corrélateur"""
+    os.kill(os.getppid(), signal.SIGTERM)
+
 def extract_information(payload):
     """
     Extrait les informations d'un message, en le parcourant 
     une seule fois afin d'optimiser les performances.
+    
+    @param payload: Le message reçu par le corrélateur.
+    @type payload: L{lxml.etree}.
+    
+    @return: Un dictionnaire contenant les informations extraites du message.
+    @rtype: C{dic}.
     """
     
     info_dictionary = {"host": None, 
@@ -82,6 +94,10 @@ def check_topology(last_topology_update):
     consignée dans la base de données, est bien antérieure à la date de 
     dernière mise à jour de l'arbre topologique utilisé par le corrélateur
     (passée en paramètre). Reconstruit cet arbre si nécessaire.
+    
+    @param last_topology_update: La date de dernière mise à jour de l'arbre topologique
+    utilisé par le corrélateur (enregistrée dans MemcacheD).
+    @type last_topology_update: L{datetime.datetime}.
     """
     
     # On récupère la date de dernière modification de la topologie
@@ -106,15 +122,20 @@ def check_topology(last_topology_update):
     # et on reconstruit l'arbre si nécessaire.
     if not last_topology_update \
         or last_topology_update < last_topology_modification:
-        conn = connect()
+        conn = MemcachedConnection()
         conn.delete(TOPOLOGY_PREFIX)
-        LOGGER.info(_("Topology has been reloaded."))
+        LOGGER.info(_("The topology has been reloaded."))
 
-def create_rule_runners_pool(out_queue):
+def create_rule_runners_pool():
     """
     Création du pool de processus utilisé par le rule_dispatcher.
     Suppression de l'ancien s'il en existait un.
+    
+    @return: Le pool de processus utilisé par le corrélateur.
+    @rtype: L{vigilo.correlator.actors.pool.VigiloPool}.
     """
+    # Valeur (arbitraire) par défaut pour le nombre de rule_runners à lancer.
+    processes = 4
     try:
         # Si "rule_runners_count" a été défini dans la configuration,
         # on honore sa valeur.
@@ -125,9 +146,8 @@ def create_rule_runners_pool(out_queue):
             # tous les processeurs à disposition.
             processes = mp.cpu_count()
         except NotImplementedError:
-            # Et sinon, on utilise une valeur par défaut
-            # complètement arbitraire.
-            processes = 4
+            # Et sinon, on utilise une valeur par défaut.
+            pass
         finally:
             LOGGER.info(_('You did not set the number of rule runners to use. '
                         'I chose to use %d. Set "rule_runners_count" in the '
@@ -136,12 +156,23 @@ def create_rule_runners_pool(out_queue):
     # Crée un nouveau pool de processus compatibles avec Twisted.
     return VigiloPool(
         processes = processes,
-        initializer = rule_runner.init,
-        initargs = (out_queue, )
     )
     
-def handle_rules_errors(results, rules_graph, out_queue, rule_runners_pool):
-    """ Fonction de traitement des valeurs de retour des règles """
+def handle_rules_errors(results, rules_graph, rule_runners_pool):
+    """
+    Fonction de traitement des valeurs de retour des règles.
+    
+    @param results: La liste des codes de retour de chacune des règles 
+    exécutées.
+    @type results: C{list}.
+    @param rules_graph: L'arbre des règles utilisées dans le corrélateur.
+    @type rules_graph: L{vigilo.correlator.registry.RegistryDict.RulesTree}.
+    @param rule_runners_pool: Le pool de processus utilisé par le corrélateur.
+    @type rule_runners_pool: L{vigilo.correlator.actors.pool.VigiloPool}.
+    
+    @return: Le pool de processus utilisé par le corrélateur.
+    @rtype: L{vigilo.correlator.actors.pool.VigiloPool}.
+    """
     
     regenerate_pool = False
     
@@ -153,6 +184,10 @@ def handle_rules_errors(results, rules_graph, out_queue, rule_runners_pool):
                     })
         if ex:
             LOGGER.debug(_("##### Exception raised : %r #####") % ex)
+            # Si on n'arrive pas à rétablir la connexion au
+            # serveur MemcacheD, on arrête le corrélateur.
+            if isinstance(ex, MemcachedConnectionError):
+                stop_correlator()
         # Si une erreur s'est produite,
         if result != rulesapi.ENOERROR:
             # On retire la règle du graphe 
@@ -167,12 +202,27 @@ def handle_rules_errors(results, rules_graph, out_queue, rule_runners_pool):
         if rule_runners_pool:
             rule_runners_pool.terminate()
             rule_runners_pool.join()
-        rule_runners_pool = create_rule_runners_pool(out_queue)
+        rule_runners_pool = create_rule_runners_pool()
         
     return rule_runners_pool
 
-def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
-    """ Lecture et traitement d'un message du bus XMPP """
+def handle_bus_message(manager, schema, rule_runners_pool, xml):
+    """
+    Lecture et traitement d'un message du bus XMPP.
+    
+    @param manager: Le manager utilisé pour le partage des informations entre 
+    les différents processus du corrélateur.
+    @type manager: L{multiprocessing.managers.SyncManager}.
+    @param schema: Le schéma XSD utilisé pour valider le message reçu.
+    @type schema: L{lxml.etree.XMLSchema}.
+    @param rule_runners_pool: Le pool de processus utilisé par le corrélateur.
+    @type rule_runners_pool: L{vigilo.correlator.actors.pool.VigiloPool}.
+    @param xml: Un message reçu par le corrélateur sur le bus XMPP.
+    @type xml: C{basestring}.
+    
+    @return: Le pool de processus utilisé par le corrélateur.
+    @rtype: L{vigilo.correlator.actors.pool.VigiloPool}.
+    """
     dom = etree.fromstring(xml)
 
     # Extraction des informations du message
@@ -193,14 +243,20 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
     
     # On initialise le contexte et on y insère 
     # les informations de l'alerte traitée.
-    idnt = dom.get('id')
-    ctx = Context.get_or_create(manager.out_queue, idnt)
-    ctx.hostname = info_dictionary["host"]
-    ctx.servicename = info_dictionary["service"]
-    ctx.statename = info_dictionary["state"]
+    xmpp_id = dom.get('id')
+    try:
+        ctx = Context(xmpp_id)
+        ctx.hostname = info_dictionary["host"]
+        ctx.servicename = info_dictionary["service"]
+        ctx.statename = info_dictionary["state"]
+    except MemcachedConnectionError:
+        stop_correlator()
     
     # On met à jour l'arbre topologique si nécessaire.
-    check_topology(ctx.last_topology_update)
+    try:
+        check_topology(ctx.last_topology_update)
+    except MemcachedConnectionError:
+        stop_correlator()
 
     # On insère le message dans la BDD, sauf s'il concerne un HLS.
     if not info_dictionary["host"]:
@@ -216,7 +272,10 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
     transaction.begin()
 
     if raw_event_id:
-        ctx.raw_event_id = raw_event_id
+        try:
+            ctx.raw_event_id = raw_event_id
+        except MemcachedConnectionError:
+            stop_correlator()
 
     if schema is not None:
         # Validation before dispatching.
@@ -244,8 +303,6 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
         if not rule_runners_pool:
             # Process the message in serial order.
             for work_unit in work_units:
-                rule_runner.api = None
-                rule_runner.init(manager.out_queue)
                 if rule_runner.process(work_unit)[1] != rulesapi.ENOERROR:
                     # @TODO Faire d'autres traitements ici.
                     rules_graph.remove_rule(work_unit[0])
@@ -264,8 +321,8 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
                 rule_runner.process, work_units, chunksize)
 
             # On vérifie le code de retour de chacune des règles
-            rule_runners_pool = handle_rules_errors(results, rules_graph, 
-                manager.out_queue, rule_runners_pool)
+            rule_runners_pool = handle_rules_errors(
+                results, rules_graph, rule_runners_pool)
 
 # TODO : Implémenter un traitement des règles en "flux tendu", c'est à dire
 #    que les règles devraient être traitées dès que les règles dont elles
@@ -282,8 +339,7 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
 #                avec les bons paramètres.
 #                """
 #                LOGGER.debug(_("##### CALLBACK #####"))
-#                handle_rules_errors(results, rules_graph, 
-#                    manager.out_queue, rule_runners_pool)
+#                handle_rules_errors(results, rules_graph, rule_runners_pool)
 #            
 #            LOGGER.debug(_("##### BEFORE MAP_ASYNC #####"))
 #                
@@ -307,8 +363,12 @@ def handle_bus_message(manager, conn, schema, rule_runners_pool, xml):
     # on NE DOIT PAS générer d'événement corrélé.
     if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
         return rule_runners_pool
-
-    make_correvent(manager, conn, xml)
+    
+    try:
+        make_correvent(manager, xml)
+    except MemcachedConnectionError:
+        stop_correlator()
+    
     transaction.commit()
     transaction.begin()
     
@@ -320,8 +380,11 @@ def main(manager):
     Lit les messages sur le bus, en extrait l'information pour
     l'insérer dans le contexte, exécute les règles de corrélation
     avant de lancer la création des événements corrélés.
+    
+    @param manager: Le manager utilisé pour le partage des informations entre 
+    les différents processus du corrélateur.
+    @type manager: L{multiprocessing.managers.SyncManager}.
     """
-    import signal
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
@@ -336,9 +399,6 @@ def main(manager):
     manager.in_queue.cancel_join_thread()
     manager.out_queue.cancel_join_thread()
 
-    # On se connecte au serveur MemcacheD
-    conn = connect()
-
     # This flag can be used to turn off multiprocessing/multithreading
     # completely, running the rules in a serial fashion.
     # This can be useful when multiprocessing exits with '#TRACEBACK' messages.
@@ -348,7 +408,7 @@ def main(manager):
         debugging = False
 
     if not debugging:
-        rule_runners_pool = create_rule_runners_pool(manager.out_queue)
+        rule_runners_pool = create_rule_runners_pool()
     else:
         rule_runners_pool = None
 
@@ -374,6 +434,8 @@ def main(manager):
 
     # Boucle d'attente d'un message provenant du bus XMPP.
     while True:
+        from vigilo.correlator.actors.start import log_debug_info
+        log_debug_info() 
         try:
             # On tente de récupérer un message.
             xml = manager.in_queue.get(block=True)
@@ -396,7 +458,7 @@ def main(manager):
                 break
 
             rule_runners_pool = handle_bus_message(manager,
-                conn, schema, rule_runners_pool, xml)
+                schema, rule_runners_pool, xml)
 
     # On tue le pool de rule_runners.
     if rule_runners_pool is not None:

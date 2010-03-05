@@ -37,12 +37,16 @@ def log_debug_info(*args):
 def sighup_handler(*args):
     """Delete the topology associated with this context."""
     from vigilo.correlator.context import TOPOLOGY_PREFIX
-    from vigilo.correlator.connect import connect
-
-    conn = connect()
-    conn.delete(TOPOLOGY_PREFIX)
-    LOGGER.info(_("The topology has been reloaded."))
-
+    from vigilo.correlator.memcached_connection import \
+            MemcachedConnection, MemcachedConnectionError
+    
+    conn = MemcachedConnection()
+    try:
+        conn.delete(TOPOLOGY_PREFIX)
+    except MemcachedConnectionError:
+        os.kill(os.getpid(), SIGTERM)
+    else:
+        LOGGER.info(_("The topology has been reloaded."))
 
 def start():
     """Fonction principale de lancement du corrélateur."""

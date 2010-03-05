@@ -41,7 +41,7 @@ DATA_LOG_IMPACTED_HLS = 5
 DATA_LOG_PRIORITY = 6
 DATA_LOG_MESSAGE = 7
 
-def make_correvent(manager, conn, xml):
+def make_correvent(manager, xml):
     """
     Récupère dans le contexte les informations transmises par
     les règles, crée les événements corrélés (agrégats 
@@ -62,7 +62,7 @@ def make_correvent(manager, conn, xml):
 
     idnt = dom.get('id')
     dom = dom[0]
-    ctx = Context.get_or_create(manager.out_queue, idnt)
+    ctx = Context(idnt)
     xml = etree.tostring(dom)
     raw_event_id = ctx.raw_event_id
     
@@ -144,13 +144,13 @@ def make_correvent(manager, conn, xml):
                 try:
                     predecessing_aggregate = DBSession.query(CorrEvent
                         ).filter(CorrEvent.idcorrevent 
-                                    == predecessing_aggregate_id
+                                    == int(predecessing_aggregate_id)
                         ).one()
 
                 except NoResultFound:
                     LOGGER.error(_('Got a reference to a nonexistent '
                             'correlated event (%r), skipping this aggregate')
-                            % (predecessing_aggregate_id, ))
+                            % (int(predecessing_aggregate_id), ))
 
                 else:
                     # D'abord on rattache l'alerte
@@ -163,8 +163,9 @@ def make_correvent(manager, conn, xml):
                     if succeeding_aggregates_id:
                         for succeeding_aggregate_id in \
                                 succeeding_aggregates_id:
-                            events = merge_aggregates(succeeding_aggregate_id,
-                                                    predecessing_aggregate_id)
+                            events = merge_aggregates(
+                                int(succeeding_aggregate_id),
+                                int(predecessing_aggregate_id))
                             if not is_built_dependant_event_list:
                                 for event in events:
                                     if not event in dependant_event_list:

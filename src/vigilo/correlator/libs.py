@@ -4,26 +4,7 @@
 Aliases for dependencies.
 """
 
-__all__ = ( 'mc', 'mp', 'etree', 'event', )
-
-
-# Tried to find a binding to libmemcached or the memcache protocol
-# that supports the cas (check and set) operation.
-# Didn't find it, will have to extend.
-# Didn't find a cython libmemcached binding either,
-# but python-libmemcached is pyrex based.
-
-# pylibmc mimics the python-memcached api, all three are mostly swappable.
-if True:
-    # mdv: python-memcached
-    # pypi: python-memcached
-    import memcache as mc
-elif False:
-    # gcode: python-libmemcached
-    import cmemcached as mc
-else:
-    # pypi: pylibmc
-    import pylibmc as mc
+__all__ = ( 'mp', 'etree', 'event', )
 
 if False: # Not swappable at this point
     # Drawbacks: no logging helpers, exceptions are easily missed.

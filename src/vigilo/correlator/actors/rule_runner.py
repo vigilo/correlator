@@ -23,14 +23,6 @@ from vigilo.common.conf import settings
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
-
-api = None
-def init(queue):
-    """Initialisation globale."""
-    global api
-    if api is not None:
-        raise RuntimeError
-    api = rulesapi.Api(queue=queue)
     
 class TimeoutError(Exception):
     """
@@ -39,7 +31,9 @@ class TimeoutError(Exception):
     pass
 
 def sigalrm_handler(*args):
-    """Routine pour le traitement du signal SIGALRM."""
+    """
+    Routine pour le traitement du signal SIGALRM.
+    """
     raise TimeoutError
 
 @contextmanager
@@ -85,8 +79,6 @@ def process(args):
         sur lequel elle va opérer.
     @type args: C{tuple} of (C{str}, C{str})
     """
-    if api is None:
-        raise RuntimeError
 
     (rule_name, xml) = args
 
@@ -95,7 +87,7 @@ def process(args):
     rule = reg.rules.lookup(rule_name)
     dom = etree.fromstring(xml)
 
-    idnt = dom.get('id')
+    xmpp_id = dom.get('id')
     # Only one payload below item or rfc violation.
     # Some implementations send the payload only on get requests
     if len(dom) != 1:
@@ -116,7 +108,7 @@ def process(args):
     result = rulesapi.ETIMEOUT
     try:
         with deadline(settings['correlator'].as_int('rules_timeout')):
-            result = rule.process(api, idnt, payload)
+            result = rule.process(xmpp_id, payload)
     except KeyboardInterrupt:
         import sys
         LOGGER.debug(_(u'##### KeyboardInterrupt #####'))

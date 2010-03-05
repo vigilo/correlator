@@ -22,7 +22,7 @@ _ = translate(__name__)
 class TimeoutRule(Rule):
     """ Règle conçue pour s'exécuter indéfiniment """
 
-    def process(self, api, idnt, payload):
+    def process(self, xmpp_id, payload):
         """ Traitement du message par la règle. Ici une boucle infinie """
         while True:
             sleep(1)
@@ -31,7 +31,7 @@ class TimeoutRule(Rule):
 class ExceptionRule(Rule):
     """ Règle conçue pour lever une exception """
 
-    def process(self, api, idnt, payload):
+    def process(self, xmpp_id, payload):
         """ Traitement du message par la règle. Ici on lève une exception """
         raise ValueError, "Exception"
         return ENOERROR
@@ -47,10 +47,6 @@ class TestUpdateAttributeRule(unittest.TestCase):
         registry.rules.register(TimeoutRule())
         message = u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='foo'><superceded>423</superceded><superceded>523</superceded></aggr></item>"
         
-        rule_runner.api = None
-        out_queue = mp.Queue()
-        rule_runner.init(out_queue)
-        
         result = rule_runner.process(("TimeoutRule", message))
         
         self.assertEqual(result, ('TimeoutRule', ETIMEOUT, None))
@@ -62,10 +58,6 @@ class TestUpdateAttributeRule(unittest.TestCase):
         registry.rules.clear()
         registry.rules.register(ExceptionRule())
         message = u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='foo'><superceded>423</superceded><superceded>523</superceded></aggr></item>"
-        
-        rule_runner.api = None
-        out_queue = mp.Queue()
-        rule_runner.init(out_queue)
         
         result = rule_runner.process(("ExceptionRule", message))
         

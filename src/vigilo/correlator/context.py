@@ -4,13 +4,17 @@ Context objects.
 """
 __all__ = ( 'Context', )
 
+import os
+import signal
+
 from datetime import datetime
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
 from vigilo.correlator.topology import Topology
-from vigilo.correlator.connect import connect
+from vigilo.correlator.memcached_connection import MemcachedConnection, \
+                                                    MemcachedConnectionError
 
 try:
     import cPickle as pickle
@@ -62,150 +66,215 @@ class Context(object):
     
     """
 
-    def __init__(self, queue, idnt):
+    def __init__(self, idnt):
         """
-        Represents a context object.
+        Initialisation d'un contexte de corrélation (au moyen de MemcacheD).
 
-        queue is used to send alert messages.
-        idnt is the context id, used to lookup an existing context or create a
-        new one.
-
-        “Represents” is in the ORM sense; the context may not actually exist
-        on the memcached side, until you call get_or_create.
+        @param idnt: L'id XMPP de l'alerte brute reçue par le corrélateur.
+        @type idnt: C{int}.
         """
-
-        self.__queue = queue
         self.__id = str(idnt)
+        self.__connection = MemcachedConnection()
 
-    @classmethod
-    def get_or_create(cls, queue, idnt):
-        """
-        Get, or if necessary create, a context.
-
-        Some parameters are only used in the create case.
-        They are passed to the constructor as is.
-
-        Note: implementation-wise, the context object is always created.
-        But in one case it refers to existing memcached data, in the other it
-        creates the memcached data.
-        """
-
-        return cls(queue, idnt)
 
     def __get_priority(self):
-        """Renvoie la priorité de l'évènement corrélé traité."""
-        result = connect().get(PRIORITY_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        """
+        Renvoie la priorité de l'évènement corrélé traité.
+    
+        @return: La priorité de l'évènement corrélé traité.
+        @rtype: C{basestring}.
+        """
+        return self.__connection.get(PRIORITY_PREFIX + self.__id)
+    
     def __set_priority(self, value):
-        """Change la priorité de l'évènement corrélé traité."""
-        res = connect().set(PRIORITY_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change la priorité de l'évènement corrélé traité.
+
+        @param value: La valeur à affecter à la priorité de l'alerte.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(PRIORITY_PREFIX + self.__id, value)
+        
     priority = property(
                 __get_priority,
                 __set_priority)
 
+
     def __get_occurrences_count(self):
-        """Renvoie le nombre d'occurrences de l'alerte."""
-        result = connect().get(OCCURRENCES_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        """
+        Renvoie le nombre d'occurrences de l'alerte.
+    
+        @return: Le nombre d'occurrences de l'alerte.
+        @rtype: C{basestring}.
+        """
+        return self.__connection.get(OCCURRENCES_PREFIX + self.__id)
+
     def __set_occurrences_count(self, value):
-        """Change le nombre d'occurrences de l'alerte."""
-        res = connect().set(OCCURRENCES_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change le nombre d'occurrences de l'alerte.
+
+        @param value: La valeur à affecter au nombre d'occurrences de 
+        l'alerte.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(OCCURRENCES_PREFIX + self.__id, value)
+
     occurrences_count = property(
                             __get_occurrences_count,
                             __set_occurrences_count)
 
+
     def __get_update_id(self):
-        """Renvoie l'identifiant de mise à jour de l'alerte corrélée."""
-        result = connect().get(UPDATE_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        """
+        Renvoie l'identifiant de mise à jour de l'alerte corrélée.
+    
+        @return: L'identifiant de mise à jour de l'alerte corrélée.
+        @rtype: C{basestring}.
+        """
+        return self.__connection.get(UPDATE_PREFIX + self.__id)
+
     def __set_update_id(self, value):
-        """Change l'identifiant de mise à jour de l'alerte corrélée."""
-        res = connect().set(UPDATE_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change l'identifiant de mise à jour de l'alerte corrélée.
+
+        @param value: La valeur à affecter à l'identifiant de mise à jour de 
+        l'alerte corrélée.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(UPDATE_PREFIX + self.__id, value)
+        
     update_id = property(
                     __get_update_id,
                     __set_update_id)
 
+
     def __get_impacted_hls(self):
-        """Renvoie la liste des services de haut niveau impactés."""
-        value = connect().get(IMPACTED_HLS_PREFIX + self.__id)
-        if value is not None:
-            return pickle.loads(value)
-        return None
+        """
+        Renvoie la liste des services de haut niveau impactés.
+    
+        @return: La liste des services de haut niveau impactés.
+        @rtype: C{list} of C{basestring}.
+        """
+        return self.__connection.get(IMPACTED_HLS_PREFIX + self.__id)
+
     def __set_impacted_hls(self, value):
-        """Change la liste des services de haut niveau impactés."""
-        res = connect().set(IMPACTED_HLS_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change la liste des services de haut niveau impactés.
+
+        @param value: La valeur à affecter à la liste des services de haut 
+        niveau impactés.
+        @type value: C{list} of C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(IMPACTED_HLS_PREFIX + self.__id, value)
+        
     impacted_hls = property(
                     __get_impacted_hls,
                     __set_impacted_hls)
 
+
     @property
     def topology(self):
-        """Get the topology associated with this context."""
-        conn = connect()
-        topology = conn.get(TOPOLOGY_PREFIX)
+        """
+        Récupère la topologie associée à ce contexte.
+    
+        @return: La topologie associée à ce contexte.
+        @rtype: L{vigilo.correlator.topology.Topology}.
+        """
+        topology = self.__connection.get(TOPOLOGY_PREFIX)
         if not topology:
-            topology = Topology()        
-            conn.add(TOPOLOGY_PREFIX, pickle.dumps(topology))
+            topology = Topology()   
+            self.__connection.set(TOPOLOGY_PREFIX, topology)
             self.__set_last_topology_update(datetime.now())
-        else:
-            topology = pickle.loads(topology)
-
         return topology
 
     def __get_hostname(self):
         """
-        Get the name of the host of the service
-        associated with this context.
+        Récupère le nom de l'hôte associé à ce contexte.
+    
+        @return: Le nom de l'hôte associé à ce contexte.
+        @rtype: C{basestring}.
         """
-        result = connect().get(HOSTNAME_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        return self.__connection.get(HOSTNAME_PREFIX + self.__id)
+
     def __set_hostname(self, value):
         """
-        Set the name of the host of the service
-        associated with this context.
+        Change le nom de l'hôte associé à ce contexte.
+
+        @param value: La valeur à affecter au nom de l'hôte associé à ce 
+        contexte.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
         """
-        res = connect().set(HOSTNAME_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        return self.__connection.set(HOSTNAME_PREFIX + self.__id, value)
+        
     hostname = property(
                     __get_hostname,
                     __set_hostname)
 
+
     def __get_servicename(self):
-        """Get the name of the service associated with this context."""
-        result = connect().get(SERVICENAME_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        """
+        Récupère le nom du service associé à ce contexte.
+    
+        @return: Le nom du service associé à ce contexte.
+        @rtype: C{basestring}.
+        """
+        return self.__connection.get(SERVICENAME_PREFIX + self.__id)
+
     def __set_servicename(self, value):
-        """Set the name of the service associated with this context."""
-        res = connect().set(SERVICENAME_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change le nom du service associé à ce contexte.
+
+        @param value: La valeur à affecter au nom du service associé à ce 
+        contexte.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(SERVICENAME_PREFIX + self.__id, value)
+        
     servicename = property(
                     __get_servicename,
                     __set_servicename)
 
+
     def __get_statename(self):
-        """Renvoie le nom de l'état courant du service."""
-        result = connect().get(STATENAME_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        """
+        Renvoie le nom de l'état courant du service.
+    
+        @return: Le nom de l'état courant du service.
+        @rtype: C{basestring}.
+        """
+        return self.__connection.get(STATENAME_PREFIX + self.__id)
+
     def __set_statename(self, value):
-        """Change le nom de l'état courant du service."""
-        res = connect().set(STATENAME_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change le nom de l'état courant du service.
+
+        @param value: La valeur à affecter au nom de l'état courant du 
+        service.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(STATENAME_PREFIX + self.__id, value)
+        
     statename = property(
                     __get_statename,
                     __set_statename)
@@ -213,18 +282,28 @@ class Context(object):
     def __get_predecessors_aggregates(self):
         """
         Renvoie la liste des agrégats auxquels doit être rattaché l'événement.
+    
+        @return: La liste des agrégats auxquels doit être rattaché 
+        l'événement.
+        @rtype: C{list} of C{basestring}.
         """
-        result = connect().get(PREDECESSORS_AGGREGATES_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        return self.__connection.get(
+            PREDECESSORS_AGGREGATES_PREFIX + self.__id)
+
     def __set_predecessors_aggregates(self, value):
         """
         Modifie la liste des agrégats auxquels doit être rattaché l'événement.
+
+        @param value: La valeur à affecter à la liste des agrégats auxquels 
+        doit être rattaché l'événement.
+        @type value: C{list} of C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
         """
-        res = connect().set(PREDECESSORS_AGGREGATES_PREFIX +
-                                self.__id, pickle.dumps(value))
-        assert(res != 0)
+        return self.__connection.set(
+            PREDECESSORS_AGGREGATES_PREFIX + self.__id, value)
+        
     predecessors_aggregates = property(
                     __get_predecessors_aggregates,
                     __set_predecessors_aggregates)
@@ -233,47 +312,80 @@ class Context(object):
         """
         Renvoie la liste des aggrégats devant être fusionnés avec celui de
         l'événement courant.
+    
+        @return: La liste des agrégats devant être fusionnés avec celui de
+        l'événement courant.
+        @rtype: C{list} of C{basestring}.
         """
-        result = connect().get(SUCCESSORS_AGGREGATES_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        return self.__connection.get(SUCCESSORS_AGGREGATES_PREFIX + self.__id)
+
     def __set_successors_aggregates(self, value):
         """
         Modifie la liste des aggrégats devant être fusionnés avec celui de
         l'événement courant.
+
+        @param value: La valeur à affecter à la liste des agrégats devant être 
+        fusionnés avec celui de l'événement courant.
+        @type value: C{list} of C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
         """
-        res = connect().set(
-            SUCCESSORS_AGGREGATES_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        return self.__connection.set(
+            SUCCESSORS_AGGREGATES_PREFIX + self.__id, value)
+        
     successors_aggregates = property(
                     __get_successors_aggregates,
                     __set_successors_aggregates)
 
     def __get_raw_event_id(self):
-        """Renvoie l'identifiant de l'événement brut."""
-        result = connect().get(RAW_EVENT_ID_PREFIX + self.__id)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        """
+        Renvoie l'identifiant de l'événement brut.
+    
+        @return: L'identifiant de l'événement brut.
+        @rtype: C{basestring}.
+        """
+        return self.__connection.get(RAW_EVENT_ID_PREFIX + self.__id)
+
     def __set_raw_event_id(self, value):
-        """Change l'identifiant de l'événement brut."""
-        res = connect().set(RAW_EVENT_ID_PREFIX + self.__id, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change l'identifiant de l'événement brut.
+
+        @param value: La valeur à affecter à l'identifiant de l'événement 
+        brut.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(RAW_EVENT_ID_PREFIX + self.__id, value)
+        
     raw_event_id = property(
                             __get_raw_event_id,
                             __set_raw_event_id)
 
     def __get_last_topology_update(self):
-        """Renvoie la date de dernière mise à jour de l'arbre topologique."""
-        result = connect().get(TOPOLOGY_LAST_UPDATE_PREFIX)
-        if result is not None:
-            return pickle.loads(result)
-        return None
+        """
+        Renvoie la date de dernière mise à jour de l'arbre topologique.
+    
+        @return: La date de dernière mise à jour de l'arbre topologique.
+        @rtype: L{datetime.datetime}.
+        """
+        return self.__connection.get(TOPOLOGY_LAST_UPDATE_PREFIX)
+
     def __set_last_topology_update(self, value):
-        """Change la date de dernière mise à jour de l'arbre topologique."""
-        res = connect().set(TOPOLOGY_LAST_UPDATE_PREFIX, pickle.dumps(value))
-        assert(res != 0)
+        """
+        Change la date de dernière mise à jour de l'arbre topologique.
+
+        @param value: La valeur à affecter à la date de dernière mise à jour 
+        de l'arbre topologique.
+        @type value: L{datetime.datetime}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(TOPOLOGY_LAST_UPDATE_PREFIX, value)
+        
     last_topology_update = property(
                             __get_last_topology_update,
                             __set_last_topology_update)

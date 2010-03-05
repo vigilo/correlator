@@ -13,7 +13,8 @@ def main_cmdline(*args):
     with daemonize():
         from vigilo.common.conf import settings
         settings.load_module(__name__)
-        from vigilo.correlator.connect import connect
+        from vigilo.correlator.memcached_connection import \
+            MemcachedConnection, MemcachedConnectionError
         from vigilo.common.gettext import translate
         from vigilo.common.logging import get_logger
 
@@ -23,14 +24,14 @@ def main_cmdline(*args):
 
         # On tente d'établir une connexion au serveur memcached
         # et d'enregistrer une clé dedans. Teste la connectivité.
-        mc_conn = connect()
-        if not mc_conn.set('vigilo', '', 1):
-            LOGGER.critical(_("Could not connect to memcached server, "
-                                "make sure it is running"))
-            return 1
-
-        from vigilo.correlator.actors.start import start
-        return start()
+        mc_conn = MemcachedConnection()
+        try:
+            mc_conn.connect()
+        except MemcachedConnectionError:
+            pass
+        else:
+            from vigilo.correlator.actors.start import start
+            return start()
 
 if __name__ == '__main__':
     sys.exit(main_cmdline())

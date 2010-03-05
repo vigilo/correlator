@@ -16,7 +16,8 @@ from vigilo.models import HighLevelService, LowLevelService, Host, \
                             StateName, Dependency, Event, CorrEvent, Change
 from vigilo.models.configure import DBSession
 
-from vigilo.correlator.connect import connect
+from vigilo.correlator.memcached_connection import MemcachedConnection, \
+                                                    MemcachedConnectionError
 from vigilo.correlator.libs import mp
 from vigilo.correlator.actors.rule_dispatcher import handle_bus_message, \
                                                     handle_rules_errors, \
@@ -92,7 +93,7 @@ class TestRuleDispatcher(unittest.TestCase):
         # On force le traitement du message,
         # comme s'il provenait du bus XMPP.
         self.rule_runners_pool = handle_bus_message(self.manager, 
-            self.conn, None, self.rule_runners_pool, payload)
+            None, self.rule_runners_pool, payload)
 
 
     def make_dependencies(self):
@@ -242,9 +243,6 @@ class TestRuleDispatcher(unittest.TestCase):
         self.manager = mp.Manager()
         self.manager.in_queue = None
         self.manager.out_queue = mp.Queue()
-
-        # Instanciation d'une connection à MemCacheD.
-        self.conn = connect()
         
         # Enregistrement des règles à tester.
         self.register_rules()
@@ -520,8 +518,8 @@ class TestRuleDispatcher(unittest.TestCase):
         
         # On simule le traitement d'une règle qui fait un timeout.
         results = [("LowLevelServiceDepsRule", rulesapi.ETIMEOUT, None)]
-        self.rule_runners_pool = handle_rules_errors(results, rules_graph, 
-            self.manager.out_queue, self.rule_runners_pool)
+        self.rule_runners_pool = handle_rules_errors(
+            results, rules_graph, self.rule_runners_pool)
         
         # On s'attend à ce que la fonction
         # handle_rules_errors ait recréé un pool de processus.
@@ -554,8 +552,8 @@ class TestRuleDispatcher(unittest.TestCase):
         
         # On simule le traitement d'une règle qui lève une exception.
         results = [("HighLevelServiceDepsRule", rulesapi.EEXCEPTION, None)]
-        self.rule_runners_pool = handle_rules_errors(results, rules_graph, 
-            self.manager.out_queue, self.rule_runners_pool)
+        self.rule_runners_pool = handle_rules_errors(
+            results, rules_graph, self.rule_runners_pool)
         
         # On s'attend à ce que la fonction
         # handle_rules_errors ait recréé un pool de processus.
