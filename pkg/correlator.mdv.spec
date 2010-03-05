@@ -1,7 +1,7 @@
 %define module  correlator
 %define name    vigilo-%{module}
-%define version 1.0
-%define release 2
+%define version 1.1
+%define release 1%{?svn}
 
 Name:       %{name}
 Summary:    Vigilo correlator
@@ -18,8 +18,15 @@ BuildRequires:   python-setuptools
 Requires:   python >= 2.5
 Requires:   python-setuptools
 Requires:   vigilo-common vigilo-pubsub vigilo-connector vigilo-models
-Requires:   python-daemon lxml networkx
-Requires:   python-multiprocessing python-rel
+Requires:   python-lxml
+Requires:   python-multiprocessing
+Requires:   python-psycopg2
+Requires:   python-memcached
+Requires:   python-pydaemon
+Requires:   python-rel
+Requires:   python-twisted-words
+Requires:   python-wokkel
+Requires:   python-networkx
 # Dependance de python-rel
 Requires:   python-pyevent
 
