@@ -14,6 +14,7 @@ BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-build
 License:    GPLv2
 
 BuildRequires:   python-setuptools
+BuildRequires:   python-babel
 
 Requires:   python >= 2.5
 Requires:   python-setuptools
@@ -57,6 +58,8 @@ make install \
 # Mandriva splits Twisted
 sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/site-packages/vigilo_correlator-*-py*.egg-info/requires.txt
 
+%find_lang %{name}
+
 
 %pre
 %_pre_useradd %{name} %{_localstatedir}/lib/vigilo/%{module} /bin/false
@@ -71,7 +74,7 @@ sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/si
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-%files
+%files -f %{name}.lang
 %defattr(-,root,root)
 %doc COPYING doc/*
 %{_bindir}/%{name}
