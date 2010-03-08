@@ -72,7 +72,7 @@ class MemcachedConnection(object):
         self.__connection = mc.Client([conn_str])
         self.__connection.behaviors = {'support_cas': 1}
     
-    def set(self, key, value):
+    def set(self, key, value, *args, **kwargs):
         """
         Associe la valeur 'value' à la clé 'key'.
         
@@ -96,7 +96,7 @@ class MemcachedConnection(object):
         value = pickle.dumps(value)
         
         # On associe la valeur 'value' à la clé 'key'.
-        result = self.__connection.set(key, value)
+        result = self.__connection.set(key, value, *args, **kwargs)
         
         # Si l'enregistrement a échoué on doit
         # s'assurer que la connexion est bien opérante :
@@ -140,7 +140,7 @@ class MemcachedConnection(object):
         
         # On récupère la valeur associée à la clé 'key'.
         result = self.__connection.get(key)
-        
+
         # Si l'opération a échoué on doit s'assurer
         # que la connexion est bien opérante :
         if not result:

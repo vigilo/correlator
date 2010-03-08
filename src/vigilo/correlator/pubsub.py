@@ -8,8 +8,7 @@ from twisted.words.protocols.jabber.jid import JID
 from wokkel.client import XMPPClient
 
 from vigilo.pubsub.checknode import VerificationNode
-from vigilo.connector.nodetoqueuefw import NodeToQueueForwarder
-from vigilo.connector.queuetonodefw import QueueToNodeForwarder
+from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
 
 class CorrServiceMaker(object):
     """
@@ -18,7 +17,7 @@ class CorrServiceMaker(object):
 
     #implements(service.IServiceMaker, IPlugin)
 
-    def makeService(self, options):
+    def makeService(self):
         from vigilo.common.conf import settings
 
         """Crée un service client du bus XMPP"""
@@ -50,22 +49,14 @@ class CorrServiceMaker(object):
         _service = JID(settings['bus']['service'])
         nodetopublish = settings.get('publications', {})
 
-        # Bridge to rules processing
-        manager = options['manager']
-
-        consumer = NodeToQueueForwarder(
-            manager.in_queue,
+        msg_handler = RuleDispatcher(
             settings['connector']['backup_file'],
-            settings['connector']['backup_table_from_bus'])
-        consumer.setHandlerParent(xmpp_client)
-
-        publisher = QueueToNodeForwarder(
-            manager.out_queue,
-            settings['connector']['backup_file'],
+            settings['connector']['backup_table_from_bus'],
             settings['connector']['backup_table_to_bus'],
             nodetopublish,
-            _service)
-        publisher.setHandlerParent(xmpp_client)
+            _service
+        )
+        msg_handler.setHandlerParent(xmpp_client)
 
         root_service = service.MultiService()
         xmpp_client.setServiceParent(root_service)

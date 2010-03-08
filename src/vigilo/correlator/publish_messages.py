@@ -11,7 +11,7 @@ from time import mktime
 
 from vigilo.common.conf import settings
 
-def publish_aggregate(queue, aggregate_id_list, event_id_list):
+def publish_aggregate(forwarder, aggregate_id_list, event_id_list):
     """
     Publie sur le bus XMPP les agrégats (alertes corrélées) dont
     l'id est passé en paramètre, contenant les événements
@@ -42,9 +42,9 @@ def publish_aggregate(queue, aggregate_id_list, event_id_list):
         alert = alerts.addElement('alert')
         alert.addContent(str(alert_id))
     
-    queue.put_nowait(pl.toXml())
+    forwarder.sendItem(pl.toXml())
 
-def delete_published_aggregates(queue, aggregate_id_list):
+def delete_published_aggregates(forwarder, aggregate_id_list):
     """
     Publie sur le bus XMPP un message signifiant la suppression des 
     agrégats (alertes corrélées) dont l'id est passé en paramètre.
@@ -65,9 +65,9 @@ def delete_published_aggregates(queue, aggregate_id_list):
         aggregate = aggregates.addElement('aggregate')
         aggregate.addContent(str(aggregate_id))
 
-    queue.put_nowait(pl.toXml())
+    forwarder.sendItem(pl.toXml())
 
-def publish_state(queue, info_dictionary):
+def publish_state(forwarder, info_dictionary):
     """
     Publie sur le bus XMPP un message d'état correspondant
     correspondant au infos passées en paramètre.
@@ -108,4 +108,4 @@ def publish_state(queue, info_dictionary):
     tag = pl.addElement('message')
     tag.addContent(str(info_dictionary["message"]))
     
-    queue.put_nowait(pl.toXml())
+    forwarder.sendItem(pl.toXml())

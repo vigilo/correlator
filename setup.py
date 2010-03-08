@@ -42,20 +42,15 @@ setup(name='vigilo-correlator',
             # dashes become underscores
             # order is important (wokkel before Twisted)
             'setuptools',
-            'lxml', # ElementTree-compatible, validation…
-            'multiprocessing >= 2.6.2.1',
+            'lxml',
             'psycopg2',
+            # @TODO Doit-on utiliser twisted.protocols.memcache à la place ?
             'python-memcached',
-            'python-daemon',
-            'rel',
-            'vigilo-common',
             'vigilo-models',
             'vigilo-pubsub',
-            'wokkel',
-            'Twisted',
-            #'docutils',
             'vigilo-connector',
             'networkx',
+            'ampoule',
             ],
         extras_require={
             'tests': tests_require,
@@ -71,7 +66,7 @@ setup(name='vigilo-correlator',
             ],
         entry_points={
             'console_scripts': [
-                'vigilo-correlator = vigilo.correlator.actors.main:main_cmdline',
+                'vigilo-correlator = vigilo.correlator.main:main',
                 ],
             },
         package_dir={'': 'src'},

@@ -5,13 +5,10 @@ Test du rule_runner.
 import unittest
 from time import sleep
 
-from vigilo.correlator.libs import mp
-
 from vigilo.correlator.rule import Rule
 
 from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
-from vigilo.correlator.rulesapi import ENOERROR, ETIMEOUT, EEXCEPTION
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
@@ -26,15 +23,13 @@ class TimeoutRule(Rule):
         """ Traitement du message par la règle. Ici une boucle infinie """
         while True:
             sleep(1)
-        return ENOERROR
 
 class ExceptionRule(Rule):
     """ Règle conçue pour lever une exception """
 
     def process(self, xmpp_id, payload):
         """ Traitement du message par la règle. Ici on lève une exception """
-        raise ValueError, "Exception"
-        return ENOERROR
+        raise Exception, "Exception"
 
 class TestUpdateAttributeRule(unittest.TestCase):
     """ Classe de test du rule_runner """
@@ -46,9 +41,8 @@ class TestUpdateAttributeRule(unittest.TestCase):
         registry.rules.clear()
         registry.rules.register(TimeoutRule())
         message = u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='foo'><superceded>423</superceded><superceded>523</superceded></aggr></item>"
-        
+
         result = rule_runner.process(("TimeoutRule", message))
-        
         self.assertEqual(result, ('TimeoutRule', ETIMEOUT, None))
     
     def test_rule_exception(self):

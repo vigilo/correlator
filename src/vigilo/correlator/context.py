@@ -66,16 +66,16 @@ class Context(object):
     
     """
 
-    def __init__(self, idnt):
+    def __init__(self, idxmpp):
         """
         Initialisation d'un contexte de corrélation (au moyen de MemcacheD).
 
-        @param idnt: L'id XMPP de l'alerte brute reçue par le corrélateur.
-        @type idnt: C{int}.
+        @param idxmpp: Identifiant XMPP de l'alerte brute reçue par le corrélateur.
+        @type idxmpp: C{basestring}.
         """
-        self.__id = str(idnt)
-        self.__connection = MemcachedConnection()
 
+        self.__id = str(idxmpp)
+        self.__connection = MemcachedConnection()
 
     def __get_priority(self):
         """

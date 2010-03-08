@@ -8,8 +8,8 @@ from datetime import datetime
 import logging
 
 from sqlalchemy.orm.exc import NoResultFound
+from lxml import etree
 
-from vigilo.correlator.libs import etree
 from vigilo.correlator.xml import namespaced_tag, NS_CORREVENTS, NS_EVENTS
 from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates
@@ -41,7 +41,7 @@ DATA_LOG_IMPACTED_HLS = 5
 DATA_LOG_PRIORITY = 6
 DATA_LOG_MESSAGE = 7
 
-def make_correvent(manager, xml):
+def make_correvent(forwarder, xml):
     """
     Récupère dans le contexte les informations transmises par
     les règles, crée les événements corrélés (agrégats 
@@ -84,7 +84,7 @@ def make_correvent(manager, xml):
     # On détermine le nouvel état de chacun des HLS 
     # impactés par l'alerte, avant de l'enregistrer dans 
     # la BDD et de le transmettre à Nagios via le bus XMPP.
-    compute_hls_states(manager.out_queue, ctx)
+    compute_hls_states(forwarder, ctx)
 
     update_id = ctx.update_id
     correvent = None
@@ -144,13 +144,13 @@ def make_correvent(manager, xml):
                 try:
                     predecessing_aggregate = DBSession.query(CorrEvent
                         ).filter(CorrEvent.idcorrevent 
-                                    == int(predecessing_aggregate_id)
+                                    == predecessing_aggregate_id
                         ).one()
 
                 except NoResultFound:
                     LOGGER.error(_('Got a reference to a nonexistent '
                             'correlated event (%r), skipping this aggregate')
-                            % (int(predecessing_aggregate_id), ))
+                            % (predecessing_aggregate_id, ))
 
                 else:
                     # D'abord on rattache l'alerte
@@ -163,9 +163,8 @@ def make_correvent(manager, xml):
                     if succeeding_aggregates_id:
                         for succeeding_aggregate_id in \
                                 succeeding_aggregates_id:
-                            events = merge_aggregates(
-                                int(succeeding_aggregate_id),
-                                int(predecessing_aggregate_id))
+                            events = merge_aggregates(succeeding_aggregate_id,
+                                                    predecessing_aggregate_id)
                             if not is_built_dependant_event_list:
                                 for event in events:
                                     if not event in dependant_event_list:
@@ -174,18 +173,18 @@ def make_correvent(manager, xml):
                         is_built_dependant_event_list = True
 
             # On rattache l'alerte courante aux agrégats sur le bus XMPP.
-            publish_aggregate(manager.out_queue,
+            publish_aggregate(forwarder,
                               predecessing_aggregates_id, [raw_event_id])
             
             if succeeding_aggregates_id:
                 # On publie également sur le bus XMPP la 
                 # liste des alertes brutes (dépendantes de 
                 # l'alerte courante) à rattacher à ces agrégats.
-                publish_aggregate(manager.out_queue, 
+                publish_aggregate(forwarder, 
                             predecessing_aggregates_id, dependant_event_list)
                 # Enfin on supprime du bus les agrégats
                 # qui dépendaient de l'alerte courante.
-                delete_published_aggregates(manager.out_queue,
+                delete_published_aggregates(forwarder,
                                             succeeding_aggregates_id)
 
             DBSession.flush()
@@ -281,7 +280,7 @@ def make_correvent(manager, xml):
 
     # On génère le message à envoyer à PubSub.
     payload = etree.tostring(dom)
-    manager.out_queue.put_nowait(payload)
+    forwarder.sendItem(payload)
 
     # On génère le message à envoyer à syslog.
     data_log[DATA_LOG_ID] = idcorrevent
@@ -328,7 +327,7 @@ def make_correvent(manager, xml):
                 event_id_list.extend(events_id)
         # On publie sur le bus XMPP la liste des alertes brutes
         # à rattacher à l'événement corrélé nouvellement créé.
-        publish_aggregate(manager.out_queue, [idcorrevent], event_id_list)
-        delete_published_aggregates(manager.out_queue, aggregates_id)
+        publish_aggregate(forwarder, [idcorrevent], event_id_list)
+        delete_published_aggregates(forwarder, aggregates_id)
     DBSession.flush()
 

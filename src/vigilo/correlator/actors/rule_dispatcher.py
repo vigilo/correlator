@@ -1,61 +1,55 @@
 # -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
 """
-Exécution des règles du corrélateur
+Ce module est un demi-connecteur qui assure la redirection des messages
+issus du bus XMPP vers une file d'attente (C{Queue.Queue} ou compatible).
 """
-import os
-import signal
+import os.path
 import errno
-import Queue
-import warnings
 import pkg_resources
 import transaction
+from datetime import datetime
 
-from vigilo.correlator.actors.pool import VigiloPool
-from vigilo.correlator.libs import etree, mp
-from vigilo.correlator.xml import namespaced_tag, NS_EVENTS
-from vigilo.correlator import rulesapi
-#from vigilo.correlator.xml import NS_DOWNTIME
+from twisted.internet import reactor, protocol, task, defer
+from twisted.internet.error import ProcessTerminated
+from twisted.words.protocols.jabber.jid import JID
+from twisted.words.xish import domish
+from twisted.python import log
+from ampoule import pool, main
+from wokkel.pubsub import PubSubClient, Item
+from wokkel.generic import parseXml
+from wokkel import xmppim
+from lxml import etree
 
-from vigilo.correlator.actors import rule_runner
-from vigilo.correlator.registry import get_registry
+from vigilo.common.conf import settings
+settings.load_module(__name__)
 
-from vigilo.correlator.memcached_connection import MemcachedConnection, \
-                                                    MemcachedConnectionError
-from vigilo.correlator.context import Context, TOPOLOGY_PREFIX
+from vigilo.common.logging import get_logger
+from vigilo.common.gettext import translate
 
-#from vigilo.correlator.handle_downtime import handle_downtime
-
-from vigilo.correlator.db_insertion import insert_event, insert_state
-from vigilo.correlator.publish_messages import publish_state
-from vigilo.correlator.correvent import make_correvent
+from vigilo.connector.store import DbRetry
+from vigilo.connector.sockettonodefw import MESSAGEONETOONE
 
 from vigilo.models import Change
 from vigilo.models.configure import DBSession
 
-from datetime import datetime
-
-from vigilo.common.conf import settings
-from vigilo.common.logging import get_logger
-from vigilo.common.gettext import translate
+from vigilo.correlator.xml import namespaced_tag, NS_EVENTS#, NS_DOWNTIME
+from vigilo.correlator.actors import rule_runner
+from vigilo.correlator.registry import get_registry
+from vigilo.correlator.memcached_connection import MemcachedConnection
+from vigilo.correlator.context import Context, TOPOLOGY_PREFIX
+#from vigilo.correlator.handle_downtime import handle_downtime
+from vigilo.correlator.db_insertion import insert_event, insert_state
+from vigilo.correlator.publish_messages import publish_state
+from vigilo.correlator.correvent import make_correvent
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
-
-def stop_correlator():
-    """Déclenche l'arrêt du corrélateur"""
-    os.kill(os.getppid(), signal.SIGTERM)
 
 def extract_information(payload):
     """
     Extrait les informations d'un message, en le parcourant 
     une seule fois afin d'optimiser les performances.
-    
-    @param payload: Le message reçu par le corrélateur.
-    @type payload: L{lxml.etree}.
-    
-    @return: Un dictionnaire contenant les informations extraites du message.
-    @rtype: C{dic}.
     """
     
     info_dictionary = {"host": None, 
@@ -68,7 +62,7 @@ def extract_information(payload):
                        "comment": None,}
         
     # Récupération du namespace utilisé
-    namespace = payload.tag.split("}")[0][1:]
+    namespace = etree.QName(payload.tag).namespace
     
     for element in payload.getchildren():
         for tag in info_dictionary.keys():
@@ -94,10 +88,6 @@ def check_topology(last_topology_update):
     consignée dans la base de données, est bien antérieure à la date de 
     dernière mise à jour de l'arbre topologique utilisé par le corrélateur
     (passée en paramètre). Reconstruit cet arbre si nécessaire.
-    
-    @param last_topology_update: La date de dernière mise à jour de l'arbre topologique
-    utilisé par le corrélateur (enregistrée dans MemcacheD).
-    @type last_topology_update: L{datetime.datetime}.
     """
     
     # On récupère la date de dernière modification de la topologie
@@ -124,352 +114,404 @@ def check_topology(last_topology_update):
         or last_topology_update < last_topology_modification:
         conn = MemcachedConnection()
         conn.delete(TOPOLOGY_PREFIX)
-        LOGGER.info(_("The topology has been reloaded."))
+        LOGGER.info(_("Topology has been reloaded."))
 
-def create_rule_runners_pool():
-    """
-    Création du pool de processus utilisé par le rule_dispatcher.
-    Suppression de l'ancien s'il en existait un.
-    
-    @return: Le pool de processus utilisé par le corrélateur.
-    @rtype: L{vigilo.correlator.actors.pool.VigiloPool}.
-    """
-    # Valeur (arbitraire) par défaut pour le nombre de rule_runners à lancer.
-    processes = 4
-    try:
-        # Si "rule_runners_count" a été défini dans la configuration,
-        # on honore sa valeur.
-        processes = settings['correlator'].as_int('rule_runners_count')
-    except KeyError:
-        try:
-            # Sinon, on tente d'être malin en utilisant
-            # tous les processeurs à disposition.
-            processes = mp.cpu_count()
-        except NotImplementedError:
-            # Et sinon, on utilise une valeur par défaut.
-            pass
-        finally:
-            LOGGER.info(_('You did not set the number of rule runners to use. '
-                        'I chose to use %d. Set "rule_runners_count" in the '
-                        'settings if this unacceptable.') % processes)
+class DependencyError(Exception):
+    pass
 
-    # Crée un nouveau pool de processus compatibles avec Twisted.
-    return VigiloPool(
-        processes = processes,
-    )
-    
-def handle_rules_errors(results, rules_graph, rule_runners_pool):
+class RuleDispatcher(PubSubClient):
     """
-    Fonction de traitement des valeurs de retour des règles.
-    
-    @param results: La liste des codes de retour de chacune des règles 
-    exécutées.
-    @type results: C{list}.
-    @param rules_graph: L'arbre des règles utilisées dans le corrélateur.
-    @type rules_graph: L{vigilo.correlator.registry.RegistryDict.RulesTree}.
-    @param rule_runners_pool: Le pool de processus utilisé par le corrélateur.
-    @type rule_runners_pool: L{vigilo.correlator.actors.pool.VigiloPool}.
-    
-    @return: Le pool de processus utilisé par le corrélateur.
-    @rtype: L{vigilo.correlator.actors.pool.VigiloPool}.
+    Cette classe corrèle les messages reçus depuis le bus XMPP
+    et envoie ensuite les résultats sur le bus.
     """
-    
-    regenerate_pool = False
-    
-    # On vérifie le code de retour de chacune des règles
-    for (rule_name, result, ex) in results:
-        LOGGER.debug(_("##### Rule %(name)r -> Result : %(result)r #####") % {
-                        "name": rule_name,
-                        "result": result,
-                    })
-        if ex:
-            LOGGER.debug(_("##### Exception raised : %r #####") % ex)
-            # Si on n'arrive pas à rétablir la connexion au
-            # serveur MemcacheD, on arrête le corrélateur.
-            if isinstance(ex, MemcachedConnectionError):
-                stop_correlator()
-        # Si une erreur s'est produite,
-        if result != rulesapi.ENOERROR:
-            # On retire la règle du graphe 
-            # de dépendance des règles.
-            rules_graph.remove_rule(rule_name)
-            # Et on reconstruit le pool de processus utilisé.
-            regenerate_pool = True
-    
-    if regenerate_pool:
-        LOGGER.info(_('At least one of the rules failed, '
-                        'recreating worker processes.'))
-        if rule_runners_pool:
-            rule_runners_pool.terminate()
-            rule_runners_pool.join()
-        rule_runners_pool = create_rule_runners_pool()
+
+    def __init__(self, dbfilename, from_table, to_table,
+        nodetopublish, service):
+        """
+        Initialisation du demi-connecteur.
         
-    return rule_runners_pool
+        @param dbfilename: Emplacement du fichier SQLite de sauvegarde.
+            Ce fichier est utilisé pour stocker temporairement les messages.
+            Les messages dans cette base de données seront automatiquement
+            traités lorsque les éléments nécessaires au traitement seront
+            de nouveau disponibles.
+        @type dbfilename: C{basestring}
+        @param from_table: Nom de la table à utiliser dans le fichier
+            de sauvegarde L{dbfilename} pour stocker les messages qui
+            arrivent dans le corrélateur mais qui ne peuvent pas être
+            traités immédiatement.
+        @type from_table: C{basestring}
+        @param to_table: Nom de la table à utiliser dans le fichier
+            de sauvegarde L{dbfilename} pour stocker les messages qui
+            ont été traités par le corrélateur mais pour lesquels
+            l'envoi des résultats sur le bus XMPP a échoué (par exemple,
+            parce que la connexion avec le bus a été perdue).
+        @type to_table: C{basestring}
+        @param nodetopublish: Dictionnaire pour la correspondance entre
+            le type de message et le noeud PubSub de destination.
+        @type nodetopublish: C{dict}
+        @param service: Le service de souscription qui gère les nœuds.
+        @type service: L{twisted.words.protocols.jabber.jid.JID}
+        """
+        super(RuleDispatcher, self).__init__()
+        self.from_retry = DbRetry(dbfilename, from_table)
+        self.to_retry = DbRetry(dbfilename, to_table)
+        self._service = service
+        self._nodetopublish = nodetopublish
+        self.parallel_messages = 0
 
-def handle_bus_message(manager, schema, rule_runners_pool, xml):
-    """
-    Lecture et traitement d'un message du bus XMPP.
-    
-    @param manager: Le manager utilisé pour le partage des informations entre 
-    les différents processus du corrélateur.
-    @type manager: L{multiprocessing.managers.SyncManager}.
-    @param schema: Le schéma XSD utilisé pour valider le message reçu.
-    @type schema: L{lxml.etree.XMLSchema}.
-    @param rule_runners_pool: Le pool de processus utilisé par le corrélateur.
-    @type rule_runners_pool: L{vigilo.correlator.actors.pool.VigiloPool}.
-    @param xml: Un message reçu par le corrélateur sur le bus XMPP.
-    @type xml: C{basestring}.
-    
-    @return: Le pool de processus utilisé par le corrélateur.
-    @rtype: L{vigilo.correlator.actors.pool.VigiloPool}.
-    """
-    dom = etree.fromstring(xml)
+        # Préparation du pool d'exécuteurs de règles.
+        timeout = settings['correlator'].as_int('rules_timeout')
+        min_runner = settings['correlator'].as_int('min_rule_runners')
+        max_runner = settings['correlator'].as_int('max_rule_runners')
 
-    # Extraction des informations du message
-    info_dictionary = extract_information(dom[0])
+        self.rrp = pool.ProcessPool(
+            ampChild=rule_runner.VigiloAMPChild,
+            timeout=timeout,
+            name='RuleDispatcher',
+            min=min_runner,
+            max=max_runner,
+        )
 
-#    # S'il s'agit d'un message concernant une mise en silence :
-#    if dom[0].tag == namespaced_tag(NS_DOWNTIME, 'downtime'):
-#        # On insère les informations la concernant dans la BDD ;
-#        handle_downtime(info_dictionary)
-#        # Et on passe au message suivant.
-#        return
+        # Prépare les schémas de validation XSD.
+        self.schema = {}
+        try:
+            validate = settings['correlator'].as_bool('validate_messages')
+        except KeyError:
+            validate = False
 
-    # Sinon, s'il ne s'agit pas d'un message d'événement (c'est à dire
-    # un message d'alerte de changement d'état), on ne le traite pas.
-#    elif dom[0].tag != namespaced_tag(NS_EVENTS, 'event'):
-    if dom[0].tag != namespaced_tag(NS_EVENTS, 'event'):
-        return rule_runners_pool
-    
-    # On initialise le contexte et on y insère 
-    # les informations de l'alerte traitée.
-    xmpp_id = dom.get('id')
-    try:
-        ctx = Context(xmpp_id)
+        if validate:
+            catalog_fname = pkg_resources.resource_filename(
+                    'vigilo.pubsub', 'data/catalog.xml')
+            # We override whatever this was set to.
+            os.environ['XML_CATALOG_FILES'] = catalog_fname
+
+            file_mapping = {
+                namespaced_tag(NS_EVENTS, 'events'): 'data/schemas/event1.xsd',
+            }
+
+            for tag, filename in file_mapping:
+                schema_file = pkg_resources.resource_stream(
+                        'vigilo.pubsub', filename)
+                self.schema[tag] = etree.XMLSchema(file=schema_file)
+
+    def itemsReceived(self, event):
+        """
+        Méthode appelée lorsque des éléments ont été reçus depuis
+        le bus XMPP.
+        
+        @param event: Événement XMPP reçu.
+        @type event: C{twisted.words.xish.domish.Element}
+        """
+        for item in event.items:
+            # Item is a domish.IElement and a domish.Element
+            # Serialize as XML before queueing,
+            # or we get harmless stderr pollution  × 5 lines:
+            # Exception RuntimeError: 'maximum recursion depth exceeded in
+            # __subclasscheck__' in <type 'exceptions.AttributeError'> ignored
+            #
+            # stderr pollution caused by http://bugs.python.org/issue5508
+            # and some touchiness on domish attribute access.
+            xml = item.toXml()
+            LOGGER.debug(_('Got item: %s') % xml)
+            if item.name != 'item':
+                # The alternative is 'retract', which we silently ignore
+                # We receive retractations in FIFO order,
+                # ejabberd keeps 10 items before retracting old items.
+                continue
+            self.handleMessage(xml)
+
+    def handleMessage(self, xml):
+        """
+        Transfère un message XML sérialisé vers la file.
+
+        @param xml: message XML à transférer.
+        @type xml: C{str}
+        """
+        # Si il y a déjà un message en cours de traitement,
+        # on le stocke en base SQLite directement.
+        if self.parallel_messages:
+            self.from_retry.store(xml)
+            return
+
+        def handle_rule_error(failure, rule_name):
+            if failure.check(ProcessTerminated):
+                e = failure.trap(ProcessTerminated)
+                LOGGER.info(_('Rule %(rule_name)s failed: %(message)r') % {
+                    'rule_name': rule_name,
+                    'message': e,
+                })
+                return DependencyError
+            if rule_name is None and failure.check(DependencyError):
+                failure.trap(DependencyError)
+                LOGGER.info(_('Handling failed because some dependency '
+                            'failed.') % {
+                                'rule_name': rule_name,
+                            })
+                return None
+            return failure
+
+        deferred_cache = {}
+        def buildDeferredList(graph, node, idxmpp, xml):
+            """
+            Construit un arbre de C{Deferred}s qui suit l'arbre
+            des dépendances entre les règles.
+            """
+            if deferred_cache.has_key(node):
+                return deferred_cache[node]
+
+            subdeferreds = [buildDeferredList(graph, r[1], idxmpp, xml) \
+                            for r in graph.out_edges_iter(node)]
+            work = self.rrp.doWork(rule_runner.RuleRunner,
+                        rule_name=node, idxmpp=idxmpp, xml=xml)
+            work.addErrback(handle_rule_error, node)
+            subdeferreds.append(work)
+            dl = defer.DeferredList(subdeferreds, fireOnOneErrback=1)
+            dl.addErrback(handle_rule_error, node)
+            return dl
+
+        def buildExecutionGraph(idxmpp, payload):
+            rules_graph = get_registry().rules.rules_graph
+            subdeferreds = [buildDeferredList(rules_graph, r, idxmpp, payload)
+                            for r in rules_graph.nodes_iter() \
+                            if not rules_graph.in_degree(r)]
+            graph = defer.DeferredList(subdeferreds, fireOnOneErrback=1)
+            return graph
+
+        def sendResult(result, xml, info_dictionary):
+            # On ne doit pas émettre plus de résultats que
+            # le nombre de calculs qui nous a été demandé.
+            assert(self.parallel_messages > 0)
+            self.parallel_messages -= 1
+
+            # On publie sur le bus XMPP l'état de l'hôte
+            # ou du service concerné par l'alerte courante.
+            publish_state(self, info_dictionary)
+            
+            # Pour les services de haut niveau, on s'arrête ici,
+            # on NE DOIT PAS générer d'événement corrélé.
+            if info_dictionary["host"] == \
+                settings['correlator']['nagios_hls_host']:
+                return
+
+            make_correvent(self, xml)
+            transaction.commit()
+            transaction.begin()
+
+        LOGGER.debug(_('Spawning for payload: %s') % xml)
+        dom = etree.fromstring(xml)
+
+        # Extraction de l'id XMPP.
+        # Note: dom['id'] ne fonctionne pas dans lxml, dommage.
+        idxmpp = dom.get('id')
+        if idxmpp is None:
+            LOGGER.critical(_("Received invalid XMPP item ID (None)"))
+            return
+
+        if self.schema.get(dom[0].tag) is not None:
+            # Validation before dispatching.
+            # This breaks the policy of not doing computing
+            # in the main process, but this must be computed once.
+            try:
+                self.schema[dom[0].tag].assertValid(dom[0])
+            except etree.DocumentInvalid, e:
+                LOGGER.error(_("Validation failure: %s") % e.message)
+                return
+
+        # Extraction des informations du message
+        info_dictionary = extract_information(dom[0])
+
+    #    # S'il s'agit d'un message concernant une mise en silence :
+    #    if dom[0].tag == namespaced_tag(NS_DOWNTIME, 'downtime'):
+    #        # On insère les informations la concernant dans la BDD ;
+    #        handle_downtime(info_dictionary)
+    #        # Et on passe au message suivant.
+    #        return
+
+        # Sinon, s'il ne s'agit pas d'un message d'événement (c'est-à-dire
+        # un message d'alerte de changement d'état), on ne le traite pas.
+        if dom[0].tag != namespaced_tag(NS_EVENTS, 'event'):
+            return
+
+        # On initialise le contexte et on y insère 
+        # les informations de l'alerte traitée.
+        ctx = Context(idxmpp)
         ctx.hostname = info_dictionary["host"]
         ctx.servicename = info_dictionary["service"]
         ctx.statename = info_dictionary["state"]
-    except MemcachedConnectionError:
-        stop_correlator()
-    
-    # On met à jour l'arbre topologique si nécessaire.
-    try:
+        
+        # On met à jour l'arbre topologique si nécessaire.
         check_topology(ctx.last_topology_update)
-    except MemcachedConnectionError:
-        stop_correlator()
 
-    # On insère le message dans la BDD, sauf s'il concerne un HLS.
-    if not info_dictionary["host"]:
-        raw_event_id = None
-    else:
-        raw_event_id = insert_event(info_dictionary)
+        # On insère le message dans la BDD, sauf s'il concerne un HLS.
+        if not info_dictionary["host"]:
+            raw_event_id = None
+        else:
+            raw_event_id = insert_event(info_dictionary)
+            transaction.commit()
+            transaction.begin()
+
+        # On insère l'état dans la BDD
+        insert_state(info_dictionary)
         transaction.commit()
         transaction.begin()
 
-    # On insère l'état dans la BDD
-    insert_state(info_dictionary)
-    transaction.commit()
-    transaction.begin()
-
-    if raw_event_id:
-        try:
+        if raw_event_id:
             ctx.raw_event_id = raw_event_id
-        except MemcachedConnectionError:
-            stop_correlator()
 
-    if schema is not None:
-        # Validation before dispatching.
-        # This breaks the policy of not doing computing
-        # in the main process, but this must be computed once.
-        try:
-            schema.assertValid(dom[0])
-        except etree.DocumentInvalid, e:
-            warnings.warn(e.message)
+        # Le vrai travaille commence ici.
+        self.parallel_messages += 1
+        # 1 -   On génère un graphe avec des DeferredLists qui reproduit
+        #       le graphe des dépendances entre les règles de corrélation.
+        payload = etree.tostring(dom[0], encoding='utf-8')
+        correlation_graph = buildExecutionGraph(idxmpp, payload)
 
-    # Préparation du 1er étage d'exécution des règles.
-    LOGGER.debug(_('Spawning for payload: %s') % xml)
-    
-    rules_graph = get_registry().global_instance().rules.step_rules
-    
-    for (step, step_rules) in enumerate(rules_graph.rules):
-        LOGGER.debug(_('Running rules from step #%(step)d: %(rules)r') % {
-            'step': step + 1,
-            'rules': step_rules,
-        })
+        # 2 -   Lorsque toutes les règles de corrélation ont été exécutées,
+        #       le callback associé à correlation_graph est appelé pour
+        #       finaliser le traitement (envoyer l'événement corrélé).
+        correlation_graph.addErrback(handle_rule_error, None)
+        correlation_graph.addCallback(sendResult, xml, info_dictionary)
 
-        work_units = [(rule_name, xml)
-                for rule_name in step_rules]
+    def __sendQueuedMessages(self):
+        """
+        Déclenche l'envoi des messages stockées localement (retransmission
+        des messages suite à une panne).
+        """
 
-        if not rule_runners_pool:
-            # Process the message in serial order.
-            for work_unit in work_units:
-                if rule_runner.process(work_unit)[1] != rulesapi.ENOERROR:
-                    # @TODO Faire d'autres traitements ici.
-                    rules_graph.remove_rule(work_unit[0])
-
-        elif True:
-            # Blocks, better for debugging multiprocessing problems
-            # (see test_mprocess)
-            # or stalled rules (the latter should be reaped somehow btw).
-            # TODO: le choix du "chunksize" est arbitraire (défaut = 1).
-            # Il faudrait en faire une option de la configuration.
-            try:
-                chunksize = settings['correlator'].as_int('map_chunksize')
-            except KeyError:
-                chunksize = 1
-            results = rule_runners_pool.imap_unordered(
-                rule_runner.process, work_units, chunksize)
-
-            # On vérifie le code de retour de chacune des règles
-            rule_runners_pool = handle_rules_errors(
-                results, rules_graph, rule_runners_pool)
-
-# TODO : Implémenter un traitement des règles en "flux tendu", c'est à dire
-#    que les règles devraient être traitées dès que les règles dont elles
-#    dépendent ont retourné leur résultat. On pourra utiliser à cet effet la
-#    la fonction map_async de multiprocessing, mais cela demandera une
-#    synchronisation plus fine de l'exécution des règles.
-
-#        else:
-#            # Not a twisted deferred, a similar multiprocessing construct
-#            def callback_function(results):
-#                """
-#                Fonction appelée par map_async pour traiter les résultats.
-#                Elle se contente d'appeler la fonction handle_rules_errors
-#                avec les bons paramètres.
-#                """
-#                LOGGER.debug(_("##### CALLBACK #####"))
-#                handle_rules_errors(results, rules_graph, rule_runners_pool)
-#            
-#            LOGGER.debug(_("##### BEFORE MAP_ASYNC #####"))
-#                
-#            rule_runners_pool.map_async(rule_runner.process, 
-#                work_units, callback = callback_function)
-#            
-#            LOGGER.debug(_("##### AFTER MAP_ASYNC #####"))
-
-#    # On récupère dans le contexte les informations 
-#    # sur les noms de l'hôte et du service, et l'état.
-#    # Elles ont en effet pu être modifiées par les règles.
-#    info_dictionary["host"] = ctx.hostname
-#    info_dictionary["service"] = ctx.servicename
-#    info_dictionary["state"] = ctx.statename
-    
-    # On publie sur le bus XMPP l'état de l'hôte
-    # ou du service concerné par l'alerte courante.
-    publish_state(manager.out_queue, info_dictionary)
-    
-    # Pour les services de haut niveau, on s'arrête ici,
-    # on NE DOIT PAS générer d'événement corrélé.
-    if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
-        return rule_runners_pool
-    
-    try:
-        make_correvent(manager, xml)
-    except MemcachedConnectionError:
-        stop_correlator()
-    
-    transaction.commit()
-    transaction.begin()
-    
-    return rule_runners_pool
-        
-
-def main(manager):
-    """
-    Lit les messages sur le bus, en extrait l'information pour
-    l'insérer dans le contexte, exécute les règles de corrélation
-    avant de lancer la création des événements corrélés.
-    
-    @param manager: Le manager utilisé pour le partage des informations entre 
-    les différents processus du corrélateur.
-    @type manager: L{multiprocessing.managers.SyncManager}.
-    """
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    signal.signal(signal.SIGTERM, signal.SIG_IGN)
-
-    # On instancie le registre dès le début (il s'agit d'un singleton), afin
-    # que les règles ne s'enregistrent qu'une seule fois (au lieu de quoi elles
-    # s'enregistreraient à chaque traitement d'une règle dans le rule_runner).
-    get_registry()
-
-    # On annule le join_thread() réalisé automatiquement par multiprocessing
-    # sur les files à la fin de l'exécution du processus. Ceci évite un
-    # blocage du rule dispatcher (et donc du corrélateur).
-    manager.in_queue.cancel_join_thread()
-    manager.out_queue.cancel_join_thread()
-
-    # This flag can be used to turn off multiprocessing/multithreading
-    # completely, running the rules in a serial fashion.
-    # This can be useful when multiprocessing exits with '#TRACEBACK' messages.
-    try:
-        debugging = settings['correlator'].as_bool('debug')
-    except KeyError:
-        debugging = False
-
-    if not debugging:
-        rule_runners_pool = create_rule_runners_pool()
-    else:
-        rule_runners_pool = None
-
-    # Prépare les schémas de validation XSD.
-    try:
-        validate = settings['correlator'].as_bool('validate_messages')
-    except KeyError:
-        validate = False
-
-    if validate:
-        schema_file = pkg_resources.resource_stream(
-                'vigilo.pubsub', 'data/schemas/event1.xsd')
-        catalog_fname = pkg_resources.resource_filename(
-                'vigilo.pubsub', 'data/catalog.xml')
-        # We override whatever this was set to.
-        os.environ['XML_CATALOG_FILES'] = catalog_fname
-        schema = etree.XMLSchema(file=schema_file)
-    else: 
-        schema = None
-
-    # Tant que l'événement demandant l'arrêt
-    # n'est pas actif, on traite des messages.
-
-    # Boucle d'attente d'un message provenant du bus XMPP.
-    while True:
-        from vigilo.correlator.actors.start import log_debug_info
-        log_debug_info() 
-        try:
-            # On tente de récupérer un message.
-            xml = manager.in_queue.get(block=True)
-
-        except IOError, e:
-            # Si le get() a été interrompu par un signal,
-            # on recommence l'attente.
-            if e.errno != errno.EINTR:
-                raise
-            continue
-
-        # Si on obtient un message à traiter, on sort de l'attente.
-        else:
-            # Si le message demande l'arrêt, on s'arrête.
-            if xml == None:
-                LOGGER.debug(_('Received request to shutdown '
-                                'the Rule dispatcher.'))
-                if rule_runners_pool:
-                    rule_runners_pool.close()
+        # Tout d'abord, réinsertion des messages dans la table en sortie.
+        needs_vacuum = False
+        while True:
+            msg = self.to_retry.unstore()
+            if msg is None:
                 break
+            else:
+                needs_vacuum = True
+                item = parseXml(msg)
+                if item is None:
+                    pass
+                else:
+                    self.sendItem(msg)
 
-            rule_runners_pool = handle_bus_message(manager,
-                schema, rule_runners_pool, xml)
+        # On fait du nettoyage au besoin.
+        if needs_vacuum:
+            self.to_retry.vacuum()
 
-    # On tue le pool de rule_runners.
-    if rule_runners_pool is not None:
-        rule_runners_pool.terminate()
-        rule_runners_pool.join()
+        # On essaye de traiter un nouveau message qui serait en attente en
+        # entrée du corrélateur.
+        # On fait les traitements dans cet ordre afin d'éviter de renvoyer
+        # immédiatement un message dont l'envoi initial aurait échoué.
+        needs_vacuum = False
+        if not self.parallel_messages:
+            msg = self.from_retry.unstore()
+            if msg is not None:
+                needs_vacuum = True
+                self.handleMessage(msg)
 
-    LOGGER.debug(_('Closed the pool, closing queues.'))
+        # On fait du nettoyage au besoin.
+        if needs_vacuum:
+            self.from_retry.vacuum()
 
-    # Marque les files comme n'étant plus utilisées.
-    manager.in_queue.close()
-    manager.out_queue.close()
+    def chatReceived(self, msg):
+        """ 
+        function to treat a received chat message 
+        
+        @param msg: msg to treat
+        @type  msg: twisted.words.xish.domish.Element
 
-    LOGGER.debug(_('Stopping the Rule dispatcher.'))
+        """
+        # Il ne devrait y avoir qu'un seul corps de message (body)
+        bodys = [element for element in msg.elements()
+                         if element.name in ('body',)]
+
+        for b in bodys:
+            # the data we need is just underneath
+            # les données dont on a besoin sont juste en dessous
+            for data in b.elements():
+                LOGGER.debug(_("Chat message to forward: '%s'") %
+                               data.toXml().encode('utf8'))
+                self.messageForward(data.toXml().encode('utf8'))
+
+    def connectionInitialized(self):
+        """
+        Cette méthode est appelée lorsque la connexion avec le bus XMPP
+        est prête. On se contente d'appeler la méthode L{consomeQueue}
+        depuis le reactor de Twisted pour commencer le transfert.
+        """
+        super(RuleDispatcher, self).connectionInitialized()
+        self.xmlstream.addObserver("/message[@type='chat']", self.chatReceived)
+        LOGGER.debug(_('Connection initialized'))
+
+        # Vérifie la présence de messages dans la base de données
+        # locale toutes les 0.1 secondes.
+        loop_call = task.LoopingCall(self.__sendQueuedMessages)
+        loop_call.start(0.1)
+        self.rrp.start()
+
+    def sendItem(self, item):
+        if not isinstance(item, etree.ElementBase):
+            item = parseXml(item)
+        if item.name == MESSAGEONETOONE:
+            return self.__sendOneToOneXml(item)
+        else:
+            return self.__publishXml(item)
+
+    def __sendOneToOneXml(self, xml):
+        """ 
+        function to send a XML msg to a particular jabber user
+        @param xml: le message a envoyé sous forme XML 
+        @type xml: twisted.words.xish.domish.Element
+        """
+        # il faut l'envoyer vers un destinataire en particulier
+        msg = domish.Element((None, "message"))
+        msg["to"] = xml['to']
+        msg["from"] = self.parent.jid.userhostJID().full()
+        msg["type"] = 'chat'
+        body = xml.firstChildElement()
+        msg.addElement("body", content=body)
+        # if not connected store the message
+        if self.xmlstream is None:
+            xml_src = xml.toXml().encode('utf8')
+            LOGGER.error(_('Unable to forward one-to-one message to XMPP '
+                            'server (no connection established). The message '
+                            '(%s) has been stored for later retransmission.') %
+                            xml_src)
+            self.to_retry.store(xml_src)
+            return False
+        else:
+            self.send(msg)
+            return True
+
+    def __publishXml(self, xml):
+        """ 
+        function to publish a XML msg to node 
+        @param xml: le message a envoyé sous forme XML 
+        @type xml: twisted.words.xish.domish.Element
+        """
+        def eb(e, xml):
+            """errback"""
+            xml_src = xml.toXml().encode('utf8')
+            LOGGER.error(_('Unable to forward the message (%(error)r), it '
+                        'has been stored for later retransmission '
+                        '(%(xml_src)s)') % {
+                            'xml_src': xml_src,
+                            'error': e,
+                        })
+            self.to_retry.store(xml_src)
+
+        item = Item(payload=xml)
+        
+        if xml.name not in self._nodetopublish:
+            LOGGER.error(_("No destination node configured for messages "
+                           "of type '%s'. Skipping.") % xml.name)
+            return
+        node = self._nodetopublish[xml.name]
+        try:
+            result = self.publish(self._service, node, [item])
+            result.addErrback(eb, xml)
+        except AttributeError:
+            xml_src = xml.toXml().encode('utf8')
+            LOGGER.error(_('Message from Socket impossible to forward'
+                           ' (no connection to XMPP server), the message '
+                           'is stored for later reemission (%s)') % xml_src)
+            self.to_retry.store(xml_src)
 

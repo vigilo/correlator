@@ -3,11 +3,11 @@
 from datetime import datetime
 import unittest
 import time
+from lxml import etree
 
 from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                         add_to_aggregate
-from vigilo.correlator.libs import etree
 from vigilo.correlator.xml import NS_EVENTS
 from utils import setup_db, teardown_db
 

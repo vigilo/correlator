@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 from vigilo.correlator.rule import Rule
 from vigilo.correlator import rulesapi
-from vigilo.correlator.libs import etree
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
@@ -20,10 +19,10 @@ class TestRule(Rule):
         """Initialisation du module."""
         super(TestRule, self).__init__([])
 
-    def process(self, api, idnt, payload):
-        """Traitement du message. Ici on se content de conserver une trace."""
+    def process(self, idnt, payload):
+        """Traitement du message. Ici on se contente d'afficher une trace."""
         LOGGER.debug(_('id %(id)s payload %(payload)s') % 
-            {"id": idnt, "payload": etree.tostring(payload)})
+            {"id": idnt, "payload": payload})
         return rulesapi.ENOERROR
 
 def register(registry):

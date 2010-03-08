@@ -18,10 +18,6 @@ from vigilo.models.configure import DBSession
 
 from vigilo.correlator.memcached_connection import MemcachedConnection, \
                                                     MemcachedConnectionError
-from vigilo.correlator.libs import mp
-from vigilo.correlator.actors.rule_dispatcher import handle_bus_message, \
-                                                    handle_rules_errors, \
-                                                    create_rule_runners_pool
 from vigilo.correlator.actors import rule_runner
 
 from vigilo.correlator.registry import Registry, get_registry
@@ -239,20 +235,8 @@ class TestRuleDispatcher(unittest.TestCase):
         setup_mc()
         setup_db()
 
-        # Instanciation d'un manager.
-        self.manager = mp.Manager()
-        self.manager.in_queue = None
-        self.manager.out_queue = mp.Queue()
-        
         # Enregistrement des règles à tester.
         self.register_rules()
-        
-        # Instanciation du pool de processus utilisé par le rule_dispatcher.
-        self.rule_runners_pool = None
-
-        # Pose problème à cause de multiprocessing
-        # lorsque ce flag est mis à False.
-        self.debugging = True
 
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
@@ -263,16 +247,6 @@ class TestRuleDispatcher(unittest.TestCase):
         teardown_db()
         teardown_mc()
         
-        if self.rule_runners_pool:
-            self.rule_runners_pool.terminate()
-            self.rule_runners_pool.join()
-        
-        from vigilo.correlator.actors import rule_runner
-        rule_runner.api = None
-
-        self.manager.out_queue.close()
-        self.manager.shutdown()
-
     def test_event_succession_1(self):
         """
         Traitement d'une succession d'événements bruts (1/2)
@@ -284,15 +258,6 @@ class TestRuleDispatcher(unittest.TestCase):
         Et enfin une nouvelle sur LLS1.
         """
         
-        # Initialisation du pool de processus utilisé par le
-        # rule_dispatcher, dans le cas où l'on utilise multiprocessing.
-        if not self.debugging:
-            # On crée un pool de processus qui 
-            # sera utilisé par le rule_dispatcher.
-            rule_runner.api = None
-            self.rule_runners_pool = \
-                create_rule_runners_pool(self.manager.out_queue)
-
         # Insertion de données dans la base.
         self.make_dependencies()
         
@@ -382,15 +347,6 @@ class TestRuleDispatcher(unittest.TestCase):
         Enfin, une alerte arrive sur LLS21 
         """
         
-        # Initialisation du pool de processus utilisé par le
-        # rule_dispatcher, dans le cas où l'on utilise multiprocessing.
-        if not self.debugging:
-            # On crée un pool de processus qui 
-            # sera utilisé par le rule_dispatcher.
-            rule_runner.api = None
-            self.rule_runners_pool = \
-                create_rule_runners_pool(self.manager.out_queue)
-
         # Insertion de données dans la base.
         self.make_dependencies()
         

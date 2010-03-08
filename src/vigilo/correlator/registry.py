@@ -66,28 +66,30 @@ class RegistryDict(object):
                                         'depended': dep,
                                     })
 
-            wells = [r for r in self.__graph.nodes_iter() \
-                        if not self.__graph.out_degree(r)]
+            self.__graph.add_edge(item.name, dep)
 
-            for node in wells:
-                existing_path = networkx.shortest_path(
-                    self.__graph, item.name, node)
-                expected_path = networkx.shortest_path(
-                    self.__graph, dep, node)
+#            wells = [r for r in self.__graph.nodes_iter() \
+#                        if not self.__graph.out_degree(r)]
 
-                if existing_path and expected_path:
-                    # S'il existe un chemin plus court jusqu'aux sources,
-                    # et si l'ajout de l'arc provoquerait la création d'un
-                    # nouveau chemin, alors on casse le chemin existant
-                    # avant de rajouter le nouvel arc.
-                    if len(existing_path) < len(expected_path) + 1:
-                        self.__graph.remove_edge(existing_path[0],
-                            existing_path[1])
-                        self.__graph.add_edge(item.name, dep)
+#            for node in wells:
+#                existing_path = networkx.shortest_path(
+#                    self.__graph, item.name, node)
+#                expected_path = networkx.shortest_path(
+#                    self.__graph, dep, node)
 
-                else:
-                    # Sinon, aucun risque de conflit, on ajoute l'arc.
-                    self.__graph.add_edge(item.name, dep)
+#                if existing_path and expected_path:
+#                    # S'il existe un chemin plus court jusqu'aux sources,
+#                    # et si l'ajout de l'arc provoquerait la création d'un
+#                    # nouveau chemin, alors on casse le chemin existant
+#                    # avant de rajouter le nouvel arc.
+#                    if len(existing_path) < len(expected_path) + 1:
+#                        self.__graph.remove_edge(existing_path[0],
+#                            existing_path[1])
+#                        self.__graph.add_edge(item.name, dep)
+
+#                else:
+#                    # Sinon, aucun risque de conflit, on ajoute l'arc.
+#                    self.__graph.add_edge(item.name, dep)
 
         self.__dict[item.name] = item
         LOGGER.debug(_('Successfully registered rule %r') % item.name)
@@ -137,30 +139,8 @@ class RegistryDict(object):
         return '<%s>' % self.__dict
 
     @property
-    def step_rules(self):
-        class RulesTree(object):
-            """Classe représentant l'arborescence des règles."""
-            def __init__(self, graph):
-                """Initialisation de l'arbre."""
-                super(RulesTree, self).__init__()
-                self.__graph = graph
-                self.__rules = [r for r in graph.nodes_iter() \
-                                if not graph.out_degree(r)]
-
-            def remove_rule(self, rule_name):
-                """Suppression d'une règle de l'arbre."""
-                self.__rules.remove(rule_name)
-
-            @property
-            def rules(self):
-                """Générateur renvoyant les règles de l'arbre."""
-                while self.__rules:
-                    yield self.__rules
-                    self.__rules = [r[0] for r in \
-                        self.__graph.in_edges_iter(self.__rules)]
-                return
-
-        return RulesTree(self.__graph)
+    def rules_graph(self):
+        return self.__graph
 
 class Registry(object):
     """
