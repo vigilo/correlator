@@ -144,13 +144,13 @@ def make_correvent(forwarder, xml):
                 try:
                     predecessing_aggregate = DBSession.query(CorrEvent
                         ).filter(CorrEvent.idcorrevent 
-                                    == predecessing_aggregate_id
+                                    == int(predecessing_aggregate_id)
                         ).one()
 
                 except NoResultFound:
                     LOGGER.error(_('Got a reference to a nonexistent '
                             'correlated event (%r), skipping this aggregate')
-                            % (predecessing_aggregate_id, ))
+                            % (int(predecessing_aggregate_id), ))
 
                 else:
                     # D'abord on rattache l'alerte
@@ -163,8 +163,9 @@ def make_correvent(forwarder, xml):
                     if succeeding_aggregates_id:
                         for succeeding_aggregate_id in \
                                 succeeding_aggregates_id:
-                            events = merge_aggregates(succeeding_aggregate_id,
-                                                    predecessing_aggregate_id)
+                            events = merge_aggregates(
+                                int(succeeding_aggregate_id),
+                                int(predecessing_aggregate_id))
                             if not is_built_dependant_event_list:
                                 for event in events:
                                     if not event in dependant_event_list:
@@ -322,7 +323,7 @@ def make_correvent(forwarder, xml):
     if aggregates_id:
         event_id_list = []
         for aggregate_id in aggregates_id:
-            events_id = merge_aggregates(aggregate_id, idcorrevent)
+            events_id = merge_aggregates(int(aggregate_id), idcorrevent)
             if events_id:
                 event_id_list.extend(events_id)
         # On publie sur le bus XMPP la liste des alertes brutes
