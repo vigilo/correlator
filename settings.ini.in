@@ -47,6 +47,11 @@ unknown_priority_value = 4
 # priorité croissante ou décroissante.
 priority_order = asc
 
+# Nombre minimum et maximum de processus dédiés
+# à l'exécution des règles de corrélation.
+min_rule_runners = 0
+max_rule_runners = 4
+
 [publications]
 # Indique le nœud cible du message en fonction du type.
 correvent = /home/localhost/correlator/correvent
