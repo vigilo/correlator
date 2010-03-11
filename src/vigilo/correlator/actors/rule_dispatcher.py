@@ -5,20 +5,16 @@ Ce module est un demi-connecteur qui assure la redirection des messages
 issus du bus XMPP vers une file d'attente (C{Queue.Queue} ou compatible).
 """
 import os.path
-import errno
 import pkg_resources
 import transaction
 from datetime import datetime
 
-from twisted.internet import reactor, protocol, task, defer
+from twisted.internet import task, defer
 from twisted.internet.error import ProcessTerminated
-from twisted.words.protocols.jabber.jid import JID
 from twisted.words.xish import domish
-from twisted.python import log
-from ampoule import pool, main
+from ampoule import pool
 from wokkel.pubsub import PubSubClient, Item
 from wokkel.generic import parseXml
-from wokkel import xmppim
 from lxml import etree
 
 from vigilo.common.conf import settings
@@ -159,6 +155,7 @@ class RuleDispatcher(PubSubClient):
         self._service = service
         self._nodetopublish = nodetopublish
         self.parallel_messages = 0
+        self.loop_call = task.LoopingCall(self.__sendQueuedMessages)
 
         # Préparation du pool d'exécuteurs de règles.
         timeout = settings['correlator'].as_int('rules_timeout')
@@ -235,20 +232,17 @@ class RuleDispatcher(PubSubClient):
             return
 
         def handle_rule_error(failure, rule_name):
+            # Appelé lorsqu'une règle vient juste d'échouer (timeout).
+            # On enregistre le problème et on lève une exception.
+            # Ceci permet de déclencher les errbacks des règles qui
+            # dépendent de celle-ci, sans pour autant réenregistrer
+            # le message d'erreur.
             if failure.check(ProcessTerminated):
                 e = failure.trap(ProcessTerminated)
-                LOGGER.info(_('Rule %(rule_name)s failed: %(message)r') % {
+                LOGGER.info(_('Rule %(rule_name)s timed out') % {
                     'rule_name': rule_name,
-                    'message': e,
                 })
-                return DependencyError
-            if rule_name is None and failure.check(DependencyError):
-                failure.trap(DependencyError)
-                LOGGER.info(_('Handling failed because some dependency '
-                            'failed.') % {
-                                'rule_name': rule_name,
-                            })
-                return None
+                return DependencyError(failure)
             return failure
 
         deferred_cache = {}
@@ -268,6 +262,8 @@ class RuleDispatcher(PubSubClient):
             subdeferreds.append(work)
             dl = defer.DeferredList(subdeferreds, fireOnOneErrback=1)
             dl.addErrback(handle_rule_error, node)
+
+            deferred_cache[node] = dl
             return dl
 
         def buildExecutionGraph(idxmpp, payload):
@@ -276,6 +272,7 @@ class RuleDispatcher(PubSubClient):
                             for r in rules_graph.nodes_iter() \
                             if not rules_graph.in_degree(r)]
             graph = defer.DeferredList(subdeferreds, fireOnOneErrback=1)
+            graph.addErrback(handle_rule_error, None)
             return graph
 
         def sendResult(result, xml, info_dictionary):
@@ -361,16 +358,27 @@ class RuleDispatcher(PubSubClient):
 
         # Le vrai travaille commence ici.
         self.parallel_messages += 1
+
         # 1 -   On génère un graphe avec des DeferredLists qui reproduit
         #       le graphe des dépendances entre les règles de corrélation.
+
         payload = etree.tostring(dom[0], encoding='utf-8')
         correlation_graph = buildExecutionGraph(idxmpp, payload)
 
-        # 2 -   Lorsque toutes les règles de corrélation ont été exécutées,
+        # 2 -   Quand toutes les règles de corrélation ont été exécutées,
         #       le callback associé à correlation_graph est appelé pour
         #       finaliser le traitement (envoyer l'événement corrélé).
-        correlation_graph.addErrback(handle_rule_error, None)
+
+        # À la fin des traitements, on doit ignorer les erreurs issues
+        # d'une règle précédente (elles ont déjà enregistrées et le
+        # traitement de la corrélation doit continuer dans ce cas).
+        def ignore_previous_dependency_failures(failure):
+            if failure.check(DependencyError):
+                return ""
+            return failure
+        correlation_graph.addErrback(ignore_previous_dependency_failures)
         correlation_graph.addCallback(sendResult, xml, info_dictionary)
+        return correlation_graph
 
     def __sendQueuedMessages(self):
         """
@@ -443,9 +451,20 @@ class RuleDispatcher(PubSubClient):
 
         # Vérifie la présence de messages dans la base de données
         # locale toutes les 0.1 secondes.
-        loop_call = task.LoopingCall(self.__sendQueuedMessages)
-        loop_call.start(0.1)
+        self.loop_call.start(0.1)
         self.rrp.start()
+
+    def connectionLost(self, reason):
+        self.loop_call.stop()
+        try:
+            self.rrp.stop()
+        except KeyError:
+            # Race condition: si on arrête le corrélateur trop rapidement
+            # après son lancement, les pipes pour l'intercommunication ne sont
+            # pas encore créés et on tente d'écrire dedans pour demander
+            # l'arrêt du pool ce qui lève une exception.
+            # On ignore l'erreur silencieusement ici.
+            pass
 
     def sendItem(self, item):
         if not isinstance(item, etree.ElementBase):
