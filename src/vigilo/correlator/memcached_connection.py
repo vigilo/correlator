@@ -39,14 +39,13 @@ class MemcachedConnection(object):
         if cls.instance is None:
             # Construction de l'objet..
             cls.instance = object.__new__(cls)
-            # Initialisation de l'attribut contenant la connexion.
-            cls.instance.__connection = None
         return cls.instance
     
     def __init__(self):
         """
         Initialisation de la connexion.
         """
+        self.__connection = None
     
     def connect(self):
         """

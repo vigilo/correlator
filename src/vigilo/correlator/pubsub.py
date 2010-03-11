@@ -18,9 +18,9 @@ class CorrServiceMaker(object):
     #implements(service.IServiceMaker, IPlugin)
 
     def makeService(self):
+        """Crée un service client du bus XMPP"""
         from vigilo.common.conf import settings
 
-        """Crée un service client du bus XMPP"""
         xmpp_client = XMPPClient(
                 JID(settings['bus']['jid']),
                 settings['bus']['password'],

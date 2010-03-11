@@ -4,22 +4,13 @@ Context objects.
 """
 __all__ = ( 'Context', )
 
-import os
-import signal
-
 from datetime import datetime
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
 from vigilo.correlator.topology import Topology
-from vigilo.correlator.memcached_connection import MemcachedConnection, \
-                                                    MemcachedConnectionError
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+from vigilo.correlator.memcached_connection import MemcachedConnection
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)

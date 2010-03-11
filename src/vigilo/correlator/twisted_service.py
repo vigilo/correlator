@@ -6,9 +6,8 @@ A bit of glue, you can start this with twistd -ny path/to/file.py
 """
 import sys
 import signal
-import Queue
 
-from twisted.internet import reactor, defer
+from twisted.internet import reactor
 from twisted.application import service
 
 # Lorsque twistd exécute le code du module,
@@ -48,9 +47,8 @@ except MemcachedConnectionError:
 get_registry()
 
 def log_debug_info(*args):
-    import threading
+    import threading, os
     LOGGER.debug('pid: %d' % os.getpid())
-    LOGGER.debug('children: %s' % mp.active_children())
     LOGGER.debug('threads: %s' % threading.enumerate())
 
 # Definit une routine pour le traitement
