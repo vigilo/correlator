@@ -28,6 +28,7 @@ Requires:   python-rel
 Requires:   python-twisted-words
 Requires:   python-wokkel
 Requires:   python-networkx
+Requires:   python-ampoule
 # Dependance de python-rel
 Requires:   python-pyevent
 

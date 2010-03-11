@@ -22,7 +22,7 @@ LOCK_FILE=/var/lock/subsys/$NAME
 
 USER=$NAME
 PID_FILE=/var/run/$NAME/$NAME.pid
-OPTIONS="--daemon"
+OPTIONS=""
 
 if [ -f /etc/sysconfig/$NAME ] ; then
 	. /etc/sysconfig/$NAME
@@ -31,7 +31,7 @@ if [ -f /etc/init.d/functions ] ; then
 	. /etc/init.d/functions
 fi
 
-export USER PID_FILE
+export USER PID_FILE OPTIONS
 
 test -x $DAEMON || exit 0
 
@@ -39,7 +39,7 @@ start() {
 	[ -f $LOCK_FILE ] && return
 
 	echo -n "Starting $NAME: "
-	daemon --user $USER $DAEMON --pidfile $PID_FILE $OPTIONS
+	daemon --user $USER $DAEMON --pidfile $PID_FILE --logfile /dev/null $OPTIONS
 	RETVAL=$?
 	echo
 	[ $RETVAL -eq 0 ] && touch $LOCK_FILE
