@@ -224,6 +224,10 @@ class RuleDispatcher(PubSubClient):
 
         @param xml: message XML à transférer.
         @type xml: C{str}
+        @return: Un objet C{Deferred} correspondant au traitement
+            du message par les règles de corrélation ou C{None} si
+            le message n'a pas pu être traité (ex: message invalide).
+        @rtype: C{twisted.internet.defer.Deferred} ou C{None}
         """
         # Si il y a déjà un message en cours de traitement,
         # on le stocke en base SQLite directement.
@@ -232,24 +236,71 @@ class RuleDispatcher(PubSubClient):
             return
 
         def handle_rule_error(failure, rule_name):
-            # Appelé lorsqu'une règle vient juste d'échouer (timeout).
-            # On enregistre le problème et on lève une exception.
-            # Ceci permet de déclencher les errbacks des règles qui
-            # dépendent de celle-ci, sans pour autant réenregistrer
-            # le message d'erreur.
-            if failure.check(ProcessTerminated):
-                e = failure.trap(ProcessTerminated)
-                LOGGER.info(_('Rule %(rule_name)s timed out') % {
-                    'rule_name': rule_name,
-                })
-                return DependencyError(failure)
+            """
+            Parcourt les erreurs Twisted survenues pendant l'exécution
+            d'une règle à la recherche d'informations indiquant que la
+            règle a dépassé le délai autorisé.
+            Lorsqu'une telle erreur est trouvée, un message est loggué
+            et une nouvelle exception (différente) est levée.
+            Ceci permet d'empêcher l'exécution des règles qui dépendent
+            de la règle qui a échoué, tout en évitant d'enregistrer à
+            nouveau le message d'erreur pour les règles dépendantes.
+
+            @param failure: Erreur remontée par Twisted.
+            @type failure: C{twisted.python.failure.Failure}
+            @param rule_name: Nom de la règle de corrélation à l'origine
+                du problème.
+            @type rule_name: C{basestring}
+            @return: L'erreur originale ou une nouvelle erreur.
+            @type: C{Exception} ou C{twisted.python.failure.Failure}
+            """
+            # On remonte la pile des FirstError jusqu'à
+            # tomber sur la véritable erreur.
+            while True:
+                try:
+                    failure.raiseException()
+                # S'il s'agit d'une FirstError, il faut analyser
+                # l'erreur sous-jacente (sub-failure).
+                except defer.FirstError, e:
+                    failure = e.subFailure
+                # L'exception ProcessTerminated est levée lorsqu'une règle
+                # vient juste d'échouer (timeout).
+                # On enregistre le problème et on lève une (autre) exception.
+                except ProcessTerminated:
+                    LOGGER.info(_('Rule %(rule_name)s timed out') % {
+                        'rule_name': rule_name,
+                    })
+                    return DependencyError(failure)
+                # Pour les autres types d'exception, on les transmet
+                # intactes pour qu'un autre errback puisse éventuellement
+                # les traiter.
+                except Exception:
+                    break
             return failure
 
         deferred_cache = {}
         def buildDeferredList(graph, node, idxmpp, xml):
             """
-            Construit un arbre de C{Deferred}s qui suit l'arbre
-            des dépendances entre les règles.
+            Construit récursivement les nœuds intermédiaires de l'arbre
+            de C{Deferred}s correspondant à l'arbre des dépendances
+            entre les règles de corrélation.
+            
+            N'utilisez pas directement cette fonction, à la place,
+            utilisez buildExecutionGraph() qui appelera buildDeferredList()
+            au besoin.
+
+            @param graph: Graphe des dépendances entre règles.
+            @type graph: C{networkx.DiGraph}
+            @param node: Nom de la règle de corrélation en cours de
+                traitement dans le graphe.
+            @type node: C{basestring}
+            @param idxmpp: Identifiant XMPP du message à traiter.
+            @type idxmpp: C{basestring}
+            @param xml: Message XML sérialisé à traiter.
+            @type xml: C{unicode}
+            @return: DeferredList correspondant au traitement de la règle
+                et de ses dépendances.
+            @rtype: C{twisted.internet.defer.DeferredList}
             """
             if deferred_cache.has_key(node):
                 return deferred_cache[node]
@@ -267,15 +318,40 @@ class RuleDispatcher(PubSubClient):
             return dl
 
         def buildExecutionGraph(idxmpp, payload):
+            """
+            Construit l'arbre de C{Deferred}s correspondant à l'arbre
+            des dépendances entre les règles.
+
+            @param idxmpp: Identifiant XMPP du message à traiter.
+            @type idxmpp: C{basestring}
+            @param xml: Message XML sérialisé à traiter.
+            @type xml: C{unicode}
+            @return: DeferredList correspondant au traitement des règles
+                qui ne sont en dépendance d'aucune autre (ie: les sources
+                dans le graphe des dépendances).
+            @rtype: C{twisted.internet.defer.DeferredList}
+            """
             rules_graph = get_registry().rules.rules_graph
             subdeferreds = [buildDeferredList(rules_graph, r, idxmpp, payload)
                             for r in rules_graph.nodes_iter() \
                             if not rules_graph.in_degree(r)]
-            graph = defer.DeferredList(subdeferreds, fireOnOneErrback=1)
-            graph.addErrback(handle_rule_error, None)
+            graph = defer.DeferredList(subdeferreds)
             return graph
 
         def sendResult(result, xml, info_dictionary):
+            """
+            Traite le résultat de l'exécution de TOUTES les règles
+            de corrélation.
+
+            @param result: Résultat de la corrélation (transmis
+                automatiquement par Twisted, vaut toujours None
+                chez nous).
+            @type result: C{None}
+            @param xml: Message XML sérialisé traité par la corrélation.
+            @type xml: C{unicode}
+            @param info_dictionary: Informations extraites du message XML.
+            @param info_dictionary: C{dict}
+            """
             # On ne doit pas émettre plus de résultats que
             # le nombre de calculs qui nous a été demandé.
             assert(self.parallel_messages > 0)
@@ -373,9 +449,14 @@ class RuleDispatcher(PubSubClient):
         # d'une règle précédente (elles ont déjà enregistrées et le
         # traitement de la corrélation doit continuer dans ce cas).
         def ignore_previous_dependency_failures(failure):
+            """
+            Capture l'exception DependencyError qui indique qu'une
+            des règles de corrélation a échoué.
+            """
             if failure.check(DependencyError):
                 return ""
             return failure
+
         correlation_graph.addErrback(ignore_previous_dependency_failures)
         correlation_graph.addCallback(sendResult, xml, info_dictionary)
         return correlation_graph
@@ -455,6 +536,16 @@ class RuleDispatcher(PubSubClient):
         self.rrp.start()
 
     def connectionLost(self, reason):
+        """
+        Cette méthode est appelée lorsque la connexion avec le bus XMPP
+        est perdue. Dans ce cas, on arrête les tentatives de renvois de
+        messages et on arrête le pool de rule runners.
+        Le renvoi de messages et le pool seront relancés lorsque la
+        connexion sera rétablie (cf. connectionInitialized).
+        """
+        super(RuleDispatcher, self).connectionLost(reason)
+        LOGGER.debug(_('Connection lost'))
+
         self.loop_call.stop()
         try:
             self.rrp.stop()
