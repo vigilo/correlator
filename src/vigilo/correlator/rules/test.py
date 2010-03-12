@@ -4,7 +4,6 @@
 from __future__ import absolute_import
 
 from vigilo.correlator.rule import Rule
-from vigilo.correlator import rulesapi
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
@@ -23,7 +22,6 @@ class TestRule(Rule):
         """Traitement du message. Ici on se contente d'afficher une trace."""
         LOGGER.debug(_('id %(id)s payload %(payload)s') % 
             {"id": idnt, "payload": payload})
-        return rulesapi.ENOERROR
 
 def register(registry):
     """Enregistre le module."""
