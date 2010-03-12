@@ -18,7 +18,7 @@ _ = translate(__name__)
 
 class MemcachedConnectionError(Exception): 
     """Exception levée lorsque le serveur MemcacheD est inaccessible."""
-    pass 
+    pass
 
 class MemcachedConnection(object):
     """
@@ -87,6 +87,9 @@ class MemcachedConnection(object):
         @rtype: C{int}
         """
         
+        LOGGER.debug(_("MemcachedConnection: Trying to set value '%(value)s' "
+            "for key '%(key)s'...") % {'key': key, 'value': value})
+        
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection:
             self.connect()
@@ -113,7 +116,8 @@ class MemcachedConnection(object):
                 # On lève une exception
                 LOGGER.critical(_("Could not connect to memcached server, "
                                   "make sure it is running"))
-                raise MemcachedConnectionError
+                raise MemcachedConnectionError(_("Could not connect to "
+                    "memcached server, make sure it is running"))
             
         return result
             
@@ -132,6 +136,9 @@ class MemcachedConnection(object):
         @return: La valeur associée à la clé 'key', ou None.
         @rtype: C{str} || None
         """
+        
+        LOGGER.debug(_("MemcachedConnection: Trying to get the value of the "
+            "key '%(key)s'...") % {'key': key, })
         
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection:
@@ -162,7 +169,8 @@ class MemcachedConnection(object):
                 # On lève une exception
                 LOGGER.critical(_("Could not connect to memcached server, "
                                   "make sure it is running"))
-                raise MemcachedConnectionError
+                raise MemcachedConnectionError(_("Could not connect to "
+                    "memcached server, make sure it is running"))
         
         # On "dé-sérialise" la valeur avant de la retourner
         return pickle.loads(result)
@@ -180,6 +188,9 @@ class MemcachedConnection(object):
         @return: Un entier non nul si la suppression a réussi.
         @rtype: C{int}
         """
+        
+        LOGGER.debug(_("MemcachedConnection: Trying to delete the "
+            "key '%(key)s'...") % {'key': key, })
         
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection:
@@ -203,7 +214,8 @@ class MemcachedConnection(object):
                 # On lève une exception
                 LOGGER.critical(_("Could not connect to memcached server, "
                                   "make sure it is running"))
-                raise MemcachedConnectionError
+                raise MemcachedConnectionError(_("Could not connect to "
+                    "memcached server, make sure it is running"))
             
         return result
 
