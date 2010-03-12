@@ -7,7 +7,6 @@ avec une limite sur la durée maximale d'exécution.
 import os
 from twisted.protocols import amp
 from ampoule import child
-from lxml import etree
 
 from vigilo.common.conf import settings
 settings.load_module(__name__)
@@ -22,7 +21,7 @@ LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
 from vigilo.correlator.registry import get_registry
-from vigilo.correlator import rulesapi
+from vigilo.correlator.memcached_connection import MemcachedConnectionError
 
 class RuleRunner(amp.Command):
     arguments = [
@@ -33,6 +32,14 @@ class RuleRunner(amp.Command):
     response = [
     ]
     errors = {
+        # Permet de capturer les erreurs les plus plausibles
+        # pour pouvoir diagnostiquer facilement les problèmes.
+        KeyError: 'KeyError',
+        ValueError: 'ValueError',
+        MemcachedConnectionError: 'MemcachedConnectionError',
+
+        # Pour les autres erreurs, elles seront remontées
+        # sous forme d'C{Exception}s génériques.
         Exception: 'Exception',
     }
 

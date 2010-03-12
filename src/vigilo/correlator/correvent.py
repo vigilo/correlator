@@ -66,8 +66,6 @@ def make_correvent(forwarder, xml):
     xml = etree.tostring(dom)
     raw_event_id = ctx.raw_event_id
     
-    LOGGER.debug(_("Payload: %s") % (xml, ))
-
     # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :
     # - l'alerte brute portait sur un HLS; dans ce cas il ne s'agit pas
     #   vraiment d'une erreur (on n'enregistre pas d'événement corrélé).
@@ -80,7 +78,7 @@ def make_correvent(forwarder, xml):
     #   problème ici.
     if raw_event_id is None:
         return
-    
+
     # On détermine le nouvel état de chacun des HLS 
     # impactés par l'alerte, avant de l'enregistrer dans 
     # la BDD et de le transmettre à Nagios via le bus XMPP.
