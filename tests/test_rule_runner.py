@@ -2,65 +2,124 @@
 """
 Test du rule_runner.
 """
-import unittest
+#import unittest
+from twisted.trial import unittest
 from time import sleep
+from cStringIO import StringIO
+
+#from twisted.internet import reactor
+from twisted.internet.defer import inlineCallbacks, Deferred
+from twisted.internet.error import ProcessTerminated
+from twisted.internet import reactor
+# On réutilise les mécanismes d'ampoule.
+from ampoule.test.test_process import FakeAMP, _FakeT
+from ampoule import main, pool
 
 from vigilo.correlator.rule import Rule
 
-from vigilo.correlator.actors import rule_runner
+from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
 from vigilo.correlator.registry import get_registry
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
+from vigilo.correlator.actors.rule_runner import VigiloAMPChild, RuleRunner
+
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
-class TimeoutRule(Rule):
-    """ Règle conçue pour s'exécuter indéfiniment """
+class SpecificException(Exception):
+    message = "Oops!"
+    def __init__(self):
+        super(SpecificException, self).__init__(self.message)
 
-    def process(self, xmpp_id, payload):
-        """ Traitement du message par la règle. Ici une boucle infinie """
-        while True:
-            sleep(1)
+class ExceptionRuleRunner(RuleRunner):
+    pass
 
-class ExceptionRule(Rule):
-    """ Règle conçue pour lever une exception """
+class ExceptionAMPChild(VigiloAMPChild):
+    @ExceptionRuleRunner.responder
+    def rule_runner(self, *args, **kwargs):
+        raise SpecificException()
 
-    def process(self, xmpp_id, payload):
-        """ Traitement du message par la règle. Ici on lève une exception """
-        raise Exception, "Exception"
+class TimeoutRuleRunner(RuleRunner):
+    pass
 
-class TestUpdateAttributeRule(unittest.TestCase):
-    """ Classe de test du rule_runner """
-    
-    def test_rule_timeout(self):
-        """Code de retour d'une règle en cas de timeout"""
-        
-        registry = get_registry()
-        registry.rules.clear()
-        registry.rules.register(TimeoutRule())
-        message = u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='foo'><superceded>423</superceded><superceded>523</superceded></aggr></item>"
+class TimeoutAMPChild(VigiloAMPChild):
+    @TimeoutRuleRunner.responder
+    def rule_runner(self, *args, **kwargs):
+        from time import sleep
+        sleep(5)
 
-        result = rule_runner.process(("TimeoutRule", message))
-        self.assertEqual(result, ('TimeoutRule', ETIMEOUT, None))
-    
+class TestRuleException(unittest.TestCase):
+    """ Classe de test du comportement du rule dispatcher en cas d'erreurs."""
+    def setUp(self):
+        super(TestRuleException, self).setUp()
+
+        # Permet d'attendre le lancement du reactor
+        # avant de continuer l'exécution des tests.
+        d = Deferred()
+        reactor.callLater(0, d.callback, None)
+        return d
+
+    @inlineCallbacks
     def test_rule_exception(self):
-        """Code de retour d'une règle en cas d'exception"""
-        
-        registry = get_registry()
-        registry.rules.clear()
-        registry.rules.register(ExceptionRule())
-        message = u"<item xmlns='http://jabber.org/protocol/pubsub'><aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1' id='foo'><superceded>423</superceded><superceded>523</superceded></aggr></item>"
-        
-        result = rule_runner.process(("ExceptionRule", message))
-        
-        self.assertEqual(result[0], 'ExceptionRule')
-        self.assertEqual(result[1], EEXCEPTION)
-        self.assertTrue(result[2])
-        self.assertTrue(isinstance(result[2], ValueError))
-        self.assertEqual(str(result[2]), 'Exception')
-        
-        
-        
-        
+        """Test d'une règle qui lève une exception."""
+        pp = pool.ProcessPool(
+            ampChild=ExceptionAMPChild,
+            timeout=2,
+            name='ExceptionRuleDispatcher',
+            min=1, max=1,
+        )
+        yield pp.start()
+
+        def _fail():
+            self.fail("Expected an exception!")
+
+        def _checks(failure):
+            pp.stop()
+            try:
+                failure.raiseException()
+            except Exception, e:
+                self.assertEquals(e.message, SpecificException.message)
+            else:
+                _fail()
+
+        work = pp.doWork(
+            ExceptionRuleRunner,
+            rule_name='Exception',
+            idxmpp='foo',
+            xml='bar',
+        )
+        work.addCallbacks(lambda *args: _fail, _checks)
+        yield work
+        yield pp.stop()
+
+    @inlineCallbacks
+    def test_rule_timeout(self):
+        """Test d'une règle qui dépasse le délai maximum autorisé."""
+        pp = pool.ProcessPool(
+            ampChild=TimeoutAMPChild,
+            timeout=2,
+            name='TimeoutRuleDispatcher',
+            min=1, max=1,
+        )
+        yield pp.start()
+
+        def _fail():
+            self.fail("Expected an exception!")
+
+        def _checks(failure):
+            pp.stop()
+            self.assertTrue(failure.check(ProcessTerminated),
+                "Incorrect exception")
+
+        work = pp.doWork(
+            TimeoutRuleRunner,
+            rule_name='TimeOut',
+            idxmpp='foo',
+            xml='bar',
+        )
+        work.addCallbacks(lambda *args: _fail, _checks)
+        yield work
+        yield pp.stop()
+
