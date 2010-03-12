@@ -25,6 +25,5 @@ class ExampleRule(Rule):
 
 def register(registry):
     """Enregistre le module."""
-    registry.rules.register(ExamplRule())
-
+    registry.rules.register(ExampleRule())
 

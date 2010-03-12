@@ -163,6 +163,7 @@ class RuleDispatcher(PubSubClient):
         max_runner = settings['correlator'].as_int('max_rule_runners')
 
         self.rrp = pool.ProcessPool(
+            # @TODO permettre la config de l'idle max des rule runners.
             ampChild=rule_runner.VigiloAMPChild,
             timeout=timeout,
             name='RuleDispatcher',

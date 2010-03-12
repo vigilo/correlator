@@ -65,31 +65,7 @@ class RegistryDict(object):
                                         'dependent': item.name,
                                         'depended': dep,
                                     })
-
             self.__graph.add_edge(item.name, dep)
-
-#            wells = [r for r in self.__graph.nodes_iter() \
-#                        if not self.__graph.out_degree(r)]
-
-#            for node in wells:
-#                existing_path = networkx.shortest_path(
-#                    self.__graph, item.name, node)
-#                expected_path = networkx.shortest_path(
-#                    self.__graph, dep, node)
-
-#                if existing_path and expected_path:
-#                    # S'il existe un chemin plus court jusqu'aux sources,
-#                    # et si l'ajout de l'arc provoquerait la création d'un
-#                    # nouveau chemin, alors on casse le chemin existant
-#                    # avant de rajouter le nouvel arc.
-#                    if len(existing_path) < len(expected_path) + 1:
-#                        self.__graph.remove_edge(existing_path[0],
-#                            existing_path[1])
-#                        self.__graph.add_edge(item.name, dep)
-
-#                else:
-#                    # Sinon, aucun risque de conflit, on ajoute l'arc.
-#                    self.__graph.add_edge(item.name, dep)
 
         self.__dict[item.name] = item
         LOGGER.debug(_('Successfully registered rule %r') % item.name)
