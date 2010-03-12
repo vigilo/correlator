@@ -11,12 +11,12 @@ from vigilo.common.gettext import translate
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
-class TestRule(Rule):
+class ExampleRule(Rule):
     """Module d'exemple pour les règles de corrélation."""
 
     def __init__(self):
         """Initialisation du module."""
-        super(TestRule, self).__init__([])
+        super(ExampleRule, self).__init__([])
 
     def process(self, idnt, payload):
         """Traitement du message. Ici on se contente d'afficher une trace."""
@@ -25,6 +25,6 @@ class TestRule(Rule):
 
 def register(registry):
     """Enregistre le module."""
-    registry.rules.register(TestRule())
+    registry.rules.register(ExamplRule())
 
 
