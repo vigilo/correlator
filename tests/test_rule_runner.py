@@ -48,7 +48,7 @@ class TimeoutAMPChild(VigiloAMPChild):
     @TimeoutRuleRunner.responder
     def rule_runner(self, *args, **kwargs):
         from time import sleep
-        sleep(5)
+        sleep(999)
 
 class TestRuleException(unittest.TestCase):
     """ Classe de test du comportement du rule dispatcher en cas d'erreurs."""
