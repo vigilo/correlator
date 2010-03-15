@@ -282,6 +282,7 @@ def make_correvent(forwarder, xml):
     forwarder.sendItem(payload)
 
     # On génère le message à envoyer à syslog.
+    # Ceci satisfait l'exigence VIGILO_EXIG_VIGILO_COR_0040.
     data_log[DATA_LOG_ID] = idcorrevent
     data_log[DATA_LOG_STATE] = ctx.statename
     data_log[DATA_LOG_PRIORITY] = priority
