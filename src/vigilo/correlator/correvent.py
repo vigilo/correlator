@@ -46,6 +46,11 @@ def make_correvent(forwarder, xml):
     Récupère dans le contexte les informations transmises par
     les règles, crée les événements corrélés (agrégats 
     d'événements) nécessaires dans la BDD et les transmet à pubsub.
+    
+    
+    Permet de satisfaire les exigences suivantes : 
+    - VIGILO_EXIG_VIGILO_COR_0040,
+    - VIGILO_EXIG_VIGILO_COR_0060.
     """
     # Manière pas très propre de transformer le namespace
     # pour passer des tags <event>s aux <correvent>s.
@@ -282,7 +287,7 @@ def make_correvent(forwarder, xml):
     forwarder.sendItem(payload)
 
     # On génère le message à envoyer à syslog.
-    # Ceci satisfait l'exigence VIGILO_EXIG_VIGILO_COR_0040.
+    # Ceci permet de satisfaire l'exigence VIGILO_EXIG_VIGILO_COR_0040.
     data_log[DATA_LOG_ID] = idcorrevent
     data_log[DATA_LOG_STATE] = ctx.statename
     data_log[DATA_LOG_PRIORITY] = priority
