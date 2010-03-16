@@ -7,9 +7,10 @@ issus du bus XMPP vers une file d'attente (C{Queue.Queue} ou compatible).
 import os.path
 import pkg_resources
 import transaction
+from sqlalchemy.exc import OperationalError
 from datetime import datetime
 
-from twisted.internet import task, defer
+from twisted.internet import task, defer, reactor
 from twisted.internet.error import ProcessTerminated
 from twisted.words.xish import domish
 from ampoule import pool
@@ -415,7 +416,13 @@ class RuleDispatcher(PubSubClient):
         ctx.statename = info_dictionary["state"]
         
         # On met à jour l'arbre topologique si nécessaire.
-        check_topology(ctx.last_topology_update)
+        try:
+            check_topology(ctx.last_topology_update)
+        except OperationalError:
+            LOGGER.critical(_("Could not connect to the "
+                "database server, make sure it is running"))
+            reactor.stop()
+            return
 
         # On insère le message dans la BDD, sauf s'il concerne un HLS.
         if not info_dictionary["host"]:
