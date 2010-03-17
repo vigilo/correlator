@@ -9,7 +9,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 import transaction
 
 from vigilo.models.configure import DBSession
-from vigilo.models import Correvent, EventHistory
+from vigilo.models import CorrEvent, EventHistory
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
@@ -43,9 +43,9 @@ def handle_ticket(info_dictionary):
     # corrélé associé à ce ticket d'incident.
     try:
         correvent = DBSession.query(
-                    Correvent
+                    CorrEvent
                 ).filter(
-                    Correvent.trouble_ticket == info_dictionary["ticket_id"]
+                    CorrEvent.trouble_ticket == info_dictionary["ticket_id"]
                 ).one()
     except NoResultFound:
         # Si aucun évènement n'est trouvé on loggue une erreur.
@@ -60,13 +60,13 @@ def handle_ticket(info_dictionary):
         return
     LOGGER.debug(_('handle_ticket: The event %(event_id)r is '
                    'associated with the given ticket (%(ticket_id)r)' 
-                   % {'event_id': Correvent.idevent, 
+                   % {'event_id': correvent.idcorrevent, 
                       'ticket_id': info_dictionary["ticket_id"],}))
                  
     # Mise à jour de l'historique de l'évènement corrélé :
     history = EventHistory()
     history.type_action = u'Ticket change notification'
-    history.idevent = Correvent.idevent
+    history.idevent = correvent.idcorrevent
     history.value = info_dictionary['ticket_id']
     history.text = info_dictionary['message']
     history.timestamp = info_dictionary['timestamp']
@@ -78,11 +78,11 @@ def handle_ticket(info_dictionary):
         
     except (IntegrityError, InvalidRequestError), e:
         LOGGER.exception(_('handle_ticket: Got exception while updating '
-                            'event %r history' % Correvent.idevent))
+                            'event %r history' % correvent.idcorrevent))
         
     else:
         LOGGER.debug(_('handle_ticket: Event %r history updated successfully.' 
-                        % Correvent.idevent))
+                        % correvent.idcorrevent))
         
     return
     
