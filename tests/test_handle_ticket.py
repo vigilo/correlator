@@ -88,7 +88,10 @@ class TestHandleTicket(unittest.TestCase):
         history = DBSession.query(EventHistory).one()
         self.assertEqual(history.type_action, u'Ticket change notification')
         self.assertEqual(history.idevent, self.events_aggregate.idcorrevent)
-        self.assertEqual(history.text, info_dictionary['message'])
+        self.assertEqual(history.text, '%r;%r;%r' % 
+                            (info_dictionary['acknowledgement status'], 
+                             info_dictionary['message'], 
+                             info_dictionary['impacted_HLS']))
         self.assertEqual(history.timestamp, info_dictionary['timestamp'])
         self.assertFalse(history.username)
 

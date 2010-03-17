@@ -68,7 +68,9 @@ def handle_ticket(info_dictionary):
     history.type_action = u'Ticket change notification'
     history.idevent = correvent.idcorrevent
     history.value = info_dictionary['ticket_id']
-    history.text = info_dictionary['message']
+    history.text = '%r;%r;%r' % (info_dictionary['acknowledgement status'], 
+                                 info_dictionary['message'], 
+                                 info_dictionary['impacted_HLS'])
     history.timestamp = info_dictionary['timestamp']
     history.username = None
 
