@@ -30,7 +30,8 @@ from vigilo.connector.sockettonodefw import MESSAGEONETOONE
 from vigilo.models import Change
 from vigilo.models.configure import DBSession
 
-from vigilo.correlator.xml import namespaced_tag, NS_EVENTS#, NS_DOWNTIME
+from vigilo.correlator.xml import namespaced_tag, NS_EVENTS, \
+                                    NS_TICKET#, NS_DOWNTIME
 from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
 from vigilo.correlator.memcached_connection import MemcachedConnection
@@ -54,9 +55,12 @@ def extract_information(payload):
                        "state": None, 
                        "timestamp": None, 
                        "message": None,
-                       "type": None,
-                       "author": None,
-                       "comment": None,}
+#                       "type": None,
+#                       "author": None,
+#                       "comment": None,
+                       "impacted_HLS": None,
+                       "ticket_id": None,
+                       "acknowledgement status": None,}
         
     # Récupération du namespace utilisé
     namespace = etree.QName(payload.tag).namespace
@@ -402,6 +406,13 @@ class RuleDispatcher(PubSubClient):
     #        handle_downtime(info_dictionary)
     #        # Et on passe au message suivant.
     #        return
+
+        # S'il s'agit d'un message concernant un ticket d'incident :
+        if dom[0].tag == namespaced_tag(NS_TICKET, 'ticket'):
+            # On insère les informations la concernant dans la BDD ;
+            handle_ticket(info_dictionary)
+            # Et on passe au message suivant.
+            return
 
         # Sinon, s'il ne s'agit pas d'un message d'événement (c'est-à-dire
         # un message d'alerte de changement d'état), on ne le traite pas.
