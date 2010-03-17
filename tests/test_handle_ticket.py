@@ -72,8 +72,8 @@ class TestHandleTicket(unittest.TestCase):
             'timestamp': datetime.now(), 
             'impacted_HLS': '',
             'ticket_id': u'azerty1234', 
-            'acknowledgement status': None,
-            'message': 'foo',                  
+            'acknowledgement_status': 'foo',
+            'message': 'bar',                  
         }
         
         # On traite le message.
@@ -89,7 +89,7 @@ class TestHandleTicket(unittest.TestCase):
         self.assertEqual(history.type_action, u'Ticket change notification')
         self.assertEqual(history.idevent, self.events_aggregate.idcorrevent)
         self.assertEqual(history.text, '%r;%r;%r' % 
-                            (info_dictionary['acknowledgement status'], 
+                            (info_dictionary['acknowledgement_status'], 
                              info_dictionary['message'], 
                              info_dictionary['impacted_HLS']))
         self.assertEqual(history.timestamp, info_dictionary['timestamp'])

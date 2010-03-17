@@ -32,11 +32,11 @@ def handle_ticket(info_dictionary):
     """
     LOGGER.debug(_('handle_ticket: Trouble ticket message received. '
                  'Timestamp = %r. Impacted HLS = %r. Ticket id = %r. '
-                 'Acknowledgement status = %r. Message = %r.' % 
+                 'acknowledgement_status = %r. Message = %r.' % 
                      (info_dictionary["timestamp"], 
                       info_dictionary["impacted_HLS"],
                       info_dictionary["ticket_id"], 
-                      info_dictionary["acknowledgement status"],
+                      info_dictionary["acknowledgement_status"],
                       info_dictionary["message"])))
 
     # On cherche dans la BDD l'évènement
@@ -68,7 +68,7 @@ def handle_ticket(info_dictionary):
     history.type_action = u'Ticket change notification'
     history.idevent = correvent.idcorrevent
     history.value = info_dictionary['ticket_id']
-    history.text = '%r;%r;%r' % (info_dictionary['acknowledgement status'], 
+    history.text = '%r;%r;%r' % (info_dictionary['acknowledgement_status'], 
                                  info_dictionary['message'], 
                                  info_dictionary['impacted_HLS'])
     history.timestamp = info_dictionary['timestamp']

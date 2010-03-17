@@ -60,7 +60,7 @@ def extract_information(payload):
 #                       "comment": None,
                        "impacted_HLS": None,
                        "ticket_id": None,
-                       "acknowledgement status": None,}
+                       "acknowledgement_status": None,}
         
     # Récupération du namespace utilisé
     namespace = etree.QName(payload.tag).namespace
