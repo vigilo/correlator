@@ -554,7 +554,8 @@ class RuleDispatcher(PubSubClient):
         super(RuleDispatcher, self).connectionLost(reason)
         LOGGER.debug(_('Connection lost'))
 
-        self.loop_call.stop()
+        if self.loop_call.running:
+            self.loop_call.stop()
         try:
             self.rrp.stop()
         except KeyError:
