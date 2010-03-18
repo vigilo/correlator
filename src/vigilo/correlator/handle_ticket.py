@@ -4,9 +4,8 @@
 Prend en charge les messages concernant les tickets d'incidents.
 """
 
-from sqlalchemy import not_, or_
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-import transaction
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 from vigilo.models.configure import DBSession
 from vigilo.models import CorrEvent, EventHistory
@@ -78,7 +77,7 @@ def handle_ticket(info_dictionary):
         DBSession.add(history)
         DBSession.flush()
         
-    except (IntegrityError, InvalidRequestError), e:
+    except (IntegrityError, InvalidRequestError):
         LOGGER.exception(_('handle_ticket: Got exception while updating '
                             'event %r history' % correvent.idcorrevent))
         

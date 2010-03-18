@@ -37,6 +37,7 @@ from vigilo.correlator.registry import get_registry
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context, TOPOLOGY_PREFIX
 #from vigilo.correlator.handle_downtime import handle_downtime
+from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
