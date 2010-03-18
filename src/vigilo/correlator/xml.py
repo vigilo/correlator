@@ -8,6 +8,7 @@ NS_EVENTS = 'http://www.projet-vigilo.org/xmlns/event1'
 NS_CORREVENTS = 'http://www.projet-vigilo.org/xmlns/correvent1'
 NS_COMMAND = 'http://www.projet-vigilo.org/xmlns/command1'
 NS_DOWNTIME = 'http://www.projet-vigilo.org/xmlns/downtime1'
+NS_TICKET = 'http://www.projet-vigilo.org/xmlns/ticket1'
 
 def namespaced_tag(ns, tag):
     """
