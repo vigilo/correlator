@@ -84,8 +84,4 @@ def handle_ticket(info_dictionary):
     else:
         LOGGER.debug(_('handle_ticket: Event %r history updated successfully.' 
                         % correvent.idcorrevent))
-        
-    return
-    
-    
-    
+

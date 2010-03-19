@@ -401,17 +401,21 @@ class RuleDispatcher(PubSubClient):
         # Extraction des informations du message
         info_dictionary = extract_information(dom[0])
 
-    #    # S'il s'agit d'un message concernant une mise en silence :
-    #    if dom[0].tag == namespaced_tag(NS_DOWNTIME, 'downtime'):
-    #        # On insère les informations la concernant dans la BDD ;
-    #        handle_downtime(info_dictionary)
-    #        # Et on passe au message suivant.
-    #        return
+#        # S'il s'agit d'un message concernant une mise en silence :
+#        if dom[0].tag == namespaced_tag(NS_DOWNTIME, 'downtime'):
+#            # On insère les informations la concernant dans la BDD ;
+#            handle_downtime(info_dictionary)
+#            transaction.commit()
+#            transaction.begin()
+#            # Et on passe au message suivant.
+#            return
 
         # S'il s'agit d'un message concernant un ticket d'incident :
         if dom[0].tag == namespaced_tag(NS_TICKET, 'ticket'):
             # On insère les informations la concernant dans la BDD ;
             handle_ticket(info_dictionary)
+            transaction.commit()
+            transaction.begin()
             # Et on passe au message suivant.
             return
 

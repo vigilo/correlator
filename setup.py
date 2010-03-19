@@ -40,7 +40,6 @@ setup(name='vigilo-correlator',
         +'the cause of a problem.\n',
         install_requires=[
             # dashes become underscores
-            # order is important (wokkel before Twisted)
             'setuptools',
             'lxml',
             'psycopg2',

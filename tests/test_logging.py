@@ -2,7 +2,6 @@
 """Suite de tests des logs du corrélateur"""
 
 import unittest
-import transaction
 
 from datetime import datetime
 
@@ -154,19 +153,14 @@ class TestLogging(unittest.TestCase):
             "message": new_state,}
         # - D'abord l'évènement ;
         ctx.raw_event_id = insert_event(info_dictionary)
-        transaction.commit()
-        transaction.begin()
         # - Et ensuite l'état.
         insert_state(info_dictionary)
-        transaction.commit()
-        transaction.begin()
         
         # On force le traitement du message, par la fonction make_correvent,
         # comme s'il avait été traité au préalable par le rule_dispatcher.
         rd = RuleDispatcherStub()
         make_correvent(rd, payload)
-        transaction.commit()
-        transaction.begin()
+        DBSession.flush()
 
     def add_data(self):
         """
@@ -212,9 +206,7 @@ class TestLogging(unittest.TestCase):
             op_dep = u'&',
             weight = 42,
         )
-        
-        transaction.commit()
-        transaction.begin()
+        DBSession.flush()
     
     def setUp(self):
         """Initialisation des tests"""
