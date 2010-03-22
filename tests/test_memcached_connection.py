@@ -21,6 +21,21 @@ class TestMemcachedConnection(unittest.TestCase):
         """Arrêt du serveur Memcached à la fin de chaque test."""
         teardown_mc()
 
+    def test_singleton(self):
+        """Unicité de la connexion au serveur MemcacheD."""
+        
+        # On initialise le serveur Memcached.
+        setup_mc()
+        
+        # On instancie deux fois la classe MemcachedConnection.
+        conn1 = MemcachedConnection()
+        conn2 = MemcachedConnection()
+        
+        # On s'assure que les deux instances
+        # représentent en fait le même objet.
+        self.assertEqual(conn1, conn2)
+        
+
     def test_set(self):
         """Association d'une valeur à une clé"""
         
