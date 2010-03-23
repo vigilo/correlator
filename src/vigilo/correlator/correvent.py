@@ -4,6 +4,7 @@
 Création des événements corrélés dans la BDD et transmission à pubsub.
 """
 
+from sqlalchemy import not_ , and_
 from datetime import datetime
 import logging
 
@@ -19,9 +20,8 @@ from vigilo.correlator.publish_messages import publish_aggregate, \
 from vigilo.correlator.compute_hls_states import compute_hls_states
 
 from vigilo.models.configure import DBSession
-from vigilo.models import CorrEvent
-from vigilo.models import EventHistory
-from vigilo.models import HighLevelService
+from vigilo.models import CorrEvent, Event, EventHistory
+from vigilo.models import SupItem, HighLevelService, StateName
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
@@ -89,7 +89,26 @@ def make_correvent(forwarder, xml):
     # la BDD et de le transmettre à Nagios via le bus XMPP.
     compute_hls_states(forwarder, ctx)
 
-    update_id = ctx.update_id
+    hostname = ctx.hostname
+    servicename = ctx.servicename
+    item_id = SupItem.get_supitem(hostname, servicename)
+
+    update_id = DBSession.query(
+                CorrEvent.idcorrevent
+            ).join(
+                (Event, CorrEvent.idcause == Event.idevent),
+                (SupItem, SupItem.idsupitem == Event.idsupitem),
+            ).filter(SupItem.idsupitem == item_id
+            ).filter(not_(and_(
+                Event.current_state.in_([
+                    StateName.statename_to_value(u'OK'),
+                    StateName.statename_to_value(u'UP')
+                ]),
+                CorrEvent.status == u'AAClosed'
+            ))
+            ).filter(CorrEvent.timestamp_active != None
+            ).scalar()
+
     correvent = None
     data_log = [
         'CHANGE',   # TYPE
@@ -291,8 +310,8 @@ def make_correvent(forwarder, xml):
     data_log[DATA_LOG_ID] = idcorrevent
     data_log[DATA_LOG_STATE] = ctx.statename
     data_log[DATA_LOG_PRIORITY] = priority
-    data_log[DATA_LOG_HOST] = ctx.hostname
-    data_log[DATA_LOG_SERVICE] = ctx.servicename
+    data_log[DATA_LOG_HOST] = hostname
+    data_log[DATA_LOG_SERVICE] = servicename
     data_log[DATA_LOG_MESSAGE] = dom.findtext(
         namespaced_tag(NS_CORREVENTS, 'message'), '')
 

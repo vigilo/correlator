@@ -35,7 +35,7 @@ rules_timeout = 2
 
 syslog_data_level = 20
 
-rules = vigilo.correlator.rules.hls_deps, vigilo.correlator.rules.lls_deps, vigilo.correlator.rules.update_attribute, vigilo.correlator.rules.update_occurrences_count, vigilo.correlator.rules.priority
+rules = vigilo.correlator.rules.hls_deps, vigilo.correlator.rules.lls_deps, vigilo.correlator.rules.update_occurrences_count, vigilo.correlator.rules.priority
 
 
 # La priorité associée à une alerte sur un

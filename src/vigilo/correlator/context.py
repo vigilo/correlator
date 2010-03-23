@@ -121,33 +121,6 @@ class Context(object):
                             __set_occurrences_count)
 
 
-    def __get_update_id(self):
-        """
-        Renvoie l'identifiant de mise à jour de l'alerte corrélée.
-    
-        @return: L'identifiant de mise à jour de l'alerte corrélée.
-        @rtype: C{basestring}.
-        """
-        return self.__connection.get(UPDATE_PREFIX + self.__id)
-
-    def __set_update_id(self, value):
-        """
-        Change l'identifiant de mise à jour de l'alerte corrélée.
-
-        @param value: La valeur à affecter à l'identifiant de mise à jour de 
-        l'alerte corrélée.
-        @type value: C{int}.
-    
-        @return: Un entier non nul en cas de succès de l'opération.
-        @rtype: C{int}.
-        """
-        return self.__connection.set(UPDATE_PREFIX + self.__id, value)
-        
-    update_id = property(
-                    __get_update_id,
-                    __set_update_id)
-
-
     def __get_impacted_hls(self):
         """
         Renvoie la liste des services de haut niveau impactés.

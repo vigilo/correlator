@@ -47,6 +47,26 @@ class MemcachedConnection(object):
         Initialisation de la connexion.
         """
     
+    def __del__(self):
+        """
+        Destruction de la connexion à memcached.
+        """
+        if self.__connection:
+            self.__connection.disconnect_all()
+
+    @classmethod
+    def reset(cls):
+        """
+        Permet de supprimer le singleton qui gère la connexion
+        à memcached.
+        
+        @note: En temps normal, vous NE DEVEZ PAS utiliser cette méthode.
+            Cette méthode n'existe que pour faciliter le travail des
+            tests unitaires de cette classe.
+        """
+        del cls.instance
+        cls.instance = None
+    
     def connect(self):
         """
         Établit la connexion.
@@ -65,10 +85,17 @@ class MemcachedConnection(object):
         port = settings['correlator'].as_int('memcached_port')
         conn_str = '%s:%d' % (host, port)
 
+        # Paramètre de débogage.
+        try:
+            debug = settings['correlator'].as_bool('memcached_debug')
+        except KeyError:
+            debug = False
+
         # Établissement de la connexion.
         LOGGER.info(_("Establishing connection to MemcacheD"
                       " server (%s)...") % (conn_str, ))
         self.__connection = mc.Client([conn_str])
+        self.__connection.debug = debug
         self.__connection.behaviors = {'support_cas': 1}
     
     def set(self, key, value, *args, **kwargs):
@@ -193,21 +220,25 @@ class MemcachedConnection(object):
             "key '%(key)s'...") % {'key': key, })
         
         # On établit la connection au serveur Memcached si nécessaire.
+        LOGGER.debug("Establishing new connection")
         if not self.__connection:
             self.connect()
         
         # On supprime la clé 'key' et la valeur qui lui est associée.
         result = self.__connection.delete(key)
+        LOGGER.debug("Deleted ? %r" % result)
         
         # Si la suppression a échoué on doit s'assurer
         # que la connexion est bien opérante :
         if not result:
             
             # On tente de rétablir la connection au serveur MemcacheD.
+            LOGGER.debug("Establishing new connection (bis)")
             self.connect()
             
             # On essaye une nouvelle fois de supprimer la clé 'key'.
             result = self.__connection.delete(key)
+            LOGGER.debug("Deleted (bis) ? %r" % result)
         
             # Si la suppression a de nouveau échoué
             if not result:

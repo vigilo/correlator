@@ -238,15 +238,14 @@ class TestLogging(unittest.TestCase):
 
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
+        # On dissocie le handler du logger.
+        self.logger.removeHandler(self.handler)
 
         DBSession.flush()
         # Évite que d'anciennes instances viennent perturber le test suivant.
         DBSession.expunge_all()
         teardown_db()
         teardown_mc()
-        
-        # On dissocie le handler du logger.
-        self.logger.removeHandler(self.handler)
 
     def test_log_new_event(self):
         """

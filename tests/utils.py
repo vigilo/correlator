@@ -14,6 +14,8 @@ from vigilo.common.conf import settings
 settings.load_module(__name__)
 from vigilo.models.configure import metadata, DBSession, configure_db
 
+from vigilo.correlator.memcached_connection import MemcachedConnection
+
 mc_pid = None
 
 def get_available_port():
@@ -49,7 +51,10 @@ def setup_mc():
 
 def teardown_mc():
     """Détruit le serveur memcached créé pour le passage d'un test."""
+    # Détruit l'objet qui gère la connexion.
+    MemcachedConnection.reset()
     try:
+        # Tue le serveur memcached lancé en arrière-plan.
         os.kill(mc_pid, signal.SIGTERM)
         os.wait() # Avoid zombies. Bad zombies.
     except OSError:
