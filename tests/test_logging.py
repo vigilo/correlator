@@ -46,26 +46,16 @@ class RuleDispatcherStub():
         self.buffer = []
 
 
-class test_log_handler(object):
+class LogHandlerStub(object):
     """Classe interceptant les logs du corrélateur pendant les tests."""
     
      # Attribut statique de classe
     instance = None
+
+    def __init__(self):
+        """Initialisation."""
+        self.buffer = []
     
-    def __new__(cls):
-        """
-        Constructeur
-        
-        @return: Une instance de la classe L{cls}.
-        @rtype: L{cls}
-        """
-        if cls.instance is None:
-            # Construction de l'objet..
-            cls.instance = object.__new__(cls)
-            # Initialisation de l'attribut contenant la connexion.
-            cls.instance.buffer = []
-        return cls.instance
-        
     def write(self, message):
         """
         Écrit les messages dans le buffer.
@@ -88,8 +78,6 @@ class test_log_handler(object):
         """
         self.buffer = []
 
-syslog_handler = test_log_handler()
-    
 class TestLogging(unittest.TestCase):
     """
     Test de l'écriture des logs dans le corrélateur.
@@ -155,7 +143,8 @@ class TestLogging(unittest.TestCase):
         ctx.raw_event_id = insert_event(info_dictionary)
         # - Et ensuite l'état.
         insert_state(info_dictionary)
-        
+        DBSession.flush()
+
         # On force le traitement du message, par la fonction make_correvent,
         # comme s'il avait été traité au préalable par le rule_dispatcher.
         rd = RuleDispatcherStub()
@@ -222,7 +211,7 @@ class TestLogging(unittest.TestCase):
         # On crée une instance de la classe test_log_handler()
         # pour intercepter les logs du corrélateur, et on
         # construit un StreamHandler à partir de cette instance.
-        self.stream = test_log_handler()
+        self.stream = LogHandlerStub()
         self.handler = logging.StreamHandler(self.stream)
         
         # On associe ce handler au logger.
@@ -247,12 +236,13 @@ class TestLogging(unittest.TestCase):
         teardown_db()
         teardown_mc()
 
-    def test_log_new_event(self):
+    def test_syslog_and_correvent(self):
         """
-        Syslog : nouvel évènement
+        Syslog : création et mise à jour d'un événement corrélé.
         
         Vérifie que les logs générés lors de la création d'un nouvel
         évènement par le corrélateur sont conformes à ceux attendus.
+        Puis, fait de même avec la mise à jour d'un événement corrélé.
         """
         
         # Insertion de données dans la base.
@@ -265,16 +255,18 @@ class TestLogging(unittest.TestCase):
         
         lls_name = self.lls.servicename
         lls_id = self.lls.idservice
+
+        # Partie 1 : test le syslog sur la création d'un événement corrélé.
     
         # On recoit un message "WARNING" concernant lls1.
-        LOGGER.debug(_("Réception d'un message 'WARNING' concernant lls1"))
+        LOGGER.debug(_("Received 'WARNING' message on lls1"))
         self.simulate_message_reception(u"WARNING", host_name, lls_name)
         
         event = DBSession.query(Event.idevent).one()
         event_id = event.idevent
         
         self.assertEqual(
-            syslog_handler.buffer, [u'%(idevent)d|NEW|%(hostname)s|'
+            self.stream.buffer, [u'%(idevent)d|NEW|%(hostname)s|'
             '%(servicename)s|%(statename)s|%(priority)s|%(statename)s\n' % {
                 'idevent': event_id,
                 'hostname': host_name,
@@ -283,36 +275,12 @@ class TestLogging(unittest.TestCase):
                 'priority': 4,
                 }])
 
-    def test_log_updated_event(self):
-        """
-        Syslog : mise à jour d'un évènement
-        
-        Vérifie que les logs générés lors de la mise à jour d'un
-        évènement par le corrélateur sont conformes à ceux attendus.
-        """
-        
-        # Insertion de données dans la base.
-        self.add_data()
-        
-        DBSession.add(self.host)
-        DBSession.add(self.lls)
-        
-        host_name = self.host.name
-        
-        lls_name = self.lls.servicename
-        lls_id = self.lls.idservice
-    
-        # On recoit un message "WARNING" concernant lls1.
-        LOGGER.debug(_("Réception d'un message 'WARNING' concernant lls1"))
-        self.simulate_message_reception(u"WARNING", host_name, lls_name)
-        
-        event = DBSession.query(Event.idevent).one()
-        event_id = event.idevent
-        
         self.stream.clear()
+
+        # Partie 2 : test le syslog sur la mise à jour d'un événement corrélé.
     
         # On recoit un message "CRITICAL" concernant lls1.
-        LOGGER.debug(_("Réception d'un message 'CRITICAL' concernant lls1"))
+        LOGGER.debug(_("Received 'CRITICAL' message on lls1"))
         ctx = Context(self.XMPP_id + 1)
         ctx.update_id = event_id
         self.simulate_message_reception(u"CRITICAL", host_name, lls_name)
@@ -321,7 +289,7 @@ class TestLogging(unittest.TestCase):
         event_id = event.idevent
         
         self.assertEqual(
-            syslog_handler.buffer, [u'%(idevent)d|CHANGE|%(hostname)s|'
+            self.stream.buffer, [u'%(idevent)d|CHANGE|%(hostname)s|'
             '%(servicename)s|%(statename)s|%(priority)s|%(statename)s\n' % {
                 'idevent': event_id,
                 'hostname': host_name,
@@ -329,4 +297,6 @@ class TestLogging(unittest.TestCase):
                 'statename': u'CRITICAL',
                 'priority': 4,
                 }])
+
+        self.stream.clear()
 
