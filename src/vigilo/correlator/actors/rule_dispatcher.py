@@ -171,7 +171,14 @@ class RuleDispatcher(PubSubClient):
         self.rrp = pool.ProcessPool(
             # @TODO permettre la config de l'idle max des rule runners.
             ampChild=rule_runner.VigiloAMPChild,
-            timeout=timeout,
+            # @XXX Désactivé pour le moment car pose des problèmes.
+            # Lorsqu'un processus atteint le timeout, il est tué,
+            # mais lorsqu'une tâche arrive, ampoule semble ne pas
+            # attendre que le processus soit créé pour lui envoyer
+            # la tâche. On tombe dans une race condition et la règle
+            # échoue (à cause d'un timeout). Plusieurs messages
+            # peuvent ainsi défiler sans être traités...
+#            timeout=timeout,
             name='RuleDispatcher',
             min=min_runner,
             max=max_runner,
