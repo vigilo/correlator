@@ -130,10 +130,10 @@ def make_correvent(forwarder, xml):
                 ).filter(CorrEvent.idcorrevent == update_id
                 ).one()
             LOGGER.debug(_('Updating existing correlated event (%r)') %
-                (update_id, ))
+                update_id)
         except NoResultFound:
-            LOGGER.error(_('Got a reference to a nonexistent '
-                'correlated event (%r), adding as new') % (update_id))
+            LOGGER.error(_('Got a reference to a non-existent '
+                'correlated event (%r), adding as new') % update_id)
 
     # Il s'agit d'une création ou bien l'événement corrélé
     # indiqué n'existe pas.

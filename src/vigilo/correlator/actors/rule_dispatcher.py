@@ -222,6 +222,7 @@ class RuleDispatcher(PubSubClient):
                 # The alternative is 'retract', which we silently ignore
                 # We receive retractations in FIFO order,
                 # ejabberd keeps 10 items before retracting old items.
+                LOGGER.debug(_('Skipping unrecognized item (%s)') % item.name)
                 continue
             self.handleMessage(xml)
 
