@@ -450,9 +450,11 @@ class RuleDispatcher(PubSubClient):
             transaction.begin()
 
         # On insère l'état dans la BDD
-        insert_state(info_dictionary)
+        previous_state = insert_state(info_dictionary)
         transaction.commit()
         transaction.begin()
+
+        ctx.previous_state = previous_state
 
         if raw_event_id:
             ctx.raw_event_id = raw_event_id

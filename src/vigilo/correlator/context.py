@@ -16,6 +16,7 @@ LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
 STATENAME_PREFIX = 'statename:'
+PREVIOUS_STATE_PREFIX = 'prev-state:'
 PRIORITY_PREFIX = 'priority:'
 OCCURRENCES_PREFIX = 'occurrences:'
 IMPACTED_HLS_PREFIX = 'hls:'
@@ -242,6 +243,31 @@ class Context(object):
     statename = property(
                     __get_statename,
                     __set_statename)
+
+    def __get_previous_state(self):
+        """
+        Renvoie le précédent état du service.
+    
+        @return: Le précédent état du service.
+        @rtype: C{basestring}.
+        """
+        return self.__connection.get(PREVIOUS_STATE_PREFIX + self.__id)
+
+    def __set_previous_state(self, value):
+        """
+        Change le précédent état du service.
+
+        @param value: La valeur à affecter au précédent état du service.
+        @type value: C{int}.
+    
+        @return: Un entier non nul en cas de succès de l'opération.
+        @rtype: C{int}.
+        """
+        return self.__connection.set(PREVIOUS_STATE_PREFIX + self.__id, value)
+        
+    previous_state = property(
+                    __get_previous_state,
+                    __set_previous_state)
 
     def __get_predecessors_aggregates(self):
         """

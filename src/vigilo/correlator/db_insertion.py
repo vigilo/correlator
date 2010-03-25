@@ -138,8 +138,6 @@ def insert_state(info_dictionary):
     @param info_dictionary: Dictionnaire contenant les informations 
     extraites du message d'alerte reçu par le rule dispatcher.
     @type info_dictionary: C{dictionary}
-    @return: L'état instancié.
-    @rtype: L{vigilo.models.State}
     """
 
     # On récupère l'identifiant de l'item (hôte ou service) concerné.
@@ -156,6 +154,8 @@ def insert_state(info_dictionary):
     # Le cas échéant, on le crée.
     if not state:
         state = State(idsupitem = item_id)
+
+    previous_state = state.state
     
     # On met à jour l'état dans la BDD
     state.message = info_dictionary["message"]
@@ -167,6 +167,7 @@ def insert_state(info_dictionary):
         DBSession.flush()
     except (IntegrityError, InvalidRequestError), e:
         LOGGER.error(_('insert_state: %r' % e))
+    return previous_state
 
 
 def add_to_aggregate(idevent, aggregate):
