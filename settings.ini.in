@@ -59,6 +59,10 @@ max_rule_runners = 4
 # ressources inutilement par moments.
 rule_runners_max_idle = 20
 
+# Délai en secondes entre les vérifications de la présence
+# de messages en attente de retransmission.
+queue_delay = 0.1
+
 [publications]
 # Indique le nœud cible du message en fonction du type.
 correvent = /home/localhost/correlator/correvent

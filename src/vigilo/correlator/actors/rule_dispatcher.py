@@ -570,8 +570,16 @@ class RuleDispatcher(PubSubClient):
         LOGGER.debug(_('Connection initialized'))
 
         # Vérifie la présence de messages dans la base de données
-        # locale toutes les 0.1 secondes.
-        self.loop_call.start(0.1)
+        # locale toutes les queue_delay secondes, ou 0.1 par défaut.
+        try:
+            queue_delay = float(settings['correlator'].get(
+                'queue_delay', None))
+        except ValueError:
+            queue_delay = 0.1
+
+        LOGGER.info(_('Starting the queue manager with a delay '
+                        'of %f seconds.') % queue_delay)
+        self.loop_call.start(queue_delay)
         self.rrp.start()
 
     def connectionLost(self, reason):
