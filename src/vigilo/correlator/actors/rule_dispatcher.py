@@ -168,8 +168,13 @@ class RuleDispatcher(PubSubClient):
         min_runner = settings['correlator'].as_int('min_rule_runners')
         max_runner = settings['correlator'].as_int('max_rule_runners')
 
+        try:
+            max_idle = settings['correlator'].as_int('rule_runners_max_idle')
+        except KeyError:
+            max_idle = 20
+
         self.rrp = pool.ProcessPool(
-            # @TODO permettre la config de l'idle max des rule runners.
+            maxIdle=max_idle,
             ampChild=rule_runner.VigiloAMPChild,
             # @XXX Désactivé pour le moment car pose des problèmes.
             # Lorsqu'un processus atteint le timeout, il est tué,

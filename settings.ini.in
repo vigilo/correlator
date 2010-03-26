@@ -52,6 +52,13 @@ priority_order = asc
 min_rule_runners = 0
 max_rule_runners = 4
 
+# Durée en secondes d'inactivité après laquelle
+# les rule runners s'arrêtent.
+# Si ce délai est trop bas, cela nuira aux performances.
+# Si ce délai est trop haut, le corrélateur occupera des
+# ressources inutilement par moments.
+rule_runners_max_idle = 20
+
 [publications]
 # Indique le nœud cible du message en fonction du type.
 correvent = /home/localhost/correlator/correvent
