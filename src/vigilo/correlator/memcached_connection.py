@@ -220,25 +220,21 @@ class MemcachedConnection(object):
             "key '%(key)s'...") % {'key': key, })
         
         # On établit la connection au serveur Memcached si nécessaire.
-        LOGGER.debug("Establishing new connection")
         if not self.__connection:
             self.connect()
         
         # On supprime la clé 'key' et la valeur qui lui est associée.
         result = self.__connection.delete(key)
-        LOGGER.debug("Deleted ? %r" % result)
         
         # Si la suppression a échoué on doit s'assurer
         # que la connexion est bien opérante :
         if not result:
             
             # On tente de rétablir la connection au serveur MemcacheD.
-            LOGGER.debug("Establishing new connection (bis)")
             self.connect()
             
             # On essaye une nouvelle fois de supprimer la clé 'key'.
             result = self.__connection.delete(key)
-            LOGGER.debug("Deleted (bis) ? %r" % result)
         
             # Si la suppression a de nouveau échoué
             if not result:
