@@ -234,10 +234,6 @@ def make_correvent(forwarder, xml):
         occurrence_tag.text = str(occurrences)
         correvent.occurrence = occurrences
 
-    # Identifiant de l'événement corrélé à mettre à jour.
-    if not update_id is None:
-        dom.set('update', str(update_id))
-
     # Stockage des services de haut niveau impactés.
     impacted_hls = ctx.impacted_hls
     highlevel_tag = etree.SubElement(dom, "highlevel")
@@ -292,6 +288,12 @@ def make_correvent(forwarder, xml):
 
     # Récupération de l'identifiant de l'agrégat pour plus tard.
     idcorrevent = correvent.idcorrevent
+
+    # Identifiant de l'événement corrélé à mettre à jour.
+    if not update_id is None:
+        dom.set('update', str(update_id))
+    else:
+        dom.set('id', str(idcorrevent))
 
     # On génère le message à envoyer à PubSub.
     payload = etree.tostring(dom)
