@@ -11,7 +11,7 @@ import logging
 from sqlalchemy.orm.exc import NoResultFound
 from lxml import etree
 
-from vigilo.correlator.xml import namespaced_tag, NS_CORREVENTS, NS_EVENTS
+from vigilo.correlator.xml import namespaced_tag, NS_EVENTS
 from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates
 from vigilo.correlator.publish_messages import publish_aggregate, \
@@ -54,16 +54,8 @@ def make_correvent(forwarder, xml):
     """
     # Manière pas très propre de transformer le namespace
     # pour passer des tags <event>s aux <correvent>s.
-    xml = xml.replace(NS_EVENTS, NS_CORREVENTS)
     dom = etree.fromstring(xml)
-
     DBSession.flush()
-
-    # Transformation des tags <event> en <correvent>.
-    # Le namespace a déjà été transformé avec le code précédent.
-    for el in dom:
-        if el.tag == namespaced_tag(NS_CORREVENTS, 'event'):
-            el.tag = namespaced_tag(NS_CORREVENTS, 'correvent')
 
     idnt = dom.get('id')
     dom = dom[0]
@@ -265,7 +257,7 @@ def make_correvent(forwarder, xml):
                 service_tag.text = service.servicename
                 data_log[DATA_LOG_IMPACTED_HLS].append(service.servicename)
     # Détermine le timestamp de l'événement.
-    timestamp = dom.findtext(namespaced_tag(NS_CORREVENTS, "timestamp"))
+    timestamp = dom.findtext(namespaced_tag(NS_EVENTS, "timestamp"))
     try:
         timestamp = datetime.fromtimestamp(int(timestamp))
     except (ValueError, TypeError):
@@ -313,7 +305,7 @@ def make_correvent(forwarder, xml):
     data_log[DATA_LOG_HOST] = hostname
     data_log[DATA_LOG_SERVICE] = servicename
     data_log[DATA_LOG_MESSAGE] = dom.findtext(
-        namespaced_tag(NS_CORREVENTS, 'message'), '')
+        namespaced_tag(NS_EVENTS, 'message'), '')
 
     if not data_log[DATA_LOG_SERVICE]:
         data_log[DATA_LOG_SERVICE] = 'HOST'
@@ -323,6 +315,7 @@ def make_correvent(forwarder, xml):
     except KeyError:
         log_level = logging.INFO
 
+    LOGGER.debug(_('Sending correlated event to syslog'))
     data_logger = get_logger('vigilo.correlator.syslog')
     data_logger.log(
         log_level,

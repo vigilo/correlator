@@ -6,7 +6,7 @@ jid = correlator@localhost
 password = correlator
 
 watched_topics = /home/localhost/connector-nagios/event, /home/localhost/connector-nagios/downtime
-owned_topics = /home/localhost/correlator/correvent, /home/localhost/correlator/aggr, /home/localhost/correlator/delaggr, /home/localhost/correlator/state
+owned_topics = /home/localhost/correlator/event, /home/localhost/correlator/aggr, /home/localhost/correlator/delaggr, /home/localhost/correlator/state
 
 [database]
 sqlalchemy_url = postgres://vigilo:vigilo@localhost/vigilo
@@ -65,7 +65,7 @@ queue_delay = 0.1
 
 [publications]
 # Indique le nœud cible du message en fonction du type.
-correvent = /home/localhost/correlator/correvent
+event = /home/localhost/correlator/event
 aggr = /home/localhost/correlator/aggr
 delaggr = /home/localhost/correlator/delaggr
 state = /home/localhost/correlator/state
