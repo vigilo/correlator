@@ -127,9 +127,9 @@ msgstr  "Les poids des dépendances sont les suivants : %r"
 
 #: src/vigilo/corr/compute_hls_states.py:180
 #, python-format
-msgid   "High-level service %(name)r: weight = %(weight)d, state = %(state)r (%"
-        "(output)r)"
-msgstr  "Service de haut niveau %(name)r : poids = %(weight)d, état = %(state)"
+msgid   "High-level service %(name)r: weight = %(weight)d, state = %(state)r ("
+        "%(output)r)"
+msgstr  "Service de haut niveau %(name)r : poids = %(weight)d, état = %(state)r"
         "r (%(output)r)"
 
 #: src/vigilo/corr/compute_hls_states.py:231
@@ -180,11 +180,11 @@ msgstr  "L'identifiant de l'événement brut est incorrect, événement ignoré.
 #: src/vigilo/corr/correvent.py:101
 #, python-format
 msgid   "Updating existing correlated event (%r)"
-msgstr  "Mise à jour d'un événement corrélé existant (%r)s"
+msgstr  "Mise à jour d'un événement corrélé existant (%r)"
 
 #: src/vigilo/corr/correvent.py:104
 #, python-format
-msgid   "Got a reference to a nonexistent correlated event (%r), adding as new"
+msgid   "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr  "L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à "
         "la BDD."
 
@@ -285,10 +285,10 @@ msgstr  "id %(id)s message %(payload)s"
 
 #: src/vigilo/corr/rules/priority.py:66
 #, python-format
-msgid   "The priority for the alert on (%(hostname)r, %(servicename)r) is %"
-        "(priority)r."
-msgstr  "La priorité de l'événement corrélé causé par (%(hostname)r, %"
-        "(servicename)r) est %(priority)r."
+msgid   "The priority for the alert on (%(hostname)r, %(servicename)r) is "
+        "%(priority)r."
+msgstr  "La priorité de l'événement corrélé causé par (%(hostname)r, "
+        "%(servicename)r) est %(priority)r."
 
 #: src/vigilo/corr/rules/priority.py:104
 #, python-format
@@ -307,8 +307,8 @@ msgstr  "Hôte : %(hostname)r, service : %(servicename)r, occurrences: %"
 
 #: src/vigilo/corr/rules/update_attribute.py:57
 #, python-format
-msgid   "Host: %(hostname)r, service: %(servicename)r, update on correvent: %"
-        "(correventid)r"
+msgid   "Host: %(hostname)r, service: %(servicename)r, update on correvent: "
+        "%(correventid)r"
 msgstr  "Hôte : %(hostname)r, service : %(servicename)r, mise à jour de "
         "l'événement corrélé %(correventid)r"
 
