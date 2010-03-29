@@ -76,7 +76,6 @@ class TestRuleException(unittest.TestCase):
             self.fail("Expected an exception!")
 
         def _checks(failure):
-            pp.stop()
             try:
                 failure.raiseException()
             except Exception, e:
@@ -109,7 +108,6 @@ class TestRuleException(unittest.TestCase):
             self.fail("Expected an exception!")
 
         def _checks(failure):
-            pp.stop()
             self.assertTrue(failure.check(ProcessTerminated),
                 "Incorrect exception")
 
