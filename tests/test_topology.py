@@ -4,9 +4,9 @@ from datetime import datetime
 import unittest
 import nose
 
-from vigilo.models.configure import DBSession
-from vigilo.models import Host, LowLevelService, Dependency
-from vigilo.models import Event, CorrEvent, StateName
+from vigilo.models.session import DBSession
+from vigilo.models.tables import Host, LowLevelService, Dependency
+from vigilo.models.tables import Event, CorrEvent, StateName
 
 from vigilo.correlator.topology import Topology
 from utils import setup_db, teardown_db

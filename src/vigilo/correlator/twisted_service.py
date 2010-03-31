@@ -15,6 +15,7 @@ from twisted.application import service
 # d'une valeur explicite dans les settings, etc.
 from vigilo.common.conf import settings
 settings.load_module('vigilo.correlator')
+
 from vigilo.common.gettext import translate
 from vigilo.common.logging import get_logger
 
@@ -23,7 +24,8 @@ _ = translate('vigilo.correlator')
 
 # Configuration de l'accès à la base de données.
 from vigilo.models.configure import configure_db
-configure_db(settings['database'], 'sqlalchemy_')
+configure_db(settings['database'], 'sqlalchemy_',
+    settings['database']['db_basename'])
 
 from vigilo.correlator.context import TOPOLOGY_PREFIX
 from vigilo.correlator.memcached_connection import MemcachedConnection, \

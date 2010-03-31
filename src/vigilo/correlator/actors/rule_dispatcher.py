@@ -27,8 +27,8 @@ from vigilo.common.gettext import translate
 from vigilo.connector.store import DbRetry
 from vigilo.connector.sockettonodefw import MESSAGEONETOONE
 
-from vigilo.models import Change
-from vigilo.models.configure import DBSession
+from vigilo.models.tables import Change
+from vigilo.models.session import DBSession
 
 from vigilo.correlator.xml import namespaced_tag, NS_EVENTS, \
                                     NS_TICKET#, NS_DOWNTIME

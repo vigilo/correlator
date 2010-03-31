@@ -11,10 +11,11 @@ from vigilo.correlator.db_insertion import insert_event, insert_state, \
 from vigilo.correlator.xml import NS_EVENTS
 from utils import setup_db, teardown_db
 
-from vigilo.models import State, StateName, Event, \
+from vigilo.models.tables import State, StateName, Event, \
                             LowLevelService, HighLevelService, Host, \
                             CorrEvent
-from vigilo.models.configure import DBSession
+from vigilo.models.session import DBSession
+
 from vigilo.common.conf import settings
 settings.load_module(__name__)
 

@@ -19,9 +19,9 @@ from vigilo.correlator.publish_messages import publish_aggregate, \
 
 from vigilo.correlator.compute_hls_states import compute_hls_states
 
-from vigilo.models.configure import DBSession
-from vigilo.models import CorrEvent, Event, EventHistory
-from vigilo.models import SupItem, HighLevelService, StateName
+from vigilo.models.session import DBSession
+from vigilo.models.tables import CorrEvent, Event, EventHistory
+from vigilo.models.tables import SupItem, HighLevelService, StateName
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate

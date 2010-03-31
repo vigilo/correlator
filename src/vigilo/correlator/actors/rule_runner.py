@@ -12,7 +12,8 @@ from vigilo.common.conf import settings
 settings.load_module(__name__)
 
 from vigilo.models.configure import configure_db
-configure_db(settings['database'], 'sqlalchemy_')
+configure_db(settings['database'], 'sqlalchemy_',
+    settings['database']['db_basename'])
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate

@@ -9,9 +9,9 @@ import unittest
 from vigilo.correlator.db_insertion import merge_aggregates
 from utils import setup_db, teardown_db
 
-from vigilo.models.configure import DBSession
-from vigilo.models import Event, CorrEvent
-from vigilo.models import LowLevelService, Host
+from vigilo.models.session import DBSession
+from vigilo.models.tables import Event, CorrEvent
+from vigilo.models.tables import LowLevelService, Host
 
 def create_topology_and_events():
     """

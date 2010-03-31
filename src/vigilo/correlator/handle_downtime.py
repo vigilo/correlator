@@ -7,8 +7,8 @@ Prend en charge les messages concernant les mises en silence.
 #from sqlalchemy import not_, or_
 #import transaction
 #
-#from vigilo.models.configure import DBSession
-#from vigilo.models import Downtime, DowntimeStatus
+#from vigilo.models.session import DBSession
+#from vigilo.models.tables import Downtime, DowntimeStatus
 #
 #import re
 #

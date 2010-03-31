@@ -9,11 +9,11 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.exc import InvalidRequestError, IntegrityError
 
 from vigilo.common.logging import get_logger
-from vigilo.models.configure import DBSession
-from vigilo.models import StateName, State
-from vigilo.models import SupItem
-from vigilo.models import Event, EventHistory, CorrEvent
-from vigilo.models.secondary_tables import EVENTSAGGREGATE_TABLE
+from vigilo.models.session import DBSession
+from vigilo.models.tables import StateName, State
+from vigilo.models.tables import SupItem
+from vigilo.models.tables import Event, EventHistory, CorrEvent
+from vigilo.models.tables.secondary_tables import EVENTSAGGREGATE_TABLE
 from vigilo.common.gettext import translate
 
 _ = translate(__name__)

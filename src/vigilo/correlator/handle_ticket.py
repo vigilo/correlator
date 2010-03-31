@@ -7,8 +7,8 @@ Prend en charge les messages concernant les tickets d'incidents.
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
-from vigilo.models.configure import DBSession
-from vigilo.models import CorrEvent, EventHistory
+from vigilo.models.session import DBSession
+from vigilo.models.tables import CorrEvent, EventHistory
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)

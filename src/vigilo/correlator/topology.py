@@ -2,13 +2,13 @@
 # vim:set expandtab tabstop=4 shiftwidth=4:
 """Graphe topologique"""
 
-from vigilo.models.configure import DBSession
+from vigilo.models.session import DBSession
 from sqlalchemy.sql.expression import not_, and_, or_, desc
 
 import networkx as nx
 
-from vigilo.models import Dependency
-from vigilo.models import Event, CorrEvent, StateName
+from vigilo.models.tables import Dependency
+from vigilo.models.tables import Event, CorrEvent, StateName
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate

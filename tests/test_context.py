@@ -6,7 +6,7 @@ import unittest
 import random
 import threading
 
-from vigilo.models.configure import DBSession
+from vigilo.models.session import DBSession
 
 from utils import setup_mc, teardown_mc
 from utils import setup_db, teardown_db

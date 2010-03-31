@@ -13,8 +13,8 @@ from vigilo.correlator.xml import NS_EVENTS
 
 from vigilo.correlator.context import Context
 
-from vigilo.models.configure import DBSession
-from vigilo.models import LowLevelService, Host, StateName, \
+from vigilo.models.session import DBSession
+from vigilo.models.tables import LowLevelService, Host, StateName, \
                             Dependency, Event, CorrEvent, Change
 
 from utils import setup_mc, teardown_mc, setup_db, teardown_db

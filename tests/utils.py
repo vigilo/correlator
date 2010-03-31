@@ -12,7 +12,12 @@ import nose
 
 from vigilo.common.conf import settings
 settings.load_module(__name__)
-from vigilo.models.configure import metadata, DBSession, configure_db
+
+from vigilo.models.configure import configure_db
+configure_db(settings['database'], 'sqlalchemy_',
+    settings['database']['db_basename'])
+
+from vigilo.models.session import metadata, DBSession
 
 from vigilo.correlator.memcached_connection import MemcachedConnection
 
@@ -67,7 +72,6 @@ with_mc = nose.with_setup(setup_mc, teardown_mc)
 #Create an empty database before we start our tests for this module
 def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
-    configure_db(settings['database'], 'sqlalchemy_')
     metadata.create_all()
     
 #Teardown that database 

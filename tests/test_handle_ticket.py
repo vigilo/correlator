@@ -3,8 +3,8 @@
 from datetime import datetime
 import unittest
 
-from vigilo.models.configure import DBSession
-from vigilo.models import Host, Event, EventHistory, CorrEvent
+from vigilo.models.session import DBSession
+from vigilo.models.tables import Host, Event, EventHistory, CorrEvent
 
 from vigilo.correlator.handle_ticket import handle_ticket 
 from utils import setup_db, teardown_db
