@@ -81,6 +81,7 @@ def make_correvent(forwarder, xml):
     # la BDD et de le transmettre à Nagios via le bus XMPP.
     compute_hls_states(forwarder, ctx)
 
+    state = ctx.statename
     hostname = ctx.hostname
     servicename = ctx.servicename
     item_id = SupItem.get_supitem(hostname, servicename)
@@ -133,7 +134,6 @@ def make_correvent(forwarder, xml):
         data_log[DATA_LOG_TYPE] = 'NEW'
 
         # Si l'état de l'alerte brute est 'OK' ou bien 'UP', on ne fait rien
-        state = ctx.statename
         if state == "OK" or state == "UP":
             LOGGER.info(_('Raw event ignored. Reason: status = %r' 
                                 % (state, )))
@@ -265,7 +265,9 @@ def make_correvent(forwarder, xml):
 
     # On repasse l'événement dans l'état non-acquitté.
     # Le test évite de polluer la BDD avec des changements d'acquittement.
-    if (not correvent.status is None) and correvent.status != u'None':
+    if (not correvent.status is None) \
+        and correvent.status != u'None' \
+        and state != "OK" and state != "UP":
         correvent.timestamp_active = timestamp
         history = EventHistory(
             type_action=u'Acknowlegement change state',
