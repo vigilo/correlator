@@ -38,9 +38,11 @@ from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context, TOPOLOGY_PREFIX
 #from vigilo.correlator.handle_downtime import handle_downtime
 from vigilo.correlator.handle_ticket import handle_ticket
-from vigilo.correlator.db_insertion import insert_event, insert_state
+from vigilo.correlator.db_insertion import insert_event, insert_state, \
+                                            insert_hls_history
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
+from vigilo.correlator.compute_hls_states import compute_hls_states
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -62,7 +64,7 @@ def extract_information(payload):
                        "impacted_HLS": None,
                        "ticket_id": None,
                        "acknowledgement_status": None,}
-        
+
     # Récupération du namespace utilisé
     namespace = etree.QName(payload.tag).namespace
     
@@ -380,14 +382,26 @@ class RuleDispatcher(PubSubClient):
             # On publie sur le bus XMPP l'état de l'hôte
             # ou du service concerné par l'alerte courante.
             publish_state(self, info_dictionary)
+
+            dom = etree.fromstring(xml)
+            idnt = dom.get('id')
+            dom = dom[0]
+
+            # On détermine le nouvel état de chacun des HLS 
+            # impactés par l'alerte, avant de l'enregistrer dans 
+            # la BDD et de le transmettre à Nagios via le bus XMPP.
+            compute_hls_states(self, idnt)
             
             # Pour les services de haut niveau, on s'arrête ici,
             # on NE DOIT PAS générer d'événement corrélé.
             if info_dictionary["host"] == \
                 settings['correlator']['nagios_hls_host']:
+                transaction.commit()
+                transaction.begin()
                 return
 
-            make_correvent(self, xml)
+
+            make_correvent(self, dom, idnt)
             transaction.commit()
             transaction.begin()
 
@@ -456,6 +470,7 @@ class RuleDispatcher(PubSubClient):
         # On insère le message dans la BDD, sauf s'il concerne un HLS.
         if not info_dictionary["host"]:
             raw_event_id = None
+            insert_hls_history(info_dictionary)
         else:
             raw_event_id = insert_event(info_dictionary)
             transaction.commit()

@@ -10,8 +10,7 @@ from sqlalchemy.exc import InvalidRequestError, IntegrityError
 
 from vigilo.common.logging import get_logger
 from vigilo.models.session import DBSession
-from vigilo.models.tables import StateName, State
-from vigilo.models.tables import SupItem
+from vigilo.models.tables import StateName, State, HLSHistory, SupItem
 from vigilo.models.tables import Event, EventHistory, CorrEvent
 from vigilo.models.tables.secondary_tables import EVENTSAGGREGATE_TABLE
 from vigilo.common.gettext import translate
@@ -22,6 +21,7 @@ LOGGER = get_logger(__name__)
 __all__ = (
     'insert_event',
     'insert_state',
+    'insert_hls_history',
     'add_to_aggregate',
     'merge_aggregates'
 )
@@ -34,7 +34,7 @@ def insert_event(info_dictionary):
 
     @param info_dictionary: Dictionnaire contenant les informations 
     extraites du message d'alerte reçu par le rule dispatcher.
-    @type info_dictionary: C{dictionary}
+    @type info_dictionary: C{dict}
     @return: L'identifiant de l'événement dans la BDD.
     @rtype: C{int}
     """
@@ -129,6 +129,34 @@ def insert_event(info_dictionary):
     else:
         return event.idevent
 
+def insert_hls_history(info_dictionary):
+    """
+    Insère le nouvel état du service de haut niveau dans HLSHistory
+    afin de conserver une trace.
+
+    @param info_dictionary: Dictionnaire contenant les informations
+        extraites du message d'alerte reçu par le rule dispatcher.
+    @type info_dictionary: C{dict}
+    """
+
+    # On récupère l'identifiant du service de haut niveau.
+    item_id = SupItem.get_supitem(info_dictionary['host'],
+                                    info_dictionary['service'])
+
+    if not item_id:
+        return None
+
+    history = HLSHistory()
+    history.idhls = item_id
+    history.timestamp = info_dictionary['timestamp']
+    history.idstatename = StateName.statename_to_value(
+                            info_dictionary['state'])
+    try:
+        DBSession.add(history)
+        DBSession.flush()
+    except IntegrityError, e:
+        LOGGER.exception(_('Got exception'))
+
 def insert_state(info_dictionary):
     """
     Insère l'état fourni par un message d'événement dans la BDD.
@@ -137,7 +165,7 @@ def insert_state(info_dictionary):
 
     @param info_dictionary: Dictionnaire contenant les informations 
     extraites du message d'alerte reçu par le rule dispatcher.
-    @type info_dictionary: C{dictionary}
+    @type info_dictionary: C{dict}
     """
 
     # On récupère l'identifiant de l'item (hôte ou service) concerné.

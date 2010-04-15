@@ -17,8 +17,6 @@ from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates
 from vigilo.correlator.publish_messages import publish_aggregate, \
                                             delete_published_aggregates
 
-from vigilo.correlator.compute_hls_states import compute_hls_states
-
 from vigilo.models.session import DBSession
 from vigilo.models.tables import CorrEvent, Event, EventHistory
 from vigilo.models.tables import SupItem, HighLevelService, StateName
@@ -41,7 +39,7 @@ DATA_LOG_IMPACTED_HLS = 5
 DATA_LOG_PRIORITY = 6
 DATA_LOG_MESSAGE = 7
 
-def make_correvent(forwarder, xml):
+def make_correvent(forwarder, dom, idnt):
     """
     Récupère dans le contexte les informations transmises par
     les règles, crée les événements corrélés (agrégats 
@@ -52,17 +50,11 @@ def make_correvent(forwarder, xml):
     - VIGILO_EXIG_VIGILO_COR_0040,
     - VIGILO_EXIG_VIGILO_COR_0060.
     """
-    # Manière pas très propre de transformer le namespace
-    # pour passer des tags <event>s aux <correvent>s.
-    dom = etree.fromstring(xml)
     DBSession.flush()
 
-    idnt = dom.get('id')
-    dom = dom[0]
     ctx = Context(idnt)
-    xml = etree.tostring(dom)
     raw_event_id = ctx.raw_event_id
-    
+
     # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :
     # - l'alerte brute portait sur un HLS; dans ce cas il ne s'agit pas
     #   vraiment d'une erreur (on n'enregistre pas d'événement corrélé).
@@ -75,11 +67,6 @@ def make_correvent(forwarder, xml):
     #   problème ici.
     if raw_event_id is None:
         return
-
-    # On détermine le nouvel état de chacun des HLS 
-    # impactés par l'alerte, avant de l'enregistrer dans 
-    # la BDD et de le transmettre à Nagios via le bus XMPP.
-    compute_hls_states(forwarder, ctx)
 
     state = ctx.statename
     hostname = ctx.hostname

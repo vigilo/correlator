@@ -2,25 +2,19 @@
 """Suite de tests des logs du corrélateur"""
 
 import unittest
-
 from datetime import datetime
-
 from twisted.words.xish import domish
+from lxml import etree
 
 from utils import settings
-
-from vigilo.correlator.xml import NS_EVENTS
-
-from vigilo.correlator.context import Context
-
+from utils import setup_mc, teardown_mc, setup_db, teardown_db
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
                             Dependency, Event, CorrEvent, Change
 
-from utils import setup_mc, teardown_mc, setup_db, teardown_db
-
+from vigilo.correlator.xml import NS_EVENTS
+from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import insert_event, insert_state
-
 from vigilo.correlator.correvent import make_correvent
 
 import logging
@@ -98,47 +92,46 @@ class TestLogging(unittest.TestCase):
         
         # On génère un timestamp à partir de la date courante
         timestamp = datetime.now()
-        
-        # On génère le message xml qui devrait être
-        # reçu sur le bus XMPP dans un tel cas. 
-        item = domish.Element((NS_EVENTS, u'item'))
-        event = item.addElement((NS_EVENTS, u'event'))
-        # Ajout de l'attribut id
-        item['id'] = str(self.XMPP_id)
-        # Ajout de la balise timestamp
-        tag = event.addElement(u'timestamp')
-        tag.addContent(str(timestamp))
-        # Ajout de la balise host
-        tag = event.addElement(u'host')
+
+        infos = {
+            'xmlns': NS_EVENTS,
+            'ts': timestamp,
+            'service': service_name,
+            'state': new_state,
+            'xmpp_id': self.XMPP_id,
+        }
+
         if host_name:
-            tag.addContent(host_name)
+            infos['host'] = host_name
         else:
-            tag.addContent(settings['correlator']['nagios_hls_host'])
-        # Ajout de la balise service
-        tag = event.addElement(u'service')
-        tag.addContent(service_name)
-        # Ajout de la balise state
-        tag = event.addElement(u'state')
-        tag.addContent(new_state)
-        # Ajout de la balise message
-        tag = event.addElement(u'message')
-        tag.addContent(new_state)
-        # Conversion en XML
-        payload = item.toXml()
-        
+            infos['host'] = settings['correlator']['nagios_hls_host']
+
+        payload = """
+<event xmlns="%(xmlns)s">
+    <timestamp>%(ts)s</timestamp>
+    <host>%(host)s</host>
+    <service>%(service)s</service>
+    <state>%(state)s</state>
+    <message>%(state)s</message>
+</event>
+""" % infos
+        item = etree.fromstring(payload)
+
         # On ajoute les données nécessaires dans le contexte.
         ctx = Context(self.XMPP_id)
         ctx.hostname = host_name
         ctx.servicename = service_name
         ctx.statename = new_state
-        
+
         # On insère les données nécessaires dans la BDD:
         info_dictionary = {
             "host": host_name, 
             "service": service_name, 
             "state": new_state, 
             "timestamp": timestamp, 
-            "message": new_state,}
+            "message": new_state,
+        }
+
         # - D'abord l'évènement ;
         ctx.raw_event_id = insert_event(info_dictionary)
         # - Et ensuite l'état.
@@ -148,7 +141,8 @@ class TestLogging(unittest.TestCase):
         # On force le traitement du message, par la fonction make_correvent,
         # comme s'il avait été traité au préalable par le rule_dispatcher.
         rd = RuleDispatcherStub()
-        make_correvent(rd, payload)
+        
+        make_correvent(rd, item, self.XMPP_id)
         DBSession.flush()
 
     def add_data(self):
