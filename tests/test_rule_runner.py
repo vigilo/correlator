@@ -21,12 +21,10 @@ from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
 from vigilo.correlator.registry import get_registry
 
 from vigilo.common.logging import get_logger
-from vigilo.common.gettext import translate
 
 from vigilo.correlator.actors.rule_runner import VigiloAMPChild, RuleRunner
 
-LOGGER = get_logger(__name__)
-_ = translate(__name__)
+LOGGER = get_logger('vigilo.correlator.tests')
 
 class SpecificException(Exception):
     message = "Oops!"
@@ -86,7 +84,7 @@ class TestRuleException(unittest.TestCase):
         work = pp.doWork(
             ExceptionRuleRunner,
             rule_name='Exception',
-            idxmpp='foo',
+            idxmpp='bar',
             xml='bar',
         )
         work.addCallbacks(lambda *args: _fail, _checks)
@@ -113,9 +111,9 @@ class TestRuleException(unittest.TestCase):
 
         work = pp.doWork(
             TimeoutRuleRunner,
-            rule_name='TimeOut',
+            rule_name='Timeout',
             idxmpp='foo',
-            xml='bar',
+            xml='foo',
         )
         work.addCallbacks(lambda *args: _fail, _checks)
         yield work
