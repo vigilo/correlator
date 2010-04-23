@@ -48,19 +48,20 @@ def handle_ticket(info_dictionary):
                 ).one()
     except NoResultFound:
         # Si aucun évènement n'est trouvé on loggue une erreur.
-        LOGGER.error(_('handle_ticket: No matching trouble ticket found : %r'
-                       % info_dictionary["ticket_id"]))
+        LOGGER.error(_('handle_ticket: No matching trouble ticket found : %r')
+                       % info_dictionary["ticket_id"])
         return     
         
     except MultipleResultsFound:
         # Si plusieurs évènements sont trouvés on loggue une erreur.
         LOGGER.error(_('handle_ticket: Several events seem to be associated '
-                       'with this ticket : %r' % info_dictionary["ticket_id"]))
+                       'with this ticket : %r') % info_dictionary["ticket_id"])
         return
     LOGGER.debug(_('handle_ticket: The event %(event_id)r is '
-                   'associated with the given ticket (%(ticket_id)r)' 
-                   % {'event_id': correvent.idcorrevent, 
-                      'ticket_id': info_dictionary["ticket_id"],}))
+                   'associated with the given ticket (%(ticket_id)r)') % {
+                        'event_id': correvent.idcorrevent, 
+                        'ticket_id': info_dictionary["ticket_id"],
+                    })
                  
     # Mise à jour de l'historique de l'évènement corrélé :
     history = EventHistory()
@@ -79,9 +80,9 @@ def handle_ticket(info_dictionary):
         
     except (IntegrityError, InvalidRequestError):
         LOGGER.exception(_('handle_ticket: Got exception while updating '
-                            'event %r history' % correvent.idcorrevent))
+                            'event %r history') % correvent.idcorrevent)
         
     else:
-        LOGGER.debug(_('handle_ticket: Event %r history updated successfully.' 
-                        % correvent.idcorrevent))
+        LOGGER.debug(_('handle_ticket: Event %r history updated successfully.')
+                        % correvent.idcorrevent)
 
