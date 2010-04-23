@@ -54,6 +54,11 @@ setup(name='vigilo-correlator',
         extras_require={
             'tests': tests_require,
             },
+        message_extractors={
+            'src': [
+                ('**.py', 'python', None),
+            ],
+        },
         namespace_packages = [
             'vigilo',
             ],
