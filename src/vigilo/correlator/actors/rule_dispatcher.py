@@ -34,7 +34,8 @@ from vigilo.correlator.xml import namespaced_tag, NS_EVENTS, \
                                     NS_TICKET#, NS_DOWNTIME
 from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
-from vigilo.correlator.memcached_connection import MemcachedConnection
+from vigilo.correlator.memcached_connection import MemcachedConnection, \
+                                                    MemcachedConnectionError
 from vigilo.correlator.context import Context, TOPOLOGY_PREFIX
 #from vigilo.correlator.handle_downtime import handle_downtime
 from vigilo.correlator.handle_ticket import handle_ticket
@@ -238,7 +239,16 @@ class RuleDispatcher(PubSubClient):
                 # ejabberd keeps 10 items before retracting old items.
                 LOGGER.debug(_('Skipping unrecognized item (%s)') % item.name)
                 continue
-            self.handleMessage(xml)
+            try:
+                self.handleMessage(xml)
+            except MemcachedConnectionError:
+                # MemcachedConnection génère déjà un log concernant
+                # l'état de fonctionnement de memcached.
+                # Ici, on prévient simplement que l'on va arrêter
+                # le corrélateur.
+                LOGGER.error(_('The correlator is shutting down due '
+                                'to a previous error'))
+                reactor.stop()
 
     def handleMessage(self, xml):
         """

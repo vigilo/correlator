@@ -39,8 +39,11 @@ mc_conn = MemcachedConnection()
 try:
     mc_conn.set('vigilo', '', 1)
 except MemcachedConnectionError:
-    # Inutile de logger un message ici, la classe
-    # MemcachedConnection le fait déjà.
+    # MemcachedConnection génère déjà un log concernant
+    # l'état de fonctionnement de memcached.
+    # Ici, on prévient simplement que l'on va arrêter
+    # le corrélateur.
+    LOGGER.error(_('The correlator is shutting down due to a previous error'))
     sys.exit(1)
 
 

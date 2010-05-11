@@ -165,7 +165,7 @@ class MemcachedConnection(object):
         """
         
         LOGGER.debug(_("MemcachedConnection: Trying to get the value of the "
-            "key '%(key)s'...") % {'key': key, })
+                        "key '%(key)s'...") % {'key': key, })
         
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection:
