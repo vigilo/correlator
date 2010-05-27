@@ -28,7 +28,7 @@ Prend en charge les messages concernant les mises en silence.
 #    informations extraites du message reçu par le rule dispatcher.
 #    @type info_dictionary: C{dictionary}
 #    """
-#    LOGGER.debug(_('handle_downtime: Downtime message received. '
+#    LOGGER.debug(_(u'handle_downtime: Downtime message received. '
 #                 'Timestamp = %r. Host = %r. Service = %r. '
 #                 'Type = %r. Author = %r. Comment = %r.' % 
 #                 (info_dictionary["timestamp"], info_dictionary["host"],
@@ -43,7 +43,7 @@ Prend en charge les messages concernant les mises en silence.
 #        downtime_id = match.group('id')
 #        comment = match.group('comment')
 #    else:
-#        LOGGER.error(_('handle_downtime: Message concerning a non ' 
+#        LOGGER.error(_(u'handle_downtime: Message concerning a non ' 
 #                       'configured downtime on item (%r, %r), skipping')% 
 #                       (info_dictionary["host"], info_dictionary["service"]))
 #        return
@@ -60,10 +60,10 @@ Prend en charge les messages concernant les mises en silence.
 #                ))
 #            ).first()
 #    if downtime:
-#        LOGGER.debug(_('handle_downtime: Maching downtime : %r' 
+#        LOGGER.debug(_(u'handle_downtime: Maching downtime : %r' 
 #                        % downtime.iddowntime))
 #    else:
-#        LOGGER.error(_('handle_downtime: No matching downtime found : %r' % 
+#        LOGGER.error(_(u'handle_downtime: No matching downtime found : %r' % 
 #                   downtime_id))
 #        return         
 #                 
@@ -76,13 +76,13 @@ Prend en charge les messages concernant les mises en silence.
 #        # on loggue une erreur et on ignore le message.
 #        if downtime.idstatus == DowntimeStatus.status_name_to_value(
 #                                                                u'Active'): 
-#            LOGGER.error(_('handle_downtime: Downtime has already started, '
+#            LOGGER.error(_(u'handle_downtime: Downtime has already started, '
 #                                'skipping the message'))
 #            return
 #        
 #        # Sinon on met à jour le statut de la mise en silence.
 #        else:
-#            LOGGER.debug(_('handle_downtime: Downtime status was : %r' 
+#            LOGGER.debug(_(u'handle_downtime: Downtime status was : %r' 
 #                            % downtime.idstatus))
 #            downtime.idstatus = DowntimeStatus.status_name_to_value(u'Active')
 #    
@@ -94,13 +94,13 @@ Prend en charge les messages concernant les mises en silence.
 #        # on loggue une erreur et on ignore le message.
 #        if downtime.idstatus == DowntimeStatus.status_name_to_value(
 #                                                                u'Scheduled'):
-#            LOGGER.error(_('handle_downtime: Downtime has not started yet, '
+#            LOGGER.error(_(u'handle_downtime: Downtime has not started yet, '
 #                                'skipping the message'))
 #            return
 #        
 #        # Sinon on met à jour le statut de la mise en silence.
 #        else:
-#            LOGGER.debug(_('handle_downtime: Downtime status was : %r' 
+#            LOGGER.debug(_(u'handle_downtime: Downtime status was : %r' 
 #                            % downtime.idstatus))
 #            downtime.idstatus = DowntimeStatus.status_name_to_value(
 #                                                                u'Finished')
@@ -109,19 +109,19 @@ Prend en charge les messages concernant les mises en silence.
 #    # - Sinon, si le message est de type 'DOWNTIMECANCELLED';
 #    elif info_dictionary["type"] == u'DOWNTIMECANCELLED':
 #        # On met à jour le statut de la mise en silence.
-#        LOGGER.debug(_('handle_downtime: Downtime status was : %r' 
+#        LOGGER.debug(_(u'handle_downtime: Downtime status was : %r' 
 #                            % downtime.idstatus))
 #        downtime.idstatus = DowntimeStatus.status_name_to_value(u'Cancelled')
 #    
 #    
 #    # - Sinon, le message est invalide.
 #    else:
-#        LOGGER.error(_('handle_downtime: received an invalid message: '
+#        LOGGER.error(_(u'handle_downtime: received an invalid message: '
 #                     '%r, skipping' % info_dictionary["type"]))
 #        return
 #    
 #    DBSession.flush()
-#    LOGGER.debug(_('handle_downtime: Downtime status set to : %r' 
+#    LOGGER.debug(_(u'handle_downtime: Downtime status set to : %r' 
 #                            % downtime.idstatus))
 #    transaction.commit()
 #    transaction.begin()

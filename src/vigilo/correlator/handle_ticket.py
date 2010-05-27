@@ -29,14 +29,17 @@ def handle_ticket(info_dictionary):
     
     Cette fonction permet de satisfaire l'exigence VIGILO_EXIG_VIGILO_BAC_0120
     """
-    LOGGER.debug(_('handle_ticket: Trouble ticket message received. '
-                 'Timestamp = %r. Impacted HLS = %r. Ticket id = %r. '
-                 'acknowledgement_status = %r. Message = %r.' % 
-                     (info_dictionary["timestamp"], 
-                      info_dictionary["impacted_HLS"],
-                      info_dictionary["ticket_id"], 
-                      info_dictionary["acknowledgement_status"],
-                      info_dictionary["message"])))
+    LOGGER.debug(_(u'handle_ticket: Trouble ticket message received. '
+                 'Timestamp = %(timestamp)r. Impacted HLS = %(hls)r. '
+                 'Ticket id = %(ticket_id)r. acknowledgement_status = '
+                 '%(ack_status)r. Message = %(message)r.'),
+                 {
+                    'timestamp': info_dictionary["timestamp"],
+                    'hls': info_dictionary["impacted_HLS"],
+                    'ticket_id': info_dictionary["ticket_id"], 
+                    'ack_status': info_dictionary["acknowledgement_status"],
+                    'message': info_dictionary["message"],
+                 })
 
     # On cherche dans la BDD l'évènement
     # corrélé associé à ce ticket d'incident.
@@ -48,17 +51,17 @@ def handle_ticket(info_dictionary):
                 ).one()
     except NoResultFound:
         # Si aucun évènement n'est trouvé on loggue une erreur.
-        LOGGER.error(_('handle_ticket: No matching trouble ticket found : %r')
-                       % info_dictionary["ticket_id"])
+        LOGGER.error(_(u'handle_ticket: No matching trouble ticket found : %r'),
+                       info_dictionary["ticket_id"])
         return     
         
     except MultipleResultsFound:
         # Si plusieurs évènements sont trouvés on loggue une erreur.
-        LOGGER.error(_('handle_ticket: Several events seem to be associated '
-                       'with this ticket : %r') % info_dictionary["ticket_id"])
+        LOGGER.error(_(u'handle_ticket: Several events seem to be associated '
+                       'with this ticket : %r'), info_dictionary["ticket_id"])
         return
-    LOGGER.debug(_('handle_ticket: The event %(event_id)r is '
-                   'associated with the given ticket (%(ticket_id)r)') % {
+    LOGGER.debug(_(u'handle_ticket: The event %(event_id)r is '
+                   'associated with the given ticket (%(ticket_id)r)'), {
                         'event_id': correvent.idcorrevent, 
                         'ticket_id': info_dictionary["ticket_id"],
                     })
@@ -79,10 +82,10 @@ def handle_ticket(info_dictionary):
         DBSession.flush()
         
     except (IntegrityError, InvalidRequestError):
-        LOGGER.exception(_('handle_ticket: Got exception while updating '
-                            'event %r history') % correvent.idcorrevent)
+        LOGGER.exception(_(u'handle_ticket: Got exception while updating '
+                            'event %r history'), correvent.idcorrevent)
         
     else:
-        LOGGER.debug(_('handle_ticket: Event %r history updated successfully.')
-                        % correvent.idcorrevent)
+        LOGGER.debug(_(u'handle_ticket: Event %r history updated '
+                        'successfully.'), correvent.idcorrevent)
 

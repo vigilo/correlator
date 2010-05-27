@@ -92,8 +92,8 @@ class MemcachedConnection(object):
             debug = False
 
         # Établissement de la connexion.
-        LOGGER.info(_("Establishing connection to MemcacheD"
-                      " server (%s)...") % (conn_str, ))
+        LOGGER.info(_(u"Establishing connection to MemcacheD server (%s)..."),
+                    conn_str)
         self.__connection = mc.Client([conn_str])
         self.__connection.debug = debug
         self.__connection.behaviors = {'support_cas': 1}
@@ -114,8 +114,11 @@ class MemcachedConnection(object):
         @rtype: C{int}
         """
         
-        LOGGER.debug(_("MemcachedConnection: Trying to set value '%(value)s' "
-            "for key '%(key)s'...") % {'key': key, 'value': value})
+        LOGGER.debug(_(u"MemcachedConnection: Trying to set value '%(value)s' "
+                    "for key '%(key)s'..."), {
+                        'key': key,
+                        'value': value,
+                    })
         
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection:
@@ -141,9 +144,9 @@ class MemcachedConnection(object):
             # Si l'enregistrement a de nouveau échoué
             if not result:
                 # On lève une exception
-                LOGGER.critical(_("Could not connect to memcached server, "
+                LOGGER.critical(_(u"Could not connect to memcached server, "
                                   "make sure it is running"))
-                raise MemcachedConnectionError(_("Could not connect to "
+                raise MemcachedConnectionError(_(u"Could not connect to "
                     "memcached server, make sure it is running"))
             
         return result
@@ -164,8 +167,10 @@ class MemcachedConnection(object):
         @rtype: C{str} || None
         """
         
-        LOGGER.debug(_("MemcachedConnection: Trying to get the value of the "
-                        "key '%(key)s'...") % {'key': key, })
+        LOGGER.debug(_(u"MemcachedConnection: Trying to get the value of the "
+                        "key '%(key)s'..."), {
+                            'key': key,
+                        })
         
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection:
@@ -194,9 +199,9 @@ class MemcachedConnection(object):
                     return None
 
                 # On lève une exception
-                LOGGER.critical(_("Could not connect to memcached server, "
+                LOGGER.critical(_(u"Could not connect to memcached server, "
                                   "make sure it is running"))
-                raise MemcachedConnectionError(_("Could not connect to "
+                raise MemcachedConnectionError(_(u"Could not connect to "
                     "memcached server, make sure it is running"))
         
         # On "dé-sérialise" la valeur avant de la retourner
@@ -216,8 +221,10 @@ class MemcachedConnection(object):
         @rtype: C{int}
         """
         
-        LOGGER.debug(_("MemcachedConnection: Trying to delete the "
-            "key '%(key)s'...") % {'key': key, })
+        LOGGER.debug(_(u"MemcachedConnection: Trying to delete the "
+                        "key '%(key)s'..."), {
+                            'key': key,
+                        })
         
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection:
@@ -239,9 +246,9 @@ class MemcachedConnection(object):
             # Si la suppression a de nouveau échoué
             if not result:
                 # On lève une exception
-                LOGGER.critical(_("Could not connect to memcached server, "
+                LOGGER.critical(_(u"Could not connect to memcached server, "
                                   "make sure it is running"))
-                raise MemcachedConnectionError(_("Could not connect to "
+                raise MemcachedConnectionError(_(u"Could not connect to "
                     "memcached server, make sure it is running"))
             
         return result

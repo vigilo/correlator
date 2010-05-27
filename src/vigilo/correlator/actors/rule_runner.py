@@ -50,17 +50,15 @@ class VigiloAMPChild(child.AMPChild):
         reg = get_registry()
         rule = reg.rules.lookup(rule_name)
 
-        LOGGER.debug(_('Rule runner: process begins for rule "%s"') %
-            (rule_name, ))
-        LOGGER.debug(_('Process id: %(pid)r | Parent id: %(ppid)r | '
-                       'Rule name: %(name)s') % {
-                        'pid': os.getpid(),
-                        'ppid': os.getppid(),
-                        'name': rule_name,
-                    })
+        LOGGER.debug(_(u'Rule runner: process begins for rule "%s"'), rule_name)
+        LOGGER.debug(_(u'Process id: %(pid)r | Parent id: %(ppid)r | '
+                        'Rule name: %(name)s'), {
+                            'pid': os.getpid(),
+                            'ppid': os.getppid(),
+                            'name': rule_name,                        
+                        })
 
         rule.process(idxmpp, xml)
-        LOGGER.debug(_('Rule runner: process ends for rule "%s"') %
-            (rule_name, ))
+        LOGGER.debug(_(u'Rule runner: process ends for rule "%s"'), rule_name)
         return {}
 

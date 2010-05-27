@@ -52,15 +52,15 @@ class RegistryDict(object):
             raise TypeError
 
         if item.name in self.__dict:
-            LOGGER.info(_('Rule %r has already been registered, '
-                        'ignoring attempt to re-register it.') % item.name)
+            LOGGER.info(_(u'Rule %r has already been registered, '
+                        'ignoring attempt to re-register it.'), item.name)
             return
 
         self.__graph.add_node(item.name)
 
         for dep in item.dependancies:
             if dep not in self.__dict:
-                raise RuntimeError(_('The rule %(depended)r must be loaded '
+                raise RuntimeError(_(u'The rule %(depended)r must be loaded '
                                     'before %(dependent)r.') % {
                                         'dependent': item.name,
                                         'depended': dep,
@@ -68,7 +68,7 @@ class RegistryDict(object):
             self.__graph.add_edge(item.name, dep)
 
         self.__dict[item.name] = item
-        LOGGER.debug(_('Successfully registered rule %r') % item.name)
+        LOGGER.debug(_(u'Successfully registered rule %r'), item.name)
 
     def clear(self):
         """Supprime toutes les règles actuellement enregistrées."""
@@ -126,7 +126,7 @@ class Registry(object):
     def __new__(cls):
         """Constructeur des instances de registres."""
         if hasattr(cls, '_global_instance'):
-            LOGGER.warning(_('Singleton has already been instanciated, '
+            LOGGER.warning(_(u'Singleton has already been instanciated, '
                             'ignoring attempt to create a new instance.'))
             return cls._global_instance
 

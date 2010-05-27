@@ -43,7 +43,7 @@ except MemcachedConnectionError:
     # l'état de fonctionnement de memcached.
     # Ici, on prévient simplement que l'on va arrêter
     # le corrélateur.
-    LOGGER.error(_('The correlator is shutting down due to a previous error'))
+    LOGGER.error(_(u'The correlator is shutting down due to a previous error'))
     sys.exit(1)
 
 
@@ -53,8 +53,8 @@ get_registry()
 
 def log_debug_info(*args):
     import threading, os
-    LOGGER.debug('pid: %d' % os.getpid())
-    LOGGER.debug('threads: %s' % threading.enumerate())
+    LOGGER.debug('pid: %d', os.getpid())
+    LOGGER.debug('threads: %s', threading.enumerate())
 
 # Definit une routine pour le traitement
 # du signal SIGHUP (rechargement).
@@ -62,7 +62,7 @@ def sighup_handler(*args):
     """Delete the topology associated with this context."""
     conn = MemcachedConnection()
     conn.delete(TOPOLOGY_PREFIX)
-    LOGGER.info(_("The topology has been reloaded."))
+    LOGGER.info(_(u"The topology has been reloaded."))
 
 def set_signal_handlers():
     # Mise en place des routines de traitement des signaux.
@@ -76,7 +76,7 @@ def set_signal_handlers():
         # (utilisé par les scripts d'ini lors d'un reload).
         signal.signal(signal.SIGHUP, sighup_handler)
     except ValueError:
-        LOGGER.error(_('Could not set signal handlers. The correlator '
+        LOGGER.error(_(u'Could not set signal handlers. The correlator '
                         'may not be able to shutdown cleanly'))
 
 reactor.addSystemEventTrigger('during', 'startup', set_signal_handlers)

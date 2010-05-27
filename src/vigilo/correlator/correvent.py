@@ -109,11 +109,11 @@ def make_correvent(forwarder, dom, idnt):
                     CorrEvent
                 ).filter(CorrEvent.idcorrevent == update_id
                 ).one()
-            LOGGER.debug(_('Updating existing correlated event (%r)') %
+            LOGGER.debug(_(u'Updating existing correlated event (%r)'),
                 update_id)
         except NoResultFound:
-            LOGGER.error(_('Got a reference to a non-existent '
-                'correlated event (%r), adding as new') % update_id)
+            LOGGER.error(_(u'Got a reference to a non-existent '
+                'correlated event (%r), adding as new'), update_id)
 
     # Il s'agit d'une création ou bien l'événement corrélé
     # indiqué n'existe pas.
@@ -122,8 +122,7 @@ def make_correvent(forwarder, dom, idnt):
 
         # Si l'état de l'alerte brute est 'OK' ou bien 'UP', on ne fait rien
         if state == "OK" or state == "UP":
-            LOGGER.info(_('Raw event ignored. Reason: status = %r' 
-                                % (state, )))
+            LOGGER.info(_(u'Raw event ignored. Reason: status = %r'), state)
             return 
 
         # Si un ou plusieurs agrégats dont dépend l'alerte sont
@@ -149,9 +148,9 @@ def make_correvent(forwarder, dom, idnt):
                         ).one()
 
                 except NoResultFound:
-                    LOGGER.error(_('Got a reference to a nonexistent '
-                            'correlated event (%r), skipping this aggregate')
-                            % (int(predecessing_aggregate_id), ))
+                    LOGGER.error(_(u'Got a reference to a nonexistent '
+                            'correlated event (%r), skipping this aggregate'),
+                            int(predecessing_aggregate_id))
 
                 else:
                     # D'abord on rattache l'alerte
@@ -192,7 +191,7 @@ def make_correvent(forwarder, dom, idnt):
             DBSession.flush()
             return
 
-        LOGGER.debug(_('Creating new correlated event'))
+        LOGGER.debug(_(u'Creating new correlated event'))
         
         correvent = CorrEvent()
         correvent.idcause = raw_event_id
@@ -306,7 +305,7 @@ def make_correvent(forwarder, dom, idnt):
     except KeyError:
         log_level = logging.INFO
 
-    LOGGER.debug(_('Sending correlated event to syslog'))
+    LOGGER.debug(_(u'Sending correlated event to syslog'))
     data_logger = get_logger('vigilo.correlator.syslog')
     data_logger.log(
         log_level,

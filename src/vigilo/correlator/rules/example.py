@@ -20,8 +20,10 @@ class ExampleRule(Rule):
 
     def process(self, idnt, payload):
         """Traitement du message. Ici on se contente d'afficher une trace."""
-        LOGGER.debug(_('id %(id)s payload %(payload)s') % 
-            {"id": idnt, "payload": payload})
+        LOGGER.debug(_(u'id %(id)s payload %(payload)s'), {
+                        "id": idnt,
+                        "payload": payload,
+                    })
 
 def register(registry):
     """Enregistre le module."""

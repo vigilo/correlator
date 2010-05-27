@@ -107,7 +107,7 @@ def check_topology(last_topology_update):
         # On affiche un message mais on ne
         # reconstruit pas l'arbre topologique
         # (inutile, car il est déjà à jour).
-        LOGGER.info(_("No information from Vigiconf concerning the "
+        LOGGER.info(_(u"No information from Vigiconf concerning the "
                        "topology's last modification date. Therefore the "
                        "topology has NOT been rebuilt."))
         return
@@ -119,7 +119,7 @@ def check_topology(last_topology_update):
         or last_topology_update < last_topology_modification:
         conn = MemcachedConnection()
         conn.delete(TOPOLOGY_PREFIX)
-        LOGGER.info(_("Topology has been reloaded."))
+        LOGGER.info(_(u"Topology has been reloaded."))
 
 class DependencyError(Exception):
     pass
@@ -232,12 +232,12 @@ class RuleDispatcher(PubSubClient):
             # stderr pollution caused by http://bugs.python.org/issue5508
             # and some touchiness on domish attribute access.
             xml = item.toXml()
-            LOGGER.debug(_('Got item: %s') % xml)
+            LOGGER.debug(_(u'Got item: %s'), xml)
             if item.name != 'item':
                 # The alternative is 'retract', which we silently ignore
                 # We receive retractations in FIFO order,
                 # ejabberd keeps 10 items before retracting old items.
-                LOGGER.debug(_('Skipping unrecognized item (%s)') % item.name)
+                LOGGER.debug(_(u'Skipping unrecognized item (%s)'), item.name)
                 continue
             try:
                 self.handleMessage(xml)
@@ -246,7 +246,7 @@ class RuleDispatcher(PubSubClient):
                 # l'état de fonctionnement de memcached.
                 # Ici, on prévient simplement que l'on va arrêter
                 # le corrélateur.
-                LOGGER.error(_('The correlator is shutting down due '
+                LOGGER.error(_(u'The correlator is shutting down due '
                                 'to a previous error'))
                 reactor.stop()
 
@@ -299,7 +299,7 @@ class RuleDispatcher(PubSubClient):
                 # vient juste d'échouer (timeout).
                 # On enregistre le problème et on lève une (autre) exception.
                 except ProcessTerminated:
-                    LOGGER.info(_('Rule %(rule_name)s timed out') % {
+                    LOGGER.info(_(u'Rule %(rule_name)s timed out'), {
                         'rule_name': rule_name,
                     })
                     return DependencyError(failure)
@@ -415,14 +415,14 @@ class RuleDispatcher(PubSubClient):
             transaction.commit()
             transaction.begin()
 
-        LOGGER.debug(_('Spawning for payload: %s') % xml)
+        LOGGER.debug(_(u'Spawning for payload: %s'), xml)
         dom = etree.fromstring(xml)
 
         # Extraction de l'id XMPP.
         # Note: dom['id'] ne fonctionne pas dans lxml, dommage.
         idxmpp = dom.get('id')
         if idxmpp is None:
-            LOGGER.critical(_("Received invalid XMPP item ID (None)"))
+            LOGGER.critical(_(u"Received invalid XMPP item ID (None)"))
             return
 
         if self.schema.get(dom[0].tag) is not None:
@@ -432,7 +432,7 @@ class RuleDispatcher(PubSubClient):
             try:
                 self.schema[dom[0].tag].assertValid(dom[0])
             except etree.DocumentInvalid, e:
-                LOGGER.error(_("Validation failure: %s") % e.message)
+                LOGGER.error(_(u"Validation failure: %s"), e.message)
                 return
 
         # Extraction des informations du message
@@ -472,7 +472,7 @@ class RuleDispatcher(PubSubClient):
         try:
             check_topology(ctx.last_topology_update)
         except OperationalError:
-            LOGGER.critical(_("Could not connect to the "
+            LOGGER.critical(_(u"Could not connect to the "
                 "database server, make sure it is running"))
             reactor.stop()
             return
@@ -580,7 +580,7 @@ class RuleDispatcher(PubSubClient):
             # the data we need is just underneath
             # les données dont on a besoin sont juste en dessous
             for data in b.elements():
-                LOGGER.debug(_("Chat message to forward: '%s'") %
+                LOGGER.debug(_(u"Chat message to forward: '%s'"),
                                data.toXml().encode('utf8'))
                 self.messageForward(data.toXml().encode('utf8'))
 
@@ -592,7 +592,7 @@ class RuleDispatcher(PubSubClient):
         """
         super(RuleDispatcher, self).connectionInitialized()
         self.xmlstream.addObserver("/message[@type='chat']", self.chatReceived)
-        LOGGER.debug(_('Connection initialized'))
+        LOGGER.debug(_(u'Connection initialized'))
 
         # Vérifie la présence de messages dans la base de données
         # locale toutes les queue_delay secondes, ou 0.1 par défaut.
@@ -602,8 +602,8 @@ class RuleDispatcher(PubSubClient):
         except ValueError:
             queue_delay = 0.1
 
-        LOGGER.info(_('Starting the queue manager with a delay '
-                        'of %f seconds.') % queue_delay)
+        LOGGER.info(_(u'Starting the queue manager with a delay '
+                        'of %f seconds.'), queue_delay)
         self.loop_call.start(queue_delay)
         self.rrp.start()
 
@@ -616,7 +616,7 @@ class RuleDispatcher(PubSubClient):
         connexion sera rétablie (cf. connectionInitialized).
         """
         super(RuleDispatcher, self).connectionLost(reason)
-        LOGGER.debug(_('Connection lost'))
+        LOGGER.debug(_(u'Connection lost'))
 
         if self.loop_call.running:
             self.loop_call.stop()
@@ -654,9 +654,9 @@ class RuleDispatcher(PubSubClient):
         # if not connected store the message
         if self.xmlstream is None:
             xml_src = xml.toXml().encode('utf8')
-            LOGGER.error(_('Unable to forward one-to-one message to XMPP '
+            LOGGER.error(_(u'Unable to forward one-to-one message to XMPP '
                             'server (no connection established). The message '
-                            '(%s) has been stored for later retransmission.') %
+                            '(%s) has been stored for later retransmission.'),
                             xml_src)
             self.to_retry.store(xml_src)
             return False
@@ -673,9 +673,9 @@ class RuleDispatcher(PubSubClient):
         def eb(e, xml):
             """errback"""
             xml_src = xml.toXml().encode('utf8')
-            LOGGER.error(_('Unable to forward the message (%(error)r), it '
+            LOGGER.error(_(u'Unable to forward the message (%(error)r), it '
                         'has been stored for later retransmission '
-                        '(%(xml_src)s)') % {
+                        '(%(xml_src)s)'), {
                             'xml_src': xml_src,
                             'error': e,
                         })
@@ -684,8 +684,8 @@ class RuleDispatcher(PubSubClient):
         item = Item(payload=xml)
         
         if xml.name not in self._nodetopublish:
-            LOGGER.error(_("No destination node configured for messages "
-                           "of type '%s'. Skipping.") % xml.name)
+            LOGGER.error(_(u"No destination node configured for messages "
+                           "of type '%s'. Skipping."), xml.name)
             return
         node = self._nodetopublish[xml.name]
         try:
@@ -693,7 +693,7 @@ class RuleDispatcher(PubSubClient):
             result.addErrback(eb, xml)
         except AttributeError:
             xml_src = xml.toXml().encode('utf8')
-            LOGGER.error(_('Message from Socket impossible to forward'
+            LOGGER.error(_(u'Message from Socket impossible to forward'
                            ' (no connection to XMPP server), the message '
                            'is stored for later reemission (%s)') % xml_src)
             self.to_retry.store(xml_src)

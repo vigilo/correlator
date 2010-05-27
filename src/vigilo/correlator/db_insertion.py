@@ -41,7 +41,7 @@ def insert_event(info_dictionary):
     
     # S'il s'agit d'un événement concernant un HLS.
     if not info_dictionary["host"]:
-        LOGGER.critical(_('Received request to add an event on HLS "%s"') %
+        LOGGER.critical(_(u'Received request to add an event on HLS "%s"'),
                             info_dictionary["service"])
         return None
     
@@ -49,10 +49,11 @@ def insert_event(info_dictionary):
     item_id = SupItem.get_supitem(info_dictionary["host"], 
                                   info_dictionary["service"])
     if not item_id:
-        LOGGER.error(_('Got a reference to a non configured item '
-                       '(%(host)r, %(service)r), skipping event') % 
-                        {"host": info_dictionary["host"], 
-                        "service": info_dictionary["service"]})
+        LOGGER.error(_(u'Got a reference to a non configured item '
+                       '(%(host)r, %(service)r), skipping event'), {
+                            "host": info_dictionary["host"], 
+                            "service": info_dictionary["service"],
+                        })
         return None
     
     history = EventHistory()
@@ -81,24 +82,24 @@ def insert_event(info_dictionary):
                 ))
                 ).filter(CorrEvent.timestamp_active != None
                 ).distinct().one()
-        LOGGER.debug(_('insert_event: updating event %r' % event.idevent))
+        LOGGER.debug(_(u'insert_event: updating event %r'), event.idevent)
     # Si aucun événement correpondant à cet item ne figure dans la base
     except NoResultFound:
         # Si l'état de cette alerte est 'OK', on l'ignore
         if info_dictionary["state"] == "OK" or \
             info_dictionary["state"] == "UP":
-            LOGGER.info(_('Ignoring request to create a new event '
-                            'with state "%s" (nothing alarming here)') %
+            LOGGER.info(_(u'Ignoring request to create a new event '
+                            'with state "%s" (nothing alarming here)'),
                             info_dictionary['state'])
             return None
         # Sinon, il s'agit d'un nouvel incident, on le prépare.
         event = Event()
         event.idsupitem = item_id
         history.type_action = u'New occurrence'
-        LOGGER.debug(_('insert_event: creating new event '))
+        LOGGER.debug(_(u'insert_event: creating new event'))
     except MultipleResultsFound:
         # Si plusieurs événements ont été trouvés
-        LOGGER.error(_('Multiple matching events found, skipping.'))
+        LOGGER.error(_(u'Multiple matching events found, skipping.'))
         return None
     else:
         # Il s'agit d'une mise à jour.
@@ -124,7 +125,7 @@ def insert_event(info_dictionary):
 
     # On capture les erreurs qui sont permanentes.
     except (IntegrityError, InvalidRequestError), e:
-        LOGGER.exception(_('Got exception'))
+        LOGGER.exception(_(u'Got exception'))
         return None
     else:
         return event.idevent
@@ -155,7 +156,7 @@ def insert_hls_history(info_dictionary):
         DBSession.add(history)
         DBSession.flush()
     except IntegrityError, e:
-        LOGGER.exception(_('Got exception'))
+        LOGGER.exception(_(u'Got exception'))
 
 def insert_state(info_dictionary):
     """
@@ -193,8 +194,8 @@ def insert_state(info_dictionary):
     try:
         DBSession.add(state)
         DBSession.flush()
-    except (IntegrityError, InvalidRequestError), e:
-        LOGGER.error(_('insert_state: %r' % e))
+    except (IntegrityError, InvalidRequestError):
+        LOGGER.exception(_(u'insert_state'))
     return previous_state
 
 
@@ -213,8 +214,8 @@ def add_to_aggregate(idevent, aggregate):
             aggregate.events.append(event)
             DBSession.flush()
 
-    except (IntegrityError, InvalidRequestError), e:
-        LOGGER.error(_('add_to_aggregate: %r' % e))
+    except (IntegrityError, InvalidRequestError):
+        LOGGER.exception(_(u'add_to_aggregate'))
 
 
 def merge_aggregates(sourceaggregateid, destinationaggregateid):
@@ -231,7 +232,7 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
     @rtype: Liste de C{int}
     """
     sourceaggregateid = int(sourceaggregateid)
-    LOGGER.debug(_('Merging aggregate #%(src)d with aggregate #%(dest)d') % {
+    LOGGER.debug(_(u'Merging aggregate #%(src)d with aggregate #%(dest)d'), {
                     'src': sourceaggregateid,
                     'dest': destinationaggregateid,
                 })
@@ -242,7 +243,7 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
                     ).filter(CorrEvent.idcorrevent == sourceaggregateid
                     ).one()
     except NoResultFound:
-        LOGGER.error(_('merge_aggregates: Got a reference to a nonexistent '
+        LOGGER.exception(_(u'merge_aggregates: Got a reference to a nonexistent '
                        'source aggregate, aborting'))
         return
         
@@ -252,9 +253,9 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
                 ).filter(CorrEvent.idcorrevent == destinationaggregateid
                 ).one()
     except NoResultFound:
-        LOGGER.error(_('merge_aggregates: Got a reference to a nonexistent '
-                       'destination aggregate %r, aborting') % 
-                       (destinationaggregateid,))
+        LOGGER.exception(_(u'merge_aggregates: Got a reference to a nonexistent '
+                       'destination aggregate %r, aborting'),
+                       destinationaggregateid)
         return
     
     # Déplace les événements depuis l'agrégat source
