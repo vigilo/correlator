@@ -42,7 +42,6 @@ setup(name='vigilo-correlator',
             # dashes become underscores
             'setuptools',
             'lxml',
-            'psycopg2',
             # @TODO Doit-on utiliser twisted.protocols.memcache à la place ?
             'python-memcached',
             'vigilo-models',

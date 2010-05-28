@@ -21,16 +21,10 @@ Requires:   python-setuptools
 Requires:   vigilo-common vigilo-pubsub vigilo-connector vigilo-models
 Requires:   python-lxml
 Requires:   python-multiprocessing
-Requires:   python-psycopg2
 Requires:   python-memcached
-Requires:   python-pydaemon
-Requires:   python-rel
 Requires:   python-twisted-words
-Requires:   python-wokkel
 Requires:   python-networkx
 Requires:   python-ampoule
-# Dependance de python-rel
-Requires:   python-pyevent
 
 Requires(pre): rpm-helper
 
