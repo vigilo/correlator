@@ -21,10 +21,16 @@ class CorrServiceMaker(object):
         """Crée un service client du bus XMPP"""
         from vigilo.common.conf import settings
 
+        try:
+            require_tls = settings['bus'].as_bool('require_tls')
+        except KeyError:
+            require_tls = False
+
         xmpp_client = XMPPClient(
                 JID(settings['bus']['jid']),
                 settings['bus']['password'],
-                settings['bus']['host'])
+                settings['bus']['host'],
+                require_tls=require_tls)
         xmpp_client.setName('xmpp_client')
 
         try:
