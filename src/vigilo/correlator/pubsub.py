@@ -5,7 +5,7 @@ Correlator Pubsub client.
 
 from twisted.application import service
 from twisted.words.protocols.jabber.jid import JID
-from wokkel.client import XMPPClient
+from vigilo.connector.client import XMPPClient
 
 from vigilo.pubsub.checknode import VerificationNode
 from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
