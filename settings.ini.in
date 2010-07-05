@@ -26,7 +26,7 @@ debug = False
 validate_messages = False
 
 nagios_hls_jid = connector-nagios@localhost
-nagios_hls_host = HLS
+nagios_hls_host = High-Level-Services
 
 map_chunksize = 1
 
