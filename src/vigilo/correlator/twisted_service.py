@@ -27,25 +27,10 @@ from vigilo.models.configure import configure_db
 configure_db(settings['database'], 'sqlalchemy_',
     settings['database']['db_basename'])
 
-from vigilo.correlator.context import TOPOLOGY_PREFIX
 from vigilo.correlator.memcached_connection import MemcachedConnection, \
                                                     MemcachedConnectionError
 from vigilo.correlator.registry import get_registry
 from vigilo.correlator.pubsub import CorrServiceMaker
-
-# On tente d'établir une connexion au serveur memcached
-# et d'enregistrer une clé dedans. Teste la connectivité.
-mc_conn = MemcachedConnection()
-try:
-    mc_conn.set('vigilo', '', 1)
-except MemcachedConnectionError:
-    # MemcachedConnection génère déjà un log concernant
-    # l'état de fonctionnement de memcached.
-    # Ici, on prévient simplement que l'on va arrêter
-    # le corrélateur.
-    LOGGER.error(_(u'The correlator is shutting down due to a previous error'))
-    sys.exit(1)
-
 
 # Enregistre les règles de corrélation dans le registre.
 # À LAISSER ABSOLUMENT.
@@ -61,7 +46,7 @@ def log_debug_info(*args):
 def sighup_handler(*args):
     """Delete the topology associated with this context."""
     conn = MemcachedConnection()
-    conn.delete(TOPOLOGY_PREFIX)
+    conn.delete('vigilo:topology')
     LOGGER.info(_(u"The topology has been reloaded."))
 
 def set_signal_handlers():

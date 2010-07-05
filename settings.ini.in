@@ -21,6 +21,8 @@ backup_table_to_bus = tobus
 memcached_host = 127.0.0.1
 memcached_port = 11215
 memcached_type = inet
+context_db_url = sqlite:///:memory:
+context_timeout = 60.
 
 debug = False
 validate_messages = False

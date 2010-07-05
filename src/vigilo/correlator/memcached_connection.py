@@ -8,13 +8,60 @@ except ImportError:
     import pickle
 
 import memcache as mc
-        
-from vigilo.common.conf import settings
+from datetime import datetime
+import time
+from twisted.internet import task
 
+from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
-LOGGER = get_logger(__name__)
 from vigilo.common.gettext import translate
+
+LOGGER = get_logger(__name__)
 _ = translate(__name__)
+
+__all__ = (
+    'MemcachedConnectionError',
+    'MemcachedConnection',
+)
+
+from sqlalchemy.engine import engine_from_config
+from vigilo.models import configure
+from vigilo.models.session import PrefixedTables
+from sqlalchemy.ext.declarative import declarative_base
+from vigilo.models.session import DeclarativeBase, ForeignKey
+from sqlalchemy.orm import scoped_session, sessionmaker
+
+from sqlalchemy import Column
+from sqlalchemy.types import Text, String, DateTime
+from sqlalchemy.orm import relation
+
+# Création de la seconde session pour la connexion
+# à la base de données qui gère les contextes de corrélation.
+DeclarativeBase = declarative_base(metaclass=PrefixedTables)
+metadata = DeclarativeBase.metadata
+DBSession = scoped_session(sessionmaker(autoflush=True, autocommit=True))
+engine = engine_from_config(settings['correlator'], prefix='context_db_')
+DBSession.configure(bind=engine)
+metadata.bind = DBSession.bind
+
+class CorrelationContext(DeclarativeBase):
+    __tablename__ = 'correlation_context'
+
+    key = Column(
+            String(256),
+            primary_key=True,
+            index=True,
+        )
+
+    value = Column(
+            Text,
+            nullable=False,
+        )
+
+    expiration_date = Column(
+            DateTime(timezone=False),
+            nullable=True,
+        )
 
 class MemcachedConnectionError(Exception): 
     """Exception levée lorsque le serveur MemcacheD est inaccessible."""
@@ -28,31 +75,74 @@ class MemcachedConnection(object):
     
      # Attribut statique de classe
     instance = None
-    
+
+    # Maximum de secondes au-delà duquel memcached
+    # considère que l'expiration est une date absolue
+    # dans le temps (timestamp Unix) et non relative.
+    MAX_RELATIVE = 60 * 60 * 24 * 30
+
+    CONTEXT_TIMER = 60.
+
     def __new__(cls):
         """
         Constructeur
-        
+
         @return: Une instance de la classe L{cls}.
         @rtype: L{cls}
         """
         if cls.instance is None:
             # Construction de l'objet..
             cls.instance = object.__new__(cls)
-            cls.instance.__connection = None
+            cls.instance.__connection_cache = None
+            cls.instance.__connection_db_metadata = metadata
+            cls.instance.__connection_db_session = DBSession
+            metadata.create_all()
+            cls.instance.__expiration = task.LoopingCall(
+                cls.instance.__remove_expired_contexts)
+
+            # Le timer est réglé sur 0 dans les tests unitaires,
+            # où nous n'avons pas besoin d'expirer les contextes.
+            if cls.CONTEXT_TIMER:
+                cls.instance.__expiration_defer = \
+                    cls.instance.__expiration.start(cls.CONTEXT_TIMER)
+
         return cls.instance
-    
+
     def __init__(self):
         """
         Initialisation de la connexion.
         """
-    
+        # Si vous devez initialiser des attributs, faîtes le dans __new__
+        # et non dans __init__ : __new__ ne fera l'initialisation qu'une
+        # fois (singleton). Dans __init__, l'attribut serait réinitialisé
+        # à chaque récupération d'une instance.
+
     def __del__(self):
         """
         Destruction de la connexion à memcached.
         """
-        if self.__connection:
-            self.__connection.disconnect_all()
+        if self.__connection_cache:
+            self.__connection_cache.disconnect_all()
+        # @TODO: rendre ceci paramétrable ? on veut peut-être une persistance.
+        if self.__connection_db_metadata:
+            self.__connection_db_metadata.drop_all()
+        self.__expiration.stop()
+        self.__expiration_defer.cancel()
+
+    def __convert_to_datetime(self, timestamp):
+        if not timestamp:
+            return None
+        if timestamp > self.MAX_RELATIVE:
+            return datetime.fromtimestamp(timestamp)
+        return datetime.fromtimestamp(timestamp + time.time())
+
+    def __remove_expired_contexts(self):
+        now = datetime.now()
+        nb_deleted = self.__connection_db_session.query(CorrelationContext
+            ).filter(CorrelationContext.expiration_date < now).delete()
+        LOGGER.debug(_('Deleted %(nb_deleted)d expired correlation contexts'), {
+            'nb_deleted': nb_deleted,
+        })
 
     @classmethod
     def reset(cls):
@@ -66,7 +156,7 @@ class MemcachedConnection(object):
         """
         del cls.instance
         cls.instance = None
-    
+
     def connect(self):
         """
         Établit la connexion.
@@ -74,12 +164,12 @@ class MemcachedConnection(object):
 
         # Clôture d'une éventuelle connection ouverte
         # précédemment et devenue inopérante.
-        if self.__connection:
+        if self.__connection_cache:
             # Si la connexion est en fait encore active on ne fait rien.
-            if self.__connection.set('vigilo', 1):
+            if self.__connection_cache.set('vigilo', 1, time=1):
                 return
-            self.__connection.disconnect_all()
-    
+            self.__connection_cache.disconnect_all()
+
         # Récupération des informations de connection.
         host = settings['correlator']['memcached_host']
         port = settings['correlator'].as_int('memcached_port')
@@ -94,11 +184,11 @@ class MemcachedConnection(object):
         # Établissement de la connexion.
         LOGGER.info(_(u"Establishing connection to MemcacheD server (%s)..."),
                     conn_str)
-        self.__connection = mc.Client([conn_str])
-        self.__connection.debug = debug
-        self.__connection.behaviors = {'support_cas': 1}
+        self.__connection_cache = mc.Client([conn_str])
+        self.__connection_cache.debug = debug
+        self.__connection_cache.behaviors = {'support_cas': 1}
     
-    def set(self, key, value, *args, **kwargs):
+    def set(self, key, value, **kwargs):
         """
         Associe la valeur 'value' à la clé 'key'.
         
@@ -114,42 +204,34 @@ class MemcachedConnection(object):
         @rtype: C{int}
         """
         
-        LOGGER.debug(_(u"MemcachedConnection: Trying to set value '%(value)s' "
-                    "for key '%(key)s'..."), {
+        LOGGER.debug(_(u"Trying to set value '%(value)s' for key '%(key)s'."), {
                         'key': key,
                         'value': value,
                     })
         
         # On établit la connection au serveur Memcached si nécessaire.
-        if not self.__connection:
+        if not self.__connection_cache:
             self.connect()
         
         # On sérialise la valeur 'value' avant son enregistrement
         value = pickle.dumps(value)
-        
+
         # On associe la valeur 'value' à la clé 'key'.
-        result = self.__connection.set(key, value, *args, **kwargs)
-        
-        # Si l'enregistrement a échoué on doit
-        # s'assurer que la connexion est bien opérante :
-        if not result:
-            
-            # On tente de rétablir la connection au serveur MemcacheD.
-            self.connect()
-            
-            # On essaye une nouvelle fois d'associer
-            # la valeur 'value' à la clé 'key'.
-            result = self.__connection.set(key, value)
-        
-            # Si l'enregistrement a de nouveau échoué
-            if not result:
-                # On lève une exception
-                LOGGER.critical(_(u"Could not connect to memcached server, "
-                                  "make sure it is running"))
-                raise MemcachedConnectionError(_(u"Could not connect to "
-                    "memcached server, make sure it is running"))
-            
-        return result
+        exp_time = self.__convert_to_datetime(kwargs.pop('time', None))
+        instance = CorrelationContext(key=key)
+        instance = self.__connection_db_session.merge(instance)
+        instance.value = value
+        instance.expiration_date = exp_time
+        self.__connection_db_session.flush()
+
+        # memcached utilise 0 pour indiquer l'absence d'expiration.
+        if exp_time is None:
+            exp_time = 0
+        else:
+            exp_time = int(time.mktime(exp_time.timetuple()))
+
+        self.__connection_cache.set(key, value, time=exp_time, **kwargs)
+        return 1
             
     
     def get(self, key):
@@ -167,46 +249,41 @@ class MemcachedConnection(object):
         @rtype: C{str} || None
         """
         
-        LOGGER.debug(_(u"MemcachedConnection: Trying to get the value of the "
-                        "key '%(key)s'..."), {
+        LOGGER.debug(_(u"Trying to get the value of the key '%(key)s'."), {
                             'key': key,
                         })
         
         # On établit la connection au serveur Memcached si nécessaire.
-        if not self.__connection:
+        if not self.__connection_cache:
             self.connect()
         
         # On récupère la valeur associée à la clé 'key'.
-        result = self.__connection.get(key)
+        result = self.__connection_cache.get(key)
 
-        # Si l'opération a échoué on doit s'assurer
-        # que la connexion est bien opérante :
+        # Pas de résultat ? On récupère l'information depuis
+        # la base de données et on met à jour le cache.
         if not result:
-            
-            # On tente de rétablir la connection au serveur MemcacheD.
-            self.connect()
-            
-            # On essaye une nouvelle fois de récupèrer
-            # la valeur associée à la clé 'key'.
-            result = self.__connection.get(key)
-        
-            # Si l'opération a de nouveau échoué
-            if not result:
-                # On fait ici la distinction entre le cas de
-                # l'erreur de connexion et celui de la clé
-                # manquante, distinction que MemcacheD ne fait pas.
-                if self.__connection.set('vigilo', 1):
-                    return None
+            instance = self.__connection_db_session.query(
+                            CorrelationContext).get(key)
+            if not instance:
+                return None
 
-                # On lève une exception
-                LOGGER.critical(_(u"Could not connect to memcached server, "
-                                  "make sure it is running"))
-                raise MemcachedConnectionError(_(u"Could not connect to "
-                    "memcached server, make sure it is running"))
-        
+            exp_time = instance.expiration_date            
+            if exp_time is not None:
+                # Si la valeur a une date de validité dans le passé,
+                # on l'ignore. La valeur sera supprimée bientôt.
+                if exp_time < datetime.now():
+                    return None
+                exp_time = int(time.mktime(exp_time.timetuple()))
+            else:
+                exp_time = 0
+
+            self.__connection_cache.set(key, instance.value, time=exp_time)
+            result = instance.value
+
         # On "dé-sérialise" la valeur avant de la retourner
-        return pickle.loads(result)
-    
+        return pickle.loads(str(result))
+
     def delete(self, key):
         """
         Supprime la clé 'key' et la valeur qui lui est associée.
@@ -221,35 +298,18 @@ class MemcachedConnection(object):
         @rtype: C{int}
         """
         
-        LOGGER.debug(_(u"MemcachedConnection: Trying to delete the "
-                        "key '%(key)s'..."), {
+        LOGGER.debug(_(u"Trying to delete the key '%(key)s'."), {
                             'key': key,
                         })
         
         # On établit la connection au serveur Memcached si nécessaire.
-        if not self.__connection:
+        if not self.__connection_cache:
             self.connect()
         
         # On supprime la clé 'key' et la valeur qui lui est associée.
-        result = self.__connection.delete(key)
-        
-        # Si la suppression a échoué on doit s'assurer
-        # que la connexion est bien opérante :
-        if not result:
-            
-            # On tente de rétablir la connection au serveur MemcacheD.
-            self.connect()
-            
-            # On essaye une nouvelle fois de supprimer la clé 'key'.
-            result = self.__connection.delete(key)
-        
-            # Si la suppression a de nouveau échoué
-            if not result:
-                # On lève une exception
-                LOGGER.critical(_(u"Could not connect to memcached server, "
-                                  "make sure it is running"))
-                raise MemcachedConnectionError(_(u"Could not connect to "
-                    "memcached server, make sure it is running"))
-            
-        return result
+        self.__connection_cache.delete(key)
+        nb_deleted = self.__connection_db_session.query(CorrelationContext
+            ).filter(CorrelationContext.key == key).delete()
+        self.__connection_db_session.flush()
+        return nb_deleted
 

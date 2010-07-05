@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2010-05-27 11:07+0200\n"
+"PO-Revision-Date: 2010-06-29 18:40+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -132,7 +132,6 @@ msgstr ""
 
 #: src/vigilo/correlator/db_insertion.py:99
 #, fuzzy
-#| msgid "insert_event: creating new event "
 msgid "insert_event: creating new event"
 msgstr "insert_event : création d'un nouvel événement"
 
@@ -146,14 +145,12 @@ msgid "Got exception"
 msgstr "Une exception a été levée"
 
 #: src/vigilo/correlator/db_insertion.py:198
-#, fuzzy, python-format
-#| msgid "insert_state: %r"
+#, fuzzy
 msgid "insert_state"
 msgstr "insert_state: %r"
 
 #: src/vigilo/correlator/db_insertion.py:218
-#, fuzzy, python-format
-#| msgid "add_to_aggregate: %r"
+#, fuzzy
 msgid "add_to_aggregate"
 msgstr "add_to_aggregate: %r"
 
@@ -184,8 +181,9 @@ msgid ""
 "%(timestamp)r. Impacted HLS = %(hls)r. Ticket id = %(ticket_id)r. "
 "acknowledgement_status = %(ack_status)r. Message = %(message)r."
 msgstr ""
-"handle_ticket: Message reçu sur un ticket d'incident. Horodatage = %(timestamp)r. "
-"SHN impacté = %(hls)r. ID ticket = %(ticket_id)r. état d'acquittement = %(ack_status)r. Message = %(message)r."
+"handle_ticket: Message reçu sur un ticket d'incident. Horodatage = "
+"%(timestamp)r. SHN impacté = %(hls)r. ID ticket = %(ticket_id)r. état "
+"d'acquittement = %(ack_status)r. Message = %(message)r."
 
 #: src/vigilo/correlator/handle_ticket.py:54
 #, python-format
@@ -218,39 +216,32 @@ msgstr ""
 msgid "handle_ticket: Event %r history updated successfully."
 msgstr "handle_ticket: L'historique de l'évenement %r a bien été mis à jour"
 
-#: src/vigilo/correlator/memcached_connection.py:95
+#: src/vigilo/correlator/memcached_connection.py:167
 #, python-format
 msgid "Establishing connection to MemcacheD server (%s)..."
 msgstr "Connection en cours au serveur MemcacheD (%s) ..."
 
-#: src/vigilo/correlator/memcached_connection.py:117
-#, python-format
-msgid "MemcachedConnection: Trying to set value '%(value)s' for key '%(key)s'..."
+#: src/vigilo/correlator/memcached_connection.py:189
+#, fuzzy, python-format
+#| msgid "MemcachedConnection: Trying to set value '%(value)s' for key
+#| '%(key)s'..."
+msgid "Trying to set value '%(value)s' for key '%(key)s'."
 msgstr ""
 "MemcachedConnection: Tentative de changement de la valeur de la clé "
 "'%(key)s' en '%(value)s'..."
 
-#: src/vigilo/correlator/memcached_connection.py:147
-#: src/vigilo/correlator/memcached_connection.py:149
-#: src/vigilo/correlator/memcached_connection.py:202
-#: src/vigilo/correlator/memcached_connection.py:204
-#: src/vigilo/correlator/memcached_connection.py:249
-#: src/vigilo/correlator/memcached_connection.py:251
-msgid "Could not connect to memcached server, make sure it is running"
-msgstr ""
-"Connexion impossible avec le serveur memcached, veuillez vous assurer \"\n"
-"\"qu'il soit démarré."
-
-#: src/vigilo/correlator/memcached_connection.py:170
-#, python-format
-msgid "MemcachedConnection: Trying to get the value of the key '%(key)s'..."
+#: src/vigilo/correlator/memcached_connection.py:235
+#, fuzzy, python-format
+#| msgid "MemcachedConnection: Trying to get the value of the key '%(key)s'..."
+msgid "Trying to get the value of the key '%(key)s'."
 msgstr ""
 "MemcachedConnection: Tentative de récupération de la valeur de la clé "
 "'%(key)s'..."
 
-#: src/vigilo/correlator/memcached_connection.py:224
-#, python-format
-msgid "MemcachedConnection: Trying to delete the key '%(key)s'..."
+#: src/vigilo/correlator/memcached_connection.py:280
+#, fuzzy, python-format
+#| msgid "MemcachedConnection: Trying to delete the key '%(key)s'..."
+msgid "Trying to delete the key '%(key)s'."
 msgstr "MemcachedConnection: Tentative de suppression de la clé '%(key)s'..."
 
 #: src/vigilo/correlator/registry.py:55
@@ -278,16 +269,11 @@ msgstr ""
 "Le singleton a déjà été instancié, demande de création d'une nouvelle "
 "instance ignorée."
 
-#: src/vigilo/correlator/twisted_service.py:46
-#: src/vigilo/correlator/actors/rule_dispatcher.py:249
-msgid "The correlator is shutting down due to a previous error"
-msgstr "Une erreur a été détectée qui va entraîner l'arrêt du corrélateur"
-
-#: src/vigilo/correlator/twisted_service.py:65
+#: src/vigilo/correlator/twisted_service.py:50
 msgid "The topology has been reloaded."
 msgstr "L'arbre topologique a été reconstruit."
 
-#: src/vigilo/correlator/twisted_service.py:79
+#: src/vigilo/correlator/twisted_service.py:64
 msgid ""
 "Could not set signal handlers. The correlator may not be able to shutdown"
 " cleanly"
@@ -317,6 +303,10 @@ msgstr "Réception d'un élément : %s"
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr "Élément non-reconnu ignoré (%s)"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:249
+msgid "The correlator is shutting down due to a previous error"
+msgstr "Une erreur a été détectée qui va entraîner l'arrêt du corrélateur"
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:302
 #, python-format
@@ -459,4 +449,10 @@ msgid "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)
 msgstr ""
 "Hôte : %(hostname)s, service : %(servicename)s, occurrences : "
 "%(occurrences)d"
+
+#~ msgid "Could not connect to memcached server, make sure it is running"
+#~ msgstr ""
+#~ "Connexion impossible avec le serveur "
+#~ "memcached, veuillez vous assurer \"\n"
+#~ "\"qu'il soit démarré."
 

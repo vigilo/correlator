@@ -11,7 +11,8 @@ except ImportError:
 import memcache as mc
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from utils import setup_mc, teardown_mc
-        
+from vigilo.correlator.context import Context
+
 from vigilo.common.conf import settings
     
 class TestMemcachedConnection(unittest.TestCase):
@@ -46,16 +47,6 @@ class TestMemcachedConnection(unittest.TestCase):
         # On instancie la classe MemcachedConnection.
         conn = MemcachedConnection()
 
-        # On modifie les paramètres de connexion au
-        # serveur Memcached pour les rendre invalides.
-        settings['correlator']['memcached_host'] = "127.0.0.1"
-        settings['correlator']['memcached_port'] = "0"
-        
-        # On associe la valeur 'value' à la clé 'key', et
-        # on s'assure que la méthode set lève bien une
-        # exception puisque le serveur n'est pas démarré.
-        self.assertRaises(Exception, conn.set, key, value)
-        
         # On initialise le serveur Memcached.
         setup_mc()
         
@@ -81,16 +72,6 @@ class TestMemcachedConnection(unittest.TestCase):
         # On instancie la classe MemcachedConnection.
         conn = MemcachedConnection()
 
-        # On modifie les paramètres de connexion au
-        # serveur Memcached pour les rendre invalides.
-        settings['correlator']['memcached_host'] = "127.0.0.1"
-        settings['correlator']['memcached_port'] = "0"
-        
-        # On récupère la valeur associée à la clé 'key',
-        # et on s'assure que la méthode get lève bien une
-        # exception puisque le serveur n'est pas démarré.
-        self.assertRaises(Exception, conn.get, key)
-        
         # On initialise le serveur Memcached.
         setup_mc()
         
@@ -118,31 +99,31 @@ class TestMemcachedConnection(unittest.TestCase):
         # On instancie la classe MemcachedConnection.
         conn = MemcachedConnection()
 
-        # On modifie les paramètres de connexion au
-        # serveur Memcached pour les rendre invalides.
-        settings['correlator']['memcached_host'] = "127.0.0.1"
-        settings['correlator']['memcached_port'] = "0"
-        
-        # On essaye de supprimer la clé 'key', et on
-        # s'assure que la méthode delete lève bien une
-        # exception puisque le serveur n'est pas démarré.
-        self.assertRaises(Exception, conn.delete, key)
-        
         # On initialise le serveur Memcached.
         setup_mc()
-        
+
         # On ajoute la clé 'key'.
         host = settings['correlator']['memcached_host']
         port = settings['correlator'].as_int('memcached_port')
         conn_str = '%s:%d' % (host, port)
         connection = mc.Client([conn_str])
         connection.behaviors = {'support_cas': 1}
-        connection.set(key, pickle.dumps(value))
+        conn.set(key, value)
         
         # On tente à nouveau de supprimer la clé 'key'
         self.assertTrue(conn.delete(key))
           
         # On s'assure que la clé a bien été supprimée
         self.assertFalse(connection.get(key))
+
+    def test_no_memcache(self):
+        """Teste les contextes de corrélation en l'absence de memcached."""
+        key = "vigilo_test_no_memcache"
+        value = "test_no_memcache"
         
-    
+        ctx = Context('test_no_memcache')
+        ctx.occurrences_count = 42
+
+        # On tente à nouveau de supprimer la clé 'key'
+        self.assertEqual(42, ctx.occurrences_count)
+

@@ -36,7 +36,7 @@ from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
 from vigilo.correlator.memcached_connection import MemcachedConnection, \
                                                     MemcachedConnectionError
-from vigilo.correlator.context import Context, TOPOLOGY_PREFIX
+from vigilo.correlator.context import Context
 #from vigilo.correlator.handle_downtime import handle_downtime
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
@@ -118,7 +118,7 @@ def check_topology(last_topology_update):
     if not last_topology_update \
         or last_topology_update < last_topology_modification:
         conn = MemcachedConnection()
-        conn.delete(TOPOLOGY_PREFIX)
+        conn.delete('vigilo:topology')
         LOGGER.info(_(u"Topology has been reloaded."))
 
 class DependencyError(Exception):

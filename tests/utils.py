@@ -20,7 +20,9 @@ configure_db(settings['database'], 'sqlalchemy_',
 from vigilo.models.session import metadata, DBSession
 
 from vigilo.correlator.memcached_connection import MemcachedConnection
+from twisted.internet import reactor
 
+MemcachedConnection.CONTEXT_TIMER = 0
 mc_pid = None
 
 def get_available_port():
@@ -53,6 +55,8 @@ def setup_mc():
     # Give it time to start up properly. I should try a client connection in a
     # while loop. Oh well...
     time.sleep(1)
+    # On s'assure qu'une connexion vers memcached est ouverte.
+    MemcachedConnection()
 
 def teardown_mc():
     """Détruit le serveur memcached créé pour le passage d'un test."""

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2010-05-27 11:07+0200\n"
-"PO-Revision-Date: 2010-05-27 11:08+0200\n"
+"POT-Creation-Date: 2010-06-29 18:40+0200\n"
+"PO-Revision-Date: 2010-06-29 18:40+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -213,34 +213,25 @@ msgstr "handle_ticket: Got exception while updating event %r history"
 msgid "handle_ticket: Event %r history updated successfully."
 msgstr "handle_ticket: Event %r history updated successfully."
 
-#: src/vigilo/correlator/memcached_connection.py:95
+#: src/vigilo/correlator/memcached_connection.py:167
 #, python-format
 msgid "Establishing connection to MemcacheD server (%s)..."
 msgstr "Establishing connection to MemcacheD server (%s)..."
 
-#: src/vigilo/correlator/memcached_connection.py:117
+#: src/vigilo/correlator/memcached_connection.py:189
 #, python-format
-msgid "MemcachedConnection: Trying to set value '%(value)s' for key '%(key)s'..."
-msgstr "MemcachedConnection: Trying to set value '%(value)s' for key '%(key)s'..."
+msgid "Trying to set value '%(value)s' for key '%(key)s'."
+msgstr "Trying to set value '%(value)s' for key '%(key)s'."
 
-#: src/vigilo/correlator/memcached_connection.py:147
-#: src/vigilo/correlator/memcached_connection.py:149
-#: src/vigilo/correlator/memcached_connection.py:202
-#: src/vigilo/correlator/memcached_connection.py:204
-#: src/vigilo/correlator/memcached_connection.py:249
-#: src/vigilo/correlator/memcached_connection.py:251
-msgid "Could not connect to memcached server, make sure it is running"
-msgstr "Could not connect to memcached server, make sure it is running"
-
-#: src/vigilo/correlator/memcached_connection.py:170
+#: src/vigilo/correlator/memcached_connection.py:235
 #, python-format
-msgid "MemcachedConnection: Trying to get the value of the key '%(key)s'..."
-msgstr "MemcachedConnection: Trying to get the value of the key '%(key)s'..."
+msgid "Trying to get the value of the key '%(key)s'."
+msgstr "Trying to get the value of the key '%(key)s'."
 
-#: src/vigilo/correlator/memcached_connection.py:224
+#: src/vigilo/correlator/memcached_connection.py:280
 #, python-format
-msgid "MemcachedConnection: Trying to delete the key '%(key)s'..."
-msgstr "MemcachedConnection: Trying to delete the key '%(key)s'..."
+msgid "Trying to delete the key '%(key)s'."
+msgstr "Trying to delete the key '%(key)s'."
 
 #: src/vigilo/correlator/registry.py:55
 #, python-format
@@ -265,16 +256,11 @@ msgstr ""
 "Singleton has already been instanciated, ignoring attempt to create a new"
 " instance."
 
-#: src/vigilo/correlator/twisted_service.py:46
-#: src/vigilo/correlator/actors/rule_dispatcher.py:249
-msgid "The correlator is shutting down due to a previous error"
-msgstr "The correlator is shutting down due to a previous error"
-
-#: src/vigilo/correlator/twisted_service.py:65
+#: src/vigilo/correlator/twisted_service.py:50
 msgid "The topology has been reloaded."
 msgstr "The topology has been reloaded."
 
-#: src/vigilo/correlator/twisted_service.py:79
+#: src/vigilo/correlator/twisted_service.py:64
 msgid ""
 "Could not set signal handlers. The correlator may not be able to shutdown"
 " cleanly"
@@ -303,6 +289,10 @@ msgstr "Got item: %s"
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr "Skipping unrecognized item (%s)"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:249
+msgid "The correlator is shutting down due to a previous error"
+msgstr "The correlator is shutting down due to a previous error"
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:302
 #, python-format
