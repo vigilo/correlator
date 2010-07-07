@@ -19,7 +19,7 @@ class TestHandleTicket(unittest.TestCase):
             checkhostcmd = u'check11',
             snmpcommunity = u'com11',
             hosttpl = u'tpl11',
-            mainip = u'192.168.0.11',
+            address = u'192.168.0.11',
             snmpport = 11,
             weight = 42,
         )

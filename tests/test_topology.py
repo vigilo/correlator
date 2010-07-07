@@ -21,7 +21,7 @@ class TestTopologyFunctions(unittest.TestCase):
             checkhostcmd = u'check11',
             snmpcommunity = u'com11',
             hosttpl = u'tpl11',
-            mainip = u'192.168.0.11',
+            address = u'192.168.0.11',
             snmpport = 11,
             weight = 42,
         )
@@ -33,7 +33,7 @@ class TestTopologyFunctions(unittest.TestCase):
             checkhostcmd = u'check26',
             snmpcommunity = u'com26',
             hosttpl = u'tpl26',
-            mainip = u'192.168.0.26',
+            address = u'192.168.0.26',
             snmpport = 26,
             weight = 42,
         )

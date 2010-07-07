@@ -46,7 +46,7 @@ class TestDbInsertion(unittest.TestCase):
             name=u'server.example.com',
             checkhostcmd=u'halt',
             hosttpl=u'',
-            mainip=u'127.0.0.1',
+            address=u'127.0.0.1',
             snmpcommunity=u'public',
             snmpport=42,
             weight=42,
@@ -281,7 +281,7 @@ class TestDbInsertion(unittest.TestCase):
             checkhostcmd = u'check11',
             snmpcommunity = u'com11',
             hosttpl = u'tpl11',
-            mainip = u'192.168.0.11',
+            address = u'192.168.0.11',
             snmpport = 11,
             weight = 42,
         )
