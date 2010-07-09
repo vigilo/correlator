@@ -422,7 +422,7 @@ class RuleDispatcher(PubSubClient):
         # Note: dom['id'] ne fonctionne pas dans lxml, dommage.
         idxmpp = dom.get('id')
         if idxmpp is None:
-            LOGGER.critical(_(u"Received invalid XMPP item ID (None)"))
+            LOGGER.error(_(u"Received invalid XMPP item ID (None)"))
             return
 
         if self.schema.get(dom[0].tag) is not None:
@@ -472,7 +472,7 @@ class RuleDispatcher(PubSubClient):
         try:
             check_topology(ctx.last_topology_update)
         except OperationalError:
-            LOGGER.critical(_(u"Could not connect to the "
+            LOGGER.error(_(u"Could not connect to the "
                 "database server, make sure it is running"))
             reactor.stop()
             return

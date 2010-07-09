@@ -41,7 +41,7 @@ def insert_event(info_dictionary):
     
     # S'il s'agit d'un événement concernant un HLS.
     if not info_dictionary["host"]:
-        LOGGER.critical(_(u'Received request to add an event on HLS "%s"'),
+        LOGGER.error(_(u'Received request to add an event on HLS "%s"'),
                             info_dictionary["service"])
         return None
     
