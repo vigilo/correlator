@@ -83,23 +83,23 @@ keys=console,syslog,correlation
 keys=consoleFormatter,syslogFormatter,correlationFormatter
 
 [logger_root]
-level=DEBUG
+level=INFO
 handlers=console,syslog
 
 [logger_twisted]
-level=DEBUG
+level=INFO
 qualname=twisted
 propagate=0
 handlers=syslog,console
 
 [logger_multiprocessing]
-level=DEBUG
+level=INFO
 qualname=multiprocessing
 propagate=1
 handlers=syslog,console
 
 [logger_correlation]
-level=DEBUG
+level=INFO
 qualname=vigilo.correlator.syslog
 propagate=0
 handlers=correlation,console
