@@ -35,9 +35,10 @@ class TestDbInsertion(unittest.TestCase):
     def tearDown(self):
         """Tear down the fixture used to test the model."""
         print "tearing down the database"
-        DBSession.flush()
         # Évite que d'anciennes instances viennent perturber le test suivant.
+        DBSession.rollback()
         DBSession.expunge_all()
+        DBSession.flush()
         teardown_db()
 
     def make_dependancies(self):
@@ -110,7 +111,9 @@ class TestDbInsertion(unittest.TestCase):
         # Insertion de l'état dans la BDD
         insert_state(info_dictionary)
         
-        state = DBSession.query(State).one()
+        state = DBSession.query(State).filter_by(
+                        idsupitem=event.supitem.idsupitem
+                    ).one()
 
         # Vérification des informations de l'état dans la BDD.
         self.assertEquals(LowLevelService, type(state.supitem))
@@ -186,7 +189,9 @@ class TestDbInsertion(unittest.TestCase):
         # Insertion de l'état dans la BDD
         insert_state(info_dictionary)
         
-        state = DBSession.query(State).one()
+        state = DBSession.query(State).filter_by(
+                        idsupitem=event.supitem.idsupitem
+                    ).one()
         
         # Vérification des informations de l'état dans la BDD.
         self.assertEquals(Host, type(state.supitem))

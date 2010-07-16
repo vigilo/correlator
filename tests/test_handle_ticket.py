@@ -4,7 +4,7 @@ from datetime import datetime
 import unittest
 
 from vigilo.models.session import DBSession
-from vigilo.models.tables import Host, Event, EventHistory, CorrEvent
+from vigilo.models.tables import Host, Event, EventHistory, CorrEvent, StateName
 
 from vigilo.correlator.handle_ticket import handle_ticket 
 from utils import setup_db, teardown_db
@@ -14,6 +14,9 @@ class TestHandleTicket(unittest.TestCase):
     
     def add_data(self):
         """Ajout des données dans la base avant les tests"""
+        DBSession.add(StateName(statename=u'OK', order=1))
+        DBSession.add(StateName(statename=u'UP', order=1))
+        DBSession.flush()
         self.host = Host(
             name = u'messagerie',
             checkhostcmd = u'check11',

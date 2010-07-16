@@ -14,6 +14,31 @@ from utils import setup_db, teardown_db
 class TestTopologyFunctions(unittest.TestCase):
     """Test des méthodes de la classe 'Topology'"""
     
+    def add_statenames(self):
+        # Ajout des noms d'états dans la BDD
+        DBSession.add(StateName(
+            statename = u'OK',
+            order = 0))
+        DBSession.add(StateName(
+            statename = u'UNKNOWN',
+            order = 1))
+        DBSession.add( StateName(
+            statename = u'WARNING',
+            order = 2))
+        DBSession.add(StateName(
+            statename = u'CRITICAL',
+            order = 3))
+        DBSession.add(StateName(
+            statename = u'UP',
+            order = 0))
+        DBSession.add(StateName(
+            statename = u'UNREACHABLE',
+            order = 1))
+        DBSession.add(StateName(
+            statename = u'DOWN',
+            order = 3))
+        DBSession.flush()
+    
     def add_services(self):
         """Création de 5 couples host/service"""
         self.host1 = Host(
@@ -179,34 +204,11 @@ class TestTopologyFunctions(unittest.TestCase):
         DBSession.add(self.events_aggregate2)
         DBSession.flush()
         
-        # Ajout des noms d'états dans la BDD
-        DBSession.add(StateName(
-            statename = u'OK',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNKNOWN',
-            order = 1))
-        DBSession.add( StateName(
-            statename = u'WARNING',
-            order = 2))
-        DBSession.add(StateName(
-            statename = u'CRITICAL',
-            order = 3))
-        DBSession.add(StateName(
-            statename = u'UP',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNREACHABLE',
-            order = 1))
-        DBSession.add(StateName(
-            statename = u'DOWN',
-            order = 3))
-        DBSession.flush()
-    
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
         setup_db()
         
+        self.add_statenames()
         # Création de 5 couples host/service
         self.add_services()
         

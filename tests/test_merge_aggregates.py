@@ -11,13 +11,16 @@ from utils import setup_db, teardown_db
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Event, CorrEvent
-from vigilo.models.tables import LowLevelService, Host
+from vigilo.models.tables import LowLevelService, Host, StateName
 
 def create_topology_and_events():
     """
     Création de 4 couples host/service, 
     4 événéments et 2 agrégats dans la BDD.
     """   
+    DBSession.add(StateName(statename=u'OK', order=1))
+    DBSession.add(StateName(statename=u'UP', order=1))
+    DBSession.flush()
     # On crée 4 couples host/service.
     host1 = Host(
         name = u'messagerie',

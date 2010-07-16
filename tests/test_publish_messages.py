@@ -65,6 +65,30 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         
         # Initialisation de la BDD
         setup_db()
+
+        # Ajout des noms d'états dans la BDD
+        DBSession.add(StateName(
+            statename = u'OK',
+            order = 0))
+        DBSession.add(StateName(
+             statename = u'UNKNOWN',
+            order = 1))
+        DBSession.add(StateName(
+            statename = u'WARNING',
+            order = 2))
+        DBSession.add(StateName(
+            statename = u'CRITICAL',
+            order = 3))
+        DBSession.add(StateName(
+            statename = u'UP',
+            order = 0))
+        DBSession.add(StateName(
+            statename = u'UNREACHABLE',
+            order = 1))
+        DBSession.add(StateName(
+            statename = u'DOWN',
+            order = 3))
+        DBSession.flush()
         
         # Ajout d'un hôte dans la BDD
         host1 = Host(
@@ -102,30 +126,6 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         DBSession.add(lls1)
         DBSession.flush()
         
-        # Ajout des noms d'états dans la BDD
-        DBSession.add(StateName(
-            statename = u'OK',
-            order = 0))
-        DBSession.add(StateName(
-             statename = u'UNKNOWN',
-            order = 1))
-        DBSession.add(StateName(
-            statename = u'WARNING',
-            order = 2))
-        DBSession.add(StateName(
-            statename = u'CRITICAL',
-            order = 3))
-        DBSession.add(StateName(
-            statename = u'UP',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNREACHABLE',
-            order = 1))
-        DBSession.add(StateName(
-            statename = u'DOWN',
-            order = 3))
-        DBSession.flush()
-        
         # Création d'un timestamp à partir de l'heure actuelle
         timestamp = datetime.now()
         int_timestamp = int(mktime(timestamp.timetuple()))
@@ -136,7 +136,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
             timestamp = timestamp,
             state = StateName.statename_to_value(u"UNREACHABLE"),
             message = "UNREACHABLE: Host1")
-        DBSession.add(state1)
+        state1 = DBSession.merge(state1)
         DBSession.flush()
         
         info_dictionary = {"host": "host1.example.com",
@@ -167,7 +167,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
             timestamp = timestamp,
             state = StateName.statename_to_value(u"UNKNOWN"),
             message = "UNKNOWN: Connection is in an unknown state")
-        DBSession.add(state2)
+        state2 = DBSession.merge(state2)
         DBSession.flush()
         
         info_dictionary = {"host": settings['correlator']['nagios_hls_host'],
@@ -200,7 +200,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
             timestamp = timestamp,
             state = StateName.statename_to_value(u"UNKNOWN"),
             message = "UNKNOWN: Processes are in an unknown state")
-        DBSession.add(state3)
+        state3 = DBSession.merge(state3)
         DBSession.flush()
         
         info_dictionary = {"host": "host1.example.com",
