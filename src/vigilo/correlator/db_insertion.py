@@ -51,7 +51,7 @@ def insert_event(info_dictionary):
     if not item_id:
         LOGGER.error(_(u'Got a reference to a non configured item '
                        '(%(host)r, %(service)r), skipping event'), {
-                            "host": info_dictionary["host"], 
+                            "host": info_dictionary["host"],
                             "service": info_dictionary["service"],
                         })
         return None
@@ -145,6 +145,10 @@ def insert_hls_history(info_dictionary):
                                     info_dictionary['service'])
 
     if not item_id:
+        LOGGER.error(_(u'Got a reference to a non configured high-level '
+                        'service (%(service)r)'), {
+                            "service": info_dictionary["service"],
+                        })
         return None
 
     history = HLSHistory()
@@ -174,6 +178,11 @@ def insert_state(info_dictionary):
                                   info_dictionary["service"])
     
     if not item_id:
+        LOGGER.error(_(u'Got a reference to a non configured item '
+                       '(%(host)r, %(service)r), skipping state'), {
+                            "host": info_dictionary["host"],
+                            "service": info_dictionary["service"],
+                        })
         return None
     # On vérifie s'il existe déjà un état
     # enregistré dans la BDD pour cet item.
