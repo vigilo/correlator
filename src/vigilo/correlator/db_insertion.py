@@ -32,21 +32,21 @@ def insert_event(info_dictionary):
     Insère un événement dans la BDD.
     Retourne l'identifiant de cet événement.
 
-    @param info_dictionary: Dictionnaire contenant les informations 
+    @param info_dictionary: Dictionnaire contenant les informations
     extraites du message d'alerte reçu par le rule dispatcher.
     @type info_dictionary: C{dict}
     @return: L'identifiant de l'événement dans la BDD.
     @rtype: C{int}
     """
-    
+
     # S'il s'agit d'un événement concernant un HLS.
     if not info_dictionary["host"]:
         LOGGER.error(_(u'Received request to add an event on HLS "%s"'),
                             info_dictionary["service"])
         return None
-    
+
     # On récupère l'identifiant de l'item (hôte ou service) concerné.
-    item_id = SupItem.get_supitem(info_dictionary["host"], 
+    item_id = SupItem.get_supitem(info_dictionary["host"],
                                   info_dictionary["service"])
     if not item_id:
         LOGGER.error(_(u'Got a reference to a non configured item '
@@ -55,22 +55,22 @@ def insert_event(info_dictionary):
                             "service": info_dictionary["service"],
                         })
         return None
-    
+
     history = EventHistory()
     try:
-        # On recherche un éventuel évènement concernant 
+        # On recherche un éventuel évènement concernant
         # l'item faisant partie d'agrégats ouverts.
         cause_event = aliased(Event)
         current_event = aliased(Event)
         event = DBSession.query(
                     current_event
                 ).join((EVENTSAGGREGATE_TABLE,
-                        EVENTSAGGREGATE_TABLE.c.idevent == 
+                        EVENTSAGGREGATE_TABLE.c.idevent ==
                             current_event.idevent)
                 ).join((CorrEvent,
-                        CorrEvent.idcorrevent == 
+                        CorrEvent.idcorrevent ==
                             EVENTSAGGREGATE_TABLE.c.idcorrevent)
-                ).join((cause_event, 
+                ).join((cause_event,
                         cause_event.idevent == CorrEvent.idcause)
                 ).filter(current_event.idsupitem == item_id
                 ).filter(not_(and_(
@@ -82,7 +82,7 @@ def insert_event(info_dictionary):
                 ))
                 ).filter(CorrEvent.timestamp_active != None
                 ).distinct().one()
-        LOGGER.debug(_(u'insert_event: updating event %r'), event.idevent)
+        LOGGER.debug(_(u'Updating event %r'), event.idevent)
     # Si aucun événement correpondant à cet item ne figure dans la base
     except NoResultFound:
         # Si l'état de cette alerte est 'OK', on l'ignore
@@ -96,7 +96,7 @@ def insert_event(info_dictionary):
         event = Event()
         event.idsupitem = item_id
         history.type_action = u'New occurrence'
-        LOGGER.debug(_(u'insert_event: creating new event'))
+        LOGGER.debug(_(u'Creating new event'))
     except MultipleResultsFound:
         # Si plusieurs événements ont été trouvés
         LOGGER.error(_(u'Multiple matching events found, skipping.'))
@@ -165,18 +165,18 @@ def insert_hls_history(info_dictionary):
 def insert_state(info_dictionary):
     """
     Insère l'état fourni par un message d'événement dans la BDD.
-    
+
     Retourne cet état instancié.
 
-    @param info_dictionary: Dictionnaire contenant les informations 
+    @param info_dictionary: Dictionnaire contenant les informations
     extraites du message d'alerte reçu par le rule dispatcher.
     @type info_dictionary: C{dict}
     """
 
     # On récupère l'identifiant de l'item (hôte ou service) concerné.
-    item_id = SupItem.get_supitem(info_dictionary["host"], 
+    item_id = SupItem.get_supitem(info_dictionary["host"],
                                   info_dictionary["service"])
-    
+
     if not item_id:
         LOGGER.error(_(u'Got a reference to a non configured item '
                        '(%(host)r, %(service)r), skipping state'), {
@@ -194,7 +194,7 @@ def insert_state(info_dictionary):
         state = State(idsupitem = item_id)
 
     previous_state = state.state
-    
+
     # On met à jour l'état dans la BDD
     state.message = info_dictionary["message"]
     state.timestamp = info_dictionary["timestamp"]
@@ -204,7 +204,7 @@ def insert_state(info_dictionary):
         DBSession.add(state)
         DBSession.flush()
     except (IntegrityError, InvalidRequestError):
-        LOGGER.exception(_(u'insert_state'))
+        LOGGER.exception(_(u'Got exception'))
     return previous_state
 
 
@@ -224,19 +224,19 @@ def add_to_aggregate(idevent, aggregate):
             DBSession.flush()
 
     except (IntegrityError, InvalidRequestError):
-        LOGGER.exception(_(u'add_to_aggregate'))
+        LOGGER.exception(_(u'Got exception'))
 
 
 def merge_aggregates(sourceaggregateid, destinationaggregateid):
     """
     Fusionne deux agrégats. Renvoie la liste des identifiants
     des alertes brutes de l'agrégat source ainsi déplacées.
-    
+
     @param sourceaggregateid: Identifiant de l'agrégat source.
     @type sourceaggregateid: C{int}
     @param destinationaggregateid: Identifiant de l'agrégat destination.
     @type destinationaggregateid: C{int}
-    
+
     @return: Liste des ids des alertes brutes déplacées.
     @rtype: Liste de C{int}
     """
@@ -255,9 +255,9 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
         LOGGER.exception(_(u'merge_aggregates: Got a reference to a nonexistent '
                        'source aggregate, aborting'))
         return
-        
-    # Récupère l'agrégat destination depuis la BDD. 
-    try:        
+
+    # Récupère l'agrégat destination depuis la BDD.
+    try:
         destination_aggregate = DBSession.query(CorrEvent
                 ).filter(CorrEvent.idcorrevent == destinationaggregateid
                 ).one()
@@ -266,7 +266,7 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
                        'destination aggregate %r, aborting'),
                        destinationaggregateid)
         return
-    
+
     # Déplace les événements depuis l'agrégat source
     # vers l'agrégat destination.
     event_id_list = []
@@ -278,7 +278,6 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
 
     # Supprime l'agrégat source de la BDD.
     DBSession.delete(source_aggregate)
-        
+
     DBSession.flush()
     return event_id_list
-

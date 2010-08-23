@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2010-06-29 18:40+0200\n"
-"PO-Revision-Date: 2010-06-29 18:40+0200\n"
+"POT-Creation-Date: 2010-08-23 15:32+0200\n"
+"PO-Revision-Date: 2010-08-23 15:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -18,12 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.4\n"
 
-#: src/vigilo/correlator/compute_hls_states.py:146
+#: src/vigilo/correlator/compute_hls_states.py:148
 #, python-format
 msgid "Dependancies have the following weights: %r"
 msgstr "Dependancies have the following weights: %r"
 
-#: src/vigilo/correlator/compute_hls_states.py:184
+#: src/vigilo/correlator/compute_hls_states.py:186
 #, python-format
 msgid ""
 "High-level service %(name)r: weight = %(weight)r, state = %(state)r "
@@ -32,22 +32,22 @@ msgstr ""
 "High-level service %(name)r: weight = %(weight)r, state = %(state)r "
 "(%(output)r)"
 
-#: src/vigilo/correlator/compute_hls_states.py:236
+#: src/vigilo/correlator/compute_hls_states.py:238
 #, python-format
 msgid "End of impact for HLS %r"
 msgstr "End of impact for HLS %r"
 
-#: src/vigilo/correlator/compute_hls_states.py:253
+#: src/vigilo/correlator/compute_hls_states.py:255
 #, python-format
 msgid "End of impact for item (%(hostname)r, %(servicename)r)"
 msgstr "End of impact for item (%(hostname)r, %(servicename)r)"
 
-#: src/vigilo/correlator/compute_hls_states.py:275
+#: src/vigilo/correlator/compute_hls_states.py:277
 #, python-format
 msgid "HLS %(hls1)r is impacted by HLS %(hls2)r"
 msgstr "HLS %(hls1)r is impacted by HLS %(hls2)r"
 
-#: src/vigilo/correlator/compute_hls_states.py:293
+#: src/vigilo/correlator/compute_hls_states.py:295
 #, python-format
 msgid ""
 "The HLS %r already belonged to this impacted path, ignoring request to "
@@ -56,16 +56,16 @@ msgstr ""
 "The HLS %r already belonged to this impacted path, ignoring request to "
 "add it again."
 
-#: src/vigilo/correlator/compute_hls_states.py:322
+#: src/vigilo/correlator/compute_hls_states.py:324
 msgid "Copying path"
 msgstr "Copying path"
 
-#: src/vigilo/correlator/compute_hls_states.py:337
+#: src/vigilo/correlator/compute_hls_states.py:339
 #, python-format
 msgid "HLS %(hls)r is impacted by item (%(host)r, %(service)r)"
 msgstr "HLS %(hls)r is impacted by item (%(host)r, %(service)r)"
 
-#: src/vigilo/correlator/compute_hls_states.py:375
+#: src/vigilo/correlator/compute_hls_states.py:377
 #, python-format
 msgid "Setting weight for '%s' to None"
 msgstr "Setting weight for '%s' to None"
@@ -118,8 +118,8 @@ msgstr ""
 
 #: src/vigilo/correlator/db_insertion.py:85
 #, python-format
-msgid "insert_event: updating event %r"
-msgstr "insert_event: updating event %r"
+msgid "Updating event %r"
+msgstr "Updating event %r"
 
 #: src/vigilo/correlator/db_insertion.py:91
 #, python-format
@@ -131,32 +131,40 @@ msgstr ""
 "alarming here)"
 
 #: src/vigilo/correlator/db_insertion.py:99
-msgid "insert_event: creating new event"
-msgstr "insert_event: creating new event"
+msgid "Creating new event"
+msgstr "Creating new event"
 
 #: src/vigilo/correlator/db_insertion.py:102
 msgid "Multiple matching events found, skipping."
 msgstr "Multiple matching events found, skipping."
 
 #: src/vigilo/correlator/db_insertion.py:128
-#: src/vigilo/correlator/db_insertion.py:159
+#: src/vigilo/correlator/db_insertion.py:163
+#: src/vigilo/correlator/db_insertion.py:207
+#: src/vigilo/correlator/db_insertion.py:227
 msgid "Got exception"
 msgstr "Got exception"
 
-#: src/vigilo/correlator/db_insertion.py:198
-msgid "insert_state"
-msgstr "insert_state"
+#: src/vigilo/correlator/db_insertion.py:148
+#, python-format
+msgid "Got a reference to a non configured high-level service (%(service)r)"
+msgstr "Got a reference to a non configured high-level service (%(service)r)"
 
-#: src/vigilo/correlator/db_insertion.py:218
-msgid "add_to_aggregate"
-msgstr "add_to_aggregate"
+#: src/vigilo/correlator/db_insertion.py:181
+#, python-format
+msgid ""
+"Got a reference to a non configured item (%(host)r, %(service)r), "
+"skipping state"
+msgstr ""
+"Got a reference to a non configured item (%(host)r, %(service)r), "
+"skipping state"
 
-#: src/vigilo/correlator/db_insertion.py:235
+#: src/vigilo/correlator/db_insertion.py:244
 #, python-format
 msgid "Merging aggregate #%(src)d with aggregate #%(dest)d"
 msgstr "Merging aggregate #%(src)d with aggregate #%(dest)d"
 
-#: src/vigilo/correlator/db_insertion.py:246
+#: src/vigilo/correlator/db_insertion.py:255
 msgid ""
 "merge_aggregates: Got a reference to a nonexistent source aggregate, "
 "aborting"
@@ -164,7 +172,7 @@ msgstr ""
 "merge_aggregates: Got a reference to a nonexistent source aggregate, "
 "aborting"
 
-#: src/vigilo/correlator/db_insertion.py:256
+#: src/vigilo/correlator/db_insertion.py:265
 #, python-format
 msgid ""
 "merge_aggregates: Got a reference to a nonexistent destination aggregate "
@@ -213,22 +221,27 @@ msgstr "handle_ticket: Got exception while updating event %r history"
 msgid "handle_ticket: Event %r history updated successfully."
 msgstr "handle_ticket: Event %r history updated successfully."
 
-#: src/vigilo/correlator/memcached_connection.py:167
+#: src/vigilo/correlator/memcached_connection.py:143
+#, python-format
+msgid "Deleted %(nb_deleted)d expired correlation contexts"
+msgstr "Deleted %(nb_deleted)d expired correlation contexts"
+
+#: src/vigilo/correlator/memcached_connection.py:185
 #, python-format
 msgid "Establishing connection to MemcacheD server (%s)..."
 msgstr "Establishing connection to MemcacheD server (%s)..."
 
-#: src/vigilo/correlator/memcached_connection.py:189
+#: src/vigilo/correlator/memcached_connection.py:207
 #, python-format
 msgid "Trying to set value '%(value)s' for key '%(key)s'."
 msgstr "Trying to set value '%(value)s' for key '%(key)s'."
 
-#: src/vigilo/correlator/memcached_connection.py:235
+#: src/vigilo/correlator/memcached_connection.py:252
 #, python-format
 msgid "Trying to get the value of the key '%(key)s'."
 msgstr "Trying to get the value of the key '%(key)s'."
 
-#: src/vigilo/correlator/memcached_connection.py:280
+#: src/vigilo/correlator/memcached_connection.py:301
 #, python-format
 msgid "Trying to delete the key '%(key)s'."
 msgstr "Trying to delete the key '%(key)s'."
@@ -280,62 +293,62 @@ msgstr ""
 msgid "Topology has been reloaded."
 msgstr "Topology has been reloaded."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:235
+#: src/vigilo/correlator/actors/rule_dispatcher.py:229
 #, python-format
 msgid "Got item: %s"
 msgstr "Got item: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:240
+#: src/vigilo/correlator/actors/rule_dispatcher.py:234
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr "Skipping unrecognized item (%s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:249
+#: src/vigilo/correlator/actors/rule_dispatcher.py:243
 msgid "The correlator is shutting down due to a previous error"
 msgstr "The correlator is shutting down due to a previous error"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:302
+#: src/vigilo/correlator/actors/rule_dispatcher.py:296
 #, python-format
 msgid "Rule %(rule_name)s timed out"
 msgstr "Rule %(rule_name)s timed out"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:418
+#: src/vigilo/correlator/actors/rule_dispatcher.py:412
 #, python-format
 msgid "Spawning for payload: %s"
 msgstr "Spawning for payload: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:425
+#: src/vigilo/correlator/actors/rule_dispatcher.py:419
 msgid "Received invalid XMPP item ID (None)"
 msgstr "Received invalid XMPP item ID (None)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:435
+#: src/vigilo/correlator/actors/rule_dispatcher.py:429
 #, python-format
 msgid "Validation failure: %s"
 msgstr "Validation failure: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:475
+#: src/vigilo/correlator/actors/rule_dispatcher.py:469
 msgid "Could not connect to the database server, make sure it is running"
 msgstr "Could not connect to the database server, make sure it is running"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:583
+#: src/vigilo/correlator/actors/rule_dispatcher.py:577
 #, python-format
 msgid "Chat message to forward: '%s'"
 msgstr "Chat message to forward: '%s'"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:595
+#: src/vigilo/correlator/actors/rule_dispatcher.py:589
 msgid "Connection initialized"
 msgstr "Connection initialized"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:605
+#: src/vigilo/correlator/actors/rule_dispatcher.py:599
 #, python-format
 msgid "Starting the queue manager with a delay of %f seconds."
 msgstr "Starting the queue manager with a delay of %f seconds."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:619
+#: src/vigilo/correlator/actors/rule_dispatcher.py:613
 msgid "Connection lost"
 msgstr "Connection lost"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:657
+#: src/vigilo/correlator/actors/rule_dispatcher.py:651
 #, python-format
 msgid ""
 "Unable to forward one-to-one message to XMPP server (no connection "
@@ -344,7 +357,7 @@ msgstr ""
 "Unable to forward one-to-one message to XMPP server (no connection "
 "established). The message (%s) has been stored for later retransmission."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:676
+#: src/vigilo/correlator/actors/rule_dispatcher.py:670
 #, python-format
 msgid ""
 "Unable to forward the message (%(error)r), it has been stored for later "
@@ -353,12 +366,12 @@ msgstr ""
 "Unable to forward the message (%(error)r), it has been stored for later "
 "retransmission (%(xml_src)s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:687
+#: src/vigilo/correlator/actors/rule_dispatcher.py:681
 #, python-format
 msgid "No destination node configured for messages of type '%s'. Skipping."
 msgstr "No destination node configured for messages of type '%s'. Skipping."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:696
+#: src/vigilo/correlator/actors/rule_dispatcher.py:690
 #, python-format
 msgid ""
 "Message from Socket impossible to forward (no connection to XMPP server),"
