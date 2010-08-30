@@ -50,14 +50,14 @@ _ = translate(__name__)
 
 def extract_information(payload):
     """
-    Extrait les informations d'un message, en le parcourant 
+    Extrait les informations d'un message, en le parcourant
     une seule fois afin d'optimiser les performances.
     """
-    
-    info_dictionary = {"host": None, 
-                       "service": None, 
-                       "state": None, 
-                       "timestamp": None, 
+
+    info_dictionary = {"host": None,
+                       "service": None,
+                       "state": None,
+                       "timestamp": None,
                        "message": None,
 #                       "type": None,
 #                       "author": None,
@@ -67,8 +67,8 @@ def extract_information(payload):
                        "acknowledgement_status": None,}
 
     # Récupération du namespace utilisé
-    namespace = etree.QName(payload.tag).namespace
-    
+    namespace = payload.nsmap[payload.prefix]
+
     for element in payload.getchildren():
         for tag in info_dictionary.keys():
             if element.tag == namespaced_tag(namespace, tag):
@@ -81,7 +81,7 @@ def extract_information(payload):
                             info_dictionary["timestamp"] = datetime.now()
                     else:
                         info_dictionary[tag] = u'' + element.text
-                        
+
     if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
         info_dictionary["host"] = None
 
@@ -89,19 +89,19 @@ def extract_information(payload):
 
 def check_topology(last_topology_update):
     """
-    Vérifie que la date de dernière modification de la topologie du parc, 
-    consignée dans la base de données, est bien antérieure à la date de 
+    Vérifie que la date de dernière modification de la topologie du parc,
+    consignée dans la base de données, est bien antérieure à la date de
     dernière mise à jour de l'arbre topologique utilisé par le corrélateur
     (passée en paramètre). Reconstruit cet arbre si nécessaire.
     """
-    
+
     # On récupère la date de dernière modification de la topologie
     # du parc, insérée dans la base de données par Vigiconf.
     last_topology_modification = \
         DBSession.query(Change.last_modified
             ).filter(Change.element == u"Topology"
             ).scalar()
-            
+
     # Si aucune date n'a été insérée par Vigiconf
     if not last_topology_modification:
         # On affiche un message mais on ne
@@ -111,7 +111,7 @@ def check_topology(last_topology_update):
                        "topology's last modification date. Therefore the "
                        "topology has NOT been rebuilt."))
         return
-    
+
     # On compare cette date à celle de la dernière modification
     # de l'arbre topologique utilisé par le corrélateur,
     # et on reconstruit l'arbre si nécessaire.
@@ -134,7 +134,7 @@ class RuleDispatcher(PubSubClient):
         nodetopublish, service):
         """
         Initialisation du demi-connecteur.
-        
+
         @param dbfilename: Emplacement du fichier SQLite de sauvegarde.
             Ce fichier est utilisé pour stocker temporairement les messages.
             Les messages dans cette base de données seront automatiquement
@@ -218,7 +218,7 @@ class RuleDispatcher(PubSubClient):
         """
         Méthode appelée lorsque des éléments ont été reçus depuis
         le bus XMPP.
-        
+
         @param event: Événement XMPP reçu.
         @type event: C{twisted.words.xish.domish.Element}
         """
@@ -316,7 +316,7 @@ class RuleDispatcher(PubSubClient):
             Construit récursivement les nœuds intermédiaires de l'arbre
             de C{Deferred}s correspondant à l'arbre des dépendances
             entre les règles de corrélation.
-            
+
             N'utilisez pas directement cette fonction, à la place,
             utilisez buildExecutionGraph() qui appelera buildDeferredList()
             au besoin.
@@ -397,11 +397,11 @@ class RuleDispatcher(PubSubClient):
             idnt = dom.get('id')
             dom = dom[0]
 
-            # On détermine le nouvel état de chacun des HLS 
-            # impactés par l'alerte, avant de l'enregistrer dans 
+            # On détermine le nouvel état de chacun des HLS
+            # impactés par l'alerte, avant de l'enregistrer dans
             # la BDD et de le transmettre à Nagios via le bus XMPP.
             compute_hls_states(self, idnt)
-            
+
             # Pour les services de haut niveau, on s'arrête ici,
             # on NE DOIT PAS générer d'événement corrélé.
             if info_dictionary["host"] == \
@@ -461,13 +461,13 @@ class RuleDispatcher(PubSubClient):
         if dom[0].tag != namespaced_tag(NS_EVENTS, 'event'):
             return
 
-        # On initialise le contexte et on y insère 
+        # On initialise le contexte et on y insère
         # les informations de l'alerte traitée.
         ctx = Context(idxmpp)
         ctx.hostname = info_dictionary["host"]
         ctx.servicename = info_dictionary["service"]
         ctx.statename = info_dictionary["state"]
-        
+
         # On met à jour l'arbre topologique si nécessaire.
         try:
             check_topology(ctx.last_topology_update)
@@ -565,9 +565,9 @@ class RuleDispatcher(PubSubClient):
             self.from_retry.vacuum()
 
     def chatReceived(self, msg):
-        """ 
-        function to treat a received chat message 
-        
+        """
+        function to treat a received chat message
+
         @param msg: msg to treat
         @type  msg: twisted.words.xish.domish.Element
 
@@ -639,9 +639,9 @@ class RuleDispatcher(PubSubClient):
             return self.__publishXml(item)
 
     def __sendOneToOneXml(self, xml):
-        """ 
+        """
         function to send a XML msg to a particular jabber user
-        @param xml: le message a envoyé sous forme XML 
+        @param xml: le message a envoyé sous forme XML
         @type xml: twisted.words.xish.domish.Element
         """
         # il faut l'envoyer vers un destinataire en particulier
@@ -665,9 +665,9 @@ class RuleDispatcher(PubSubClient):
             return True
 
     def __publishXml(self, xml):
-        """ 
-        function to publish a XML msg to node 
-        @param xml: le message a envoyé sous forme XML 
+        """
+        function to publish a XML msg to node
+        @param xml: le message a envoyé sous forme XML
         @type xml: twisted.words.xish.domish.Element
         """
         def eb(e, xml):
@@ -682,7 +682,7 @@ class RuleDispatcher(PubSubClient):
             self.to_retry.store(xml_src)
 
         item = Item(payload=xml)
-        
+
         if xml.name not in self._nodetopublish:
             LOGGER.error(_(u"No destination node configured for messages "
                            "of type '%s'. Skipping."), xml.name)
@@ -697,4 +697,3 @@ class RuleDispatcher(PubSubClient):
                            ' (no connection to XMPP server), the message '
                            'is stored for later reemission (%s)') % xml_src)
             self.to_retry.store(xml_src)
-
