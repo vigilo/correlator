@@ -1,0 +1,7 @@
+# Default configuration for Vigilo-Nagios connector
+
+# Those are twistd(1) options
+#OPTIONS=""
+
+# User to run as
+#USER="vigilo-correlator"
