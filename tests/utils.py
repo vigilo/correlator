@@ -48,7 +48,7 @@ def setup_mc():
     settings['correlator']['memcached_host'] = "127.0.0.1"
     port = get_available_port()
     settings['correlator']['memcached_port'] = port
-    env = os.environ[:]
+    env = os.environ.copy()
     env["PATH"] += ":/usr/sbin" # Sur mandriva, memcached est dans /usr/sbin
     memcached_bin = None
     mc_pid = subprocess.Popen([settings['correlator']["memcached_command"],
