@@ -48,9 +48,13 @@ def setup_mc():
     settings['correlator']['memcached_host'] = "127.0.0.1"
     port = get_available_port()
     settings['correlator']['memcached_port'] = port
+    env = os.environ[:]
+    env["PATH"] += ":/usr/sbin" # Sur mandriva, memcached est dans /usr/sbin
+    memcached_bin = None
     mc_pid = subprocess.Popen([settings['correlator']["memcached_command"],
                                "-l", "127.0.0.1",
                                "-p", str(port)],
+                               env=env,
                                close_fds=True).pid
     # Give it time to start up properly. I should try a client connection in a
     # while loop. Oh well...
@@ -77,7 +81,7 @@ with_mc = nose.with_setup(setup_mc, teardown_mc)
 def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
     metadata.create_all()
-    
+
 #Teardown that database 
 def teardown_db():
     """Supprime toutes les tables du modèle de la BDD."""
