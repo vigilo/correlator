@@ -118,5 +118,5 @@ class Context(object):
         if prop.startswith('_'):
             return object.__delattr__(self, prop)
         return self.__connection.delete(
-            'vigilo:%s:%s' % (prop, self.__id), value)
+            'vigilo:%s:%s' % (prop, self.__id))
 
