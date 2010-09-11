@@ -87,6 +87,7 @@ class MemcachedConnection(object):
         """
         Constructeur
 
+        @TODO: améliorer la doc ici : cherche-t-on à faire un singleton ?
         @return: Une instance de la classe L{cls}.
         @rtype: L{cls}
         """
@@ -164,6 +165,7 @@ class MemcachedConnection(object):
 
         # Clôture d'une éventuelle connection ouverte
         # précédemment et devenue inopérante.
+        # pylint: disable-msg=E0203
         if self.__connection_cache:
             # Si la connexion est en fait encore active on ne fait rien.
             if self.__connection_cache.set('vigilo', 1, time=1):
