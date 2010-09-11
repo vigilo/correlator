@@ -63,7 +63,7 @@ class CorrelationContext(DeclarativeBase):
             nullable=True,
         )
 
-class MemcachedConnectionError(Exception): 
+class MemcachedConnectionError(Exception):
     """Exception levée lorsque le serveur MemcacheD est inaccessible."""
     pass
 
@@ -72,7 +72,7 @@ class MemcachedConnection(object):
     Classe gérant la connexion et les échanges avec
     le serveur MemcacheD. Hérite de la classe mc.
     """
-    
+
      # Attribut statique de classe
     instance = None
 
@@ -149,7 +149,7 @@ class MemcachedConnection(object):
         """
         Permet de supprimer le singleton qui gère la connexion
         à memcached.
-        
+
         @note: En temps normal, vous NE DEVEZ PAS utiliser cette méthode.
             Cette méthode n'existe que pour faciliter le travail des
             tests unitaires de cette classe.
@@ -187,32 +187,32 @@ class MemcachedConnection(object):
         self.__connection_cache = mc.Client([conn_str])
         self.__connection_cache.debug = debug
         self.__connection_cache.behaviors = {'support_cas': 1}
-    
+
     def set(self, key, value, **kwargs):
         """
         Associe la valeur 'value' à la clé 'key'.
-        
+
         @param key: La clé à laquelle associer la valeur.
         @type key: C{str}
         @param value: La valeur à enregistrer.
         @type value: C{str}
-        
+
         @raise MemcachedConnectionError: Exception levée
         lorsque la connexion au serveur MemcacheD est inopérante.
-        
+
         @return: Un entier non nul si l'enregistrement a réussi.
         @rtype: C{int}
         """
-        
+
         LOGGER.debug(_(u"Trying to set value '%(value)s' for key '%(key)s'."), {
                         'key': key,
                         'value': value,
                     })
-        
+
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection_cache:
             self.connect()
-        
+
         # On sérialise la valeur 'value' avant son enregistrement
         value = pickle.dumps(value)
 
@@ -232,31 +232,31 @@ class MemcachedConnection(object):
 
         self.__connection_cache.set(key, value, time=exp_time, **kwargs)
         return 1
-            
-    
+
+
     def get(self, key):
         """
         Récupère la valeur associée à la clé 'key'.
         Renvoie None si cette clé n'existe pas.
-        
+
         @param key: La clé dans laquelle enregistrer la valeur.
         @type key: C{str}
-        
+
         @raise MemcachedConnectionError: Exception levée
         lorsque la connexion au serveur MemcacheD est inopérante.
-        
+
         @return: La valeur associée à la clé 'key', ou None.
         @rtype: C{str} || None
         """
-        
+
         LOGGER.debug(_(u"Trying to get the value of the key '%(key)s'."), {
                             'key': key,
                         })
-        
+
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection_cache:
             self.connect()
-        
+
         # On récupère la valeur associée à la clé 'key'.
         result = self.__connection_cache.get(key)
 
@@ -268,7 +268,7 @@ class MemcachedConnection(object):
             if not instance:
                 return None
 
-            exp_time = instance.expiration_date            
+            exp_time = instance.expiration_date
             if exp_time is not None:
                 # Si la valeur a une date de validité dans le passé,
                 # on l'ignore. La valeur sera supprimée bientôt.
@@ -287,25 +287,25 @@ class MemcachedConnection(object):
     def delete(self, key):
         """
         Supprime la clé 'key' et la valeur qui lui est associée.
-        
+
         @param key: La clé à supprimer.
         @type key: C{str}
-        
+
         @raise MemcachedConnectionError: Exception levée
         lorsque la connexion au serveur MemcacheD est inopérante.
-        
+
         @return: Un entier non nul si la suppression a réussi.
         @rtype: C{int}
         """
-        
+
         LOGGER.debug(_(u"Trying to delete the key '%(key)s'."), {
                             'key': key,
                         })
-        
+
         # On établit la connection au serveur Memcached si nécessaire.
         if not self.__connection_cache:
             self.connect()
-        
+
         # On supprime la clé 'key' et la valeur qui lui est associée.
         self.__connection_cache.delete(key)
         nb_deleted = self.__connection_db_session.query(CorrelationContext
