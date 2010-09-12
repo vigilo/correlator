@@ -1,5 +1,6 @@
 NAME := correlator
 CODEPATH := src/vigilo/corr
+EPYDOC_PARSE := vigilo\.correlator\.topology
 
 all: build settings.ini
 
