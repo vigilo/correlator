@@ -20,8 +20,6 @@ class Named(object):
     def name(self):
         """
         Renvoie le nom de l'objet courant.
-        
-        @return: Nom de l'objet courant.
         @rtype: C{str}
         """
         return self.__name

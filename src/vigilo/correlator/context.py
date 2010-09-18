@@ -64,13 +64,11 @@ class Context(object):
     def topology(self):
         """
         Récupère la topologie associée à ce contexte.
-    
-        @return: La topologie associée à ce contexte.
         @rtype: L{vigilo.correlator.topology.Topology}.
         """
         topology = self.__connection.get('vigilo:topology')
         if not topology:
-            topology = Topology()   
+            topology = Topology()
             self.__connection.set('vigilo:topology', topology)
             self.last_topology_update = datetime.now()
         return topology

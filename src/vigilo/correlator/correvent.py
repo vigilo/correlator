@@ -42,13 +42,13 @@ DATA_LOG_MESSAGE = 7
 def make_correvent(forwarder, dom, idnt):
     """
     Récupère dans le contexte les informations transmises par
-    les règles, crée les événements corrélés (agrégats 
+    les règles, crée les événements corrélés (agrégats
     d'événements) nécessaires dans la BDD et les transmet à pubsub.
-    
-    
-    Permet de satisfaire les exigences suivantes : 
-    - VIGILO_EXIG_VIGILO_COR_0040,
-    - VIGILO_EXIG_VIGILO_COR_0060.
+
+
+    Permet de satisfaire les exigences suivantes :
+     - VIGILO_EXIG_VIGILO_COR_0040,
+     - VIGILO_EXIG_VIGILO_COR_0060.
     """
     DBSession.flush()
 
@@ -123,14 +123,14 @@ def make_correvent(forwarder, dom, idnt):
         # Si l'état de l'alerte brute est 'OK' ou bien 'UP', on ne fait rien
         if state == "OK" or state == "UP":
             LOGGER.info(_(u'Raw event ignored. Reason: status = %r'), state)
-            return 
+            return
 
         # Si un ou plusieurs agrégats dont dépend l'alerte sont
         # spécifiés dans le contexte par la règle de corrélation
         # topologique des services de bas niveau (lls_dep),
         # alors on rattache l'alerte à ces agrégats.
         # Si un ou plusieurs agrégats dépendant de l'alerte sont
-        # spécifiés dans le contexte par la règle de corrélation 
+        # spécifiés dans le contexte par la règle de corrélation
         # topologique des services de bas niveau (lls_dep), alors
         # on rattachera également les alertes correspondant à ces agrégats.
         predecessing_aggregates_id = ctx.predecessors_aggregates
@@ -138,12 +138,12 @@ def make_correvent(forwarder, dom, idnt):
             succeeding_aggregates_id = ctx.successors_aggregates
             dependant_event_list = []
             is_built_dependant_event_list = False
-            
+
             # Pour chaque agrégat dont l'alerte dépend,
             for predecessing_aggregate_id in predecessing_aggregates_id:
                 try:
                     predecessing_aggregate = DBSession.query(CorrEvent
-                        ).filter(CorrEvent.idcorrevent 
+                        ).filter(CorrEvent.idcorrevent
                                     == int(predecessing_aggregate_id)
                         ).one()
 
@@ -170,18 +170,18 @@ def make_correvent(forwarder, dom, idnt):
                                 for event in events:
                                     if not event in dependant_event_list:
                                         dependant_event_list.append(event)
-                            
+
                         is_built_dependant_event_list = True
 
             # On rattache l'alerte courante aux agrégats sur le bus XMPP.
             publish_aggregate(forwarder,
                               predecessing_aggregates_id, [raw_event_id])
-            
+
             if succeeding_aggregates_id:
-                # On publie également sur le bus XMPP la 
-                # liste des alertes brutes (dépendantes de 
+                # On publie également sur le bus XMPP la
+                # liste des alertes brutes (dépendantes de
                 # l'alerte courante) à rattacher à ces agrégats.
-                publish_aggregate(forwarder, 
+                publish_aggregate(forwarder,
                             predecessing_aggregates_id, dependant_event_list)
                 # Enfin on supprime du bus les agrégats
                 # qui dépendaient de l'alerte courante.
@@ -192,7 +192,7 @@ def make_correvent(forwarder, dom, idnt):
             return
 
         LOGGER.debug(_(u'Creating new correlated event'))
-        
+
         correvent = CorrEvent()
         correvent.idcause = raw_event_id
 
