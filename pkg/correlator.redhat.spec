@@ -104,7 +104,7 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{name}.lang
 %defattr(644,root,root,755)
 %doc COPYING doc/*
-%{_bindir}/%{name}
+%attr(755,root,root) %{_bindir}/%{name}
 %attr(744,root,root) %{_initrddir}/%{name}
 %dir %{_sysconfdir}/vigilo
 %config(noreplace) %{_sysconfdir}/vigilo/%{module}
