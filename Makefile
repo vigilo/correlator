@@ -9,7 +9,7 @@ include buildenv/Makefile.common
 settings.ini: settings.ini.in
 	sed -e 's,@LOCALSTATEDIR@,$(LOCALSTATEDIR),g' settings.ini.in > settings.ini
 
-install: settings.ini
+install: settings.ini $(PYTHON)
 	$(PYTHON) setup.py install --single-version-externally-managed --root=$(DESTDIR) --record=INSTALLED_FILES
 	chmod a+rX -R $(DESTDIR)$(PREFIX)/lib*/python*/*
 	# init
