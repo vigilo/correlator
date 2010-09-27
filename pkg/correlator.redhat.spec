@@ -25,7 +25,6 @@ BuildRequires:   python26-babel
 Requires:   python26-distribute
 Requires:   vigilo-common vigilo-pubsub vigilo-connector vigilo-models
 Requires:   python26-lxml
-Requires:   python26-multiprocessing
 Requires:   python26-memcached
 Requires:   python26-twisted-words
 Requires:   python26-networkx

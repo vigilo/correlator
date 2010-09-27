@@ -20,7 +20,6 @@ Requires:   python >= 2.5
 Requires:   python-setuptools
 Requires:   vigilo-common vigilo-pubsub vigilo-connector vigilo-models
 Requires:   python-lxml
-Requires:   python-multiprocessing
 Requires:   python-memcached
 Requires:   python-twisted-words
 Requires:   python-networkx
