@@ -1,5 +1,5 @@
 #! /bin/sh
-# 
+#
 # vigilo-correlator       Init script for the Vigilo correlator
 #
 #
@@ -25,10 +25,10 @@ PID_FILE=/var/run/$NAME/$NAME.pid
 OPTIONS=""
 
 if [ -f /etc/sysconfig/$NAME ] ; then
-	. /etc/sysconfig/$NAME
+    . /etc/sysconfig/$NAME
 fi
 if [ -f /etc/init.d/functions ] ; then
-	. /etc/init.d/functions
+    . /etc/init.d/functions
 fi
 
 export USER PID_FILE OPTIONS
@@ -36,59 +36,77 @@ export USER PID_FILE OPTIONS
 test -x $DAEMON || exit 0
 
 start() {
-	[ -f $LOCK_FILE ] && return
+    [ -f $LOCK_FILE ] && return
 
-	echo -n "Starting $NAME: "
-	daemon --user $USER $DAEMON --pidfile $PID_FILE --logfile /dev/null $OPTIONS
-	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && touch $LOCK_FILE
+    echo -n "Starting $NAME: "
+    #daemon --user $USER $DAEMON --pidfile $PID_FILE --logfile /dev/null $OPTIONS
+    su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE --syslog $OPTIONS >/dev/null 2>&1"
+    RETVAL=$?
+    if [ $RETVAL -eq 0 ]; then
+        # Wait 3s to make sure it started properly
+        i=0
+        while [ $i -lt 3 ]; do
+            if ! pgrep -f $DAEMON >/dev/null; then
+                RETVAL=1
+                break
+            fi
+            let "i += 1"
+            gprintf "."
+            sleep 1
+        done
+        [ $RETVAL -eq 0 ] && success
+        [ $RETVAL -ne 0 ] && failure
+    else
+        failure
+    fi
+    echo
+    [ $RETVAL -eq 0 ] && touch $LOCK_FILE
 }
 
 stop() {
-	echo -n "Shutting down $NAME: "
-	killproc -p $PID_FILE $NAME
-	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
+    echo -n "Shutting down $NAME: "
+    killproc -p $PID_FILE $NAME
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
 }
 
 reload() {
-	echo -n "Reloading $NAME: "
-	killproc -p $PID_FILE $NAME -HUP
-	RETVAL=$?
-	echo
+    echo -n "Reloading $NAME: "
+    killproc -p $PID_FILE $NAME -HUP
+    RETVAL=$?
+    echo
 }
 
 
 
 case "$1" in
-	start)
-		start
-	;;
-	stop) 
-		stop
-	;;
-	status)
-		status -p $PID_FILE $NAME
-	;;
-	reload)
-		reload
-	;;
-	restart)
-		stop
-		start
-	;;
-	condrestart)
-		if [ -f $LOCK_FILE ]; then
-			stop
-			start
-		fi
-	;;
-	*)    
-		echo "Usage: $0 {start|stop|restart|reload|condrestart|status}" >&2
-		RETVAL=1
-	;;
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status -p $PID_FILE $NAME
+    ;;
+    reload)
+        reload
+    ;;
+    restart)
+        stop
+        start
+    ;;
+    condrestart)
+        if [ -f $LOCK_FILE ]; then
+            stop
+            start
+        fi
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|reload|condrestart|status}" >&2
+        RETVAL=1
+    ;;
 esac
 
 exit $RETVAL
