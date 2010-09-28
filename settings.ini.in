@@ -1,42 +1,90 @@
 [bus]
+# Le traffic XMPP doit-il être journalisé ?
 log_traffic = True
+
+# Nom d'hôte ou adresse IP du serveur XMPP.
 host = localhost
+
+# Service de publication XMPP, en général,
+# de la forme "pubsub.<serveur XMPP>".
 service = pubsub.localhost
+
+# Identifiant de connexion Jabber.
 jid = correlator@localhost
+
+# Mot de passe correspondant.
 password = correlator
 
+# Nœuds XMPP souscrits (surveillés).
 watched_topics = /home/localhost/connector-nagios/event, /home/localhost/connector-nagios/downtime
+
+# Nœuds XMPP gérés (dont nous sommes propriétaire).
 owned_topics = /home/localhost/correlator/event, /home/localhost/correlator/aggr, /home/localhost/correlator/delaggr, /home/localhost/correlator/state
 
 [database]
+# URL d'accès à la base de données.
 sqlalchemy_url = postgres://vigilo:vigilo@localhost/vigilo
+
+# Préfixe des tables.
 db_basename = vigilo_
 
 [connector]
+# Fichier de sauvegarde locale des messages
+# en cas d'échec d'une transmission.
 backup_file = @LOCALSTATEDIR@/lib/vigilo/correlator/correlator.sqlite
+
+# Table de sauvegarde pour les messages
+# provenant du bus XMPP.
 backup_table_from_bus = frombus
+
+# Table de sauvegarde pour les messages
+# à destination du bus XMPP.
 backup_table_to_bus = tobus
 
 [correlator]
+# Adresse IP du serveur memcached (optionnelle).
 memcached_host = 127.0.0.1
+
+# Port du serveur memcached.
 memcached_port = 11215
+
+# Type de connexion au serveur memcached.
+# Seul "inet" est supporté pour le moment.
 memcached_type = inet
+
+# URL de la base de données contenant
+# les contextes de corrélation.
 context_db_url = sqlite:///:memory:
+
+# Délai d'expiration par défaut des contextes.
 context_timeout = 60.
 
+# Mode débogage.
 debug = False
+
+# Validation des messages reçus.
 validate_messages = False
 
+# JID du connecteur qui reçoit les notifications
+# concernant les services de haut niveau.
 nagios_hls_jid = connector-nagios@localhost
+
+# Nom de l'hôte symbolisant les services
+# de haut niveau dans Nagios.
 nagios_hls_host = High-Level-Services
 
-map_chunksize = 1
-
+# Taille de la file d'attente des messages XMPP.
 queue_size = 100
+
+# Délai maximum d'exécution pour
+# chaque règle de corrélation.
 rules_timeout = 2
 
+# Niveau de débogage pour l'envoi des événements
+# corrélés aux journaux système.
 syslog_data_level = 20
 
+# Règles de corrélation actives.
 rules = vigilo.correlator.rules.hls_deps, vigilo.correlator.rules.lls_deps, vigilo.correlator.rules.update_occurrences_count, vigilo.correlator.rules.priority
 
 
@@ -84,25 +132,25 @@ keys=consoleFormatter,syslogFormatter,correlationFormatter
 
 [logger_root]
 level=INFO
-handlers=console,syslog
+handlers=syslog
 
 [logger_twisted]
 level=INFO
 qualname=twisted
 propagate=0
-handlers=syslog,console
+handlers=syslog
 
 [logger_multiprocessing]
 level=INFO
 qualname=multiprocessing
 propagate=1
-handlers=syslog,console
+handlers=syslog
 
 [logger_correlation]
 level=INFO
 qualname=vigilo.correlator.syslog
 propagate=0
-handlers=correlation,console
+handlers=correlation
 
 [handler_console]
 class=StreamHandler
