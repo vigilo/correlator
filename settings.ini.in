@@ -132,25 +132,25 @@ keys=consoleFormatter,syslogFormatter,correlationFormatter
 
 [logger_root]
 level=INFO
-handlers=syslog
+handlers=syslog,console
 
 [logger_twisted]
 level=INFO
 qualname=twisted
 propagate=0
-handlers=syslog
+handlers=syslog,console
 
 [logger_multiprocessing]
 level=INFO
 qualname=multiprocessing
 propagate=1
-handlers=syslog
+handlers=syslog,console
 
 [logger_correlation]
 level=INFO
 qualname=vigilo.correlator.syslog
 propagate=0
-handlers=correlation
+handlers=correlation,console
 
 [handler_console]
 class=StreamHandler
