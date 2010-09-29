@@ -587,8 +587,7 @@ class RuleDispatcher(PubSubClient):
     def connectionInitialized(self):
         """
         Cette méthode est appelée lorsque la connexion avec le bus XMPP
-        est prête. On se contente d'appeler la méthode L{consomeQueue}
-        depuis le reactor de Twisted pour commencer le transfert.
+        est prête.
         """
         super(RuleDispatcher, self).connectionInitialized()
         self.xmlstream.addObserver("/message[@type='chat']", self.chatReceived)
