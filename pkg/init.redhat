@@ -51,7 +51,7 @@ start() {
                 break
             fi
             let "i += 1"
-            gprintf "."
+            echo -n "."
             sleep 1
         done
         [ $RETVAL -eq 0 ] && success
