@@ -72,8 +72,8 @@ make install \
 	LOCALSTATEDIR=%{_localstatedir} \
 	PYTHON=%{_bindir}/python
 
-# Mandriva splits Twisted
-sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/site-packages/vigilo_correlator-*-py*.egg-info/requires.txt
+# Splitted Twisted
+sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/site-packages/vigilo*.egg-info/requires.txt
 
 %find_lang %{name}
 
