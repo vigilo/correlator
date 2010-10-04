@@ -8,6 +8,11 @@ import os
 from twisted.protocols import amp
 from ampoule import child
 
+# HACK: permet d'insérer "vigilo-correlator" devant les arguments
+# afin que les messages de log affiche le bon nom de processus.
+import sys
+sys.argv.insert(0, 'vigilo-correlator')
+
 from vigilo.common.conf import settings
 settings.load_module(__name__)
 
@@ -55,10 +60,9 @@ class VigiloAMPChild(child.AMPChild):
                         'Rule name: %(name)s'), {
                             'pid': os.getpid(),
                             'ppid': os.getppid(),
-                            'name': rule_name,                        
+                            'name': rule_name,
                         })
 
         rule.process(idxmpp, xml)
         LOGGER.debug(_(u'Rule runner: process ends for rule "%s"'), rule_name)
         return {}
-
