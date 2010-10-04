@@ -1,6 +1,6 @@
 [bus]
 # Le traffic XMPP doit-il être journalisé ?
-log_traffic = True
+log_traffic = False
 
 # Nom d'hôte ou adresse IP du serveur XMPP.
 host = localhost
