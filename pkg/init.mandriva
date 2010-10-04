@@ -3,7 +3,8 @@
 # vigilo-correlator       Init script for the Vigilo correlator
 #
 #
-
+# chkconfig: 345 95 05
+# description: Starts and stops the Vigilo correlator
 ### BEGIN INIT INFO
 # Provides: vigilo-correlator
 # Required-Start: $network $syslog
