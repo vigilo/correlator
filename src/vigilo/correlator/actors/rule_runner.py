@@ -11,7 +11,7 @@ from ampoule import child
 # HACK: permet d'insérer "vigilo-correlator" devant les arguments
 # afin que les messages de log affiche le bon nom de processus.
 import sys
-sys.argv.insert(0, 'vigilo-correlator')
+sys.argv[0] = 'vigilo-correlator'
 
 from vigilo.common.conf import settings
 settings.load_module(__name__)
