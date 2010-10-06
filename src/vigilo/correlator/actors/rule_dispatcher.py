@@ -4,6 +4,7 @@
 Ce module est un demi-connecteur qui assure la redirection des messages
 issus du bus XMPP vers une file d'attente (C{Queue.Queue} ou compatible).
 """
+import sys
 import os.path
 import pkg_resources
 import transaction
@@ -190,6 +191,7 @@ class RuleDispatcher(PubSubClient):
             name='RuleDispatcher',
             min=min_runner,
             max=max_runner,
+            ampChildArgs=(sys.argv[0], )
         )
 
         # Prépare les schémas de validation XSD.

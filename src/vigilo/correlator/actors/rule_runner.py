@@ -8,11 +8,6 @@ import os
 from twisted.protocols import amp
 from ampoule import child
 
-# HACK: permet d'insérer "vigilo-correlator" devant les arguments
-# afin que les messages de log affiche le bon nom de processus.
-import sys
-sys.argv[0] = 'vigilo-correlator'
-
 from vigilo.common.conf import settings
 settings.load_module(__name__)
 
@@ -23,11 +18,7 @@ configure_db(settings['database'], 'sqlalchemy_',
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
-LOGGER = get_logger(__name__)
 _ = translate(__name__)
-
-from vigilo.correlator.registry import get_registry
-from vigilo.correlator.memcached_connection import MemcachedConnectionError
 
 class RuleRunner(amp.Command):
     arguments = [
@@ -42,7 +33,6 @@ class RuleRunner(amp.Command):
         # pour pouvoir diagnostiquer facilement les problèmes.
         KeyError: 'KeyError',
         ValueError: 'ValueError',
-        MemcachedConnectionError: 'MemcachedConnectionError',
 
         # Pour les autres erreurs, elles seront remontées
         # sous forme d'C{Exception}s génériques.
@@ -50,13 +40,21 @@ class RuleRunner(amp.Command):
     }
 
 class VigiloAMPChild(child.AMPChild):
+    def __init__(self, *args):
+        import sys
+        sys.argv.insert(0, args[0])
+        super(VigiloAMPChild, self).__init__()
+
     @RuleRunner.responder
     def rule_runner(self, rule_name, idxmpp, xml):
+        from vigilo.correlator.registry import get_registry
+
+        logger = get_logger(__name__)
         reg = get_registry()
         rule = reg.rules.lookup(rule_name)
 
-        LOGGER.debug(_(u'Rule runner: process begins for rule "%s"'), rule_name)
-        LOGGER.debug(_(u'Process id: %(pid)r | Parent id: %(ppid)r | '
+        logger.debug(_(u'Rule runner: process begins for rule "%s"'), rule_name)
+        logger.debug(_(u'Process id: %(pid)r | Parent id: %(ppid)r | '
                         'Rule name: %(name)s'), {
                             'pid': os.getpid(),
                             'ppid': os.getppid(),
@@ -64,5 +62,5 @@ class VigiloAMPChild(child.AMPChild):
                         })
 
         rule.process(idxmpp, xml)
-        LOGGER.debug(_(u'Rule runner: process ends for rule "%s"'), rule_name)
+        logger.debug(_(u'Rule runner: process ends for rule "%s"'), rule_name)
         return {}
