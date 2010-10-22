@@ -18,7 +18,7 @@ class ExampleRule(Rule):
         """Initialisation du module."""
         super(ExampleRule, self).__init__([])
 
-    def process(self, idnt, payload):
+    def process(self, link, idnt, payload):
         """Traitement du message. Ici on se contente d'afficher une trace."""
         LOGGER.debug(_(u'id %(id)s payload %(payload)s'), {
                         "id": idnt,
@@ -28,4 +28,3 @@ class ExampleRule(Rule):
 def register(registry):
     """Enregistre le module."""
     registry.rules.register(ExampleRule())
-

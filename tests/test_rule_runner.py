@@ -22,7 +22,7 @@ from vigilo.correlator.registry import get_registry
 
 from vigilo.common.logging import get_logger
 
-from vigilo.correlator.actors.rule_runner import VigiloAMPChild, RuleRunner
+from vigilo.correlator.actors.rule_runner import RuleCommand, RuleRunner
 
 LOGGER = get_logger('vigilo.correlator.tests')
 
@@ -31,19 +31,19 @@ class SpecificException(Exception):
     def __init__(self):
         super(SpecificException, self).__init__(self.message)
 
-class ExceptionRuleRunner(RuleRunner):
+class ExceptionRuleCommand(RuleCommand):
     pass
 
-class ExceptionAMPChild(VigiloAMPChild):
-    @ExceptionRuleRunner.responder
+class ExceptionAMPChild(RuleRunner):
+    @ExceptionRuleCommand.responder
     def rule_runner(self, *args, **kwargs):
         raise SpecificException()
 
-class TimeoutRuleRunner(RuleRunner):
+class TimeoutRuleCommand(RuleCommand):
     pass
 
-class TimeoutAMPChild(VigiloAMPChild):
-    @TimeoutRuleRunner.responder
+class TimeoutAMPChild(RuleRunner):
+    @TimeoutRuleCommand.responder
     def rule_runner(self, *args, **kwargs):
         from time import sleep
         sleep(999)
@@ -85,7 +85,7 @@ class TestRuleException(unittest.TestCase):
 #                _fail()
 
 #        work = pp.doWork(
-#            ExceptionRuleRunner,
+#            ExceptionRuleCommand,
 #            rule_name='Exception',
 #            idxmpp='bar',
 #            xml='bar',
@@ -113,7 +113,7 @@ class TestRuleException(unittest.TestCase):
                 "Incorrect exception")
 
         work = pp.doWork(
-            TimeoutRuleRunner,
+            TimeoutRuleCommand,
             rule_name='Timeout',
             idxmpp='foo',
             xml='foo',
@@ -121,4 +121,3 @@ class TestRuleException(unittest.TestCase):
         work.addCallbacks(lambda *args: _fail, _checks)
         yield work
         yield pp.stop()
-

@@ -14,7 +14,9 @@ from datetime import datetime
 from twisted.internet import task, defer, reactor
 from twisted.internet.error import ProcessTerminated
 from twisted.words.xish import domish
-from ampoule import pool
+from twisted.protocols import amp
+from twisted.python import reflect
+from ampoule import pool, main, child
 from wokkel.pubsub import PubSubClient, Item
 from wokkel.generic import parseXml
 from lxml import etree
@@ -125,6 +127,38 @@ def check_topology(last_topology_update):
 class DependencyError(Exception):
     pass
 
+class SendToBus(amp.Command):
+    arguments = [
+        ('item', amp.Unicode()),
+    ]
+    requiresAnswer = False
+
+class VigiloConnectorFactory(main.AMPConnector):
+    def processEnded(self, status):
+        return
+
+class ProcessStarter(main.ProcessStarter):
+    def startAMPProcess(self, ampChild, ampParent=None, ampChildArgs=()):
+        self._checkRoundTrip(ampChild)
+        fullPath = reflect.qual(ampChild)
+        if ampParent is None:
+            prot = self.connectorFactory(amp.AMP())
+        else:
+            prot = VigiloConnectorFactory(ampParent)
+        args = ampChildArgs + (self.childReactor, fullPath)
+        return self.startPythonProcess(prot, *args)
+
+class Correlator(child.AMPChild):
+    def __init__(self, rule_dispatcher=None):
+        super(Correlator, self).__init__()
+        self.rule_dispatcher = rule_dispatcher
+
+    @SendToBus.responder
+    def send_to_bus(self, item):
+        LOGGER.debug(_('Sending this payload to the XMPP bus: %r'), item)
+        self.rule_dispatcher.sendItem(item)
+        return {}
+
 class RuleDispatcher(PubSubClient):
     """
     Cette classe corrèle les messages reçus depuis le bus XMPP
@@ -179,7 +213,8 @@ class RuleDispatcher(PubSubClient):
 
         self.rrp = pool.ProcessPool(
             maxIdle=max_idle,
-            ampChild=rule_runner.VigiloAMPChild,
+            ampChild=rule_runner.RuleRunner,
+            ampParent=Correlator(self),
             # @XXX Désactivé pour le moment car pose des problèmes.
             # Lorsqu'un processus atteint le timeout, il est tué,
             # mais lorsqu'une tâche arrive, ampoule semble ne pas
@@ -187,11 +222,12 @@ class RuleDispatcher(PubSubClient):
             # la tâche. On tombe dans une race condition et la règle
             # échoue (à cause d'un timeout). Plusieurs messages
             # peuvent ainsi défiler sans être traités...
-#            timeout=timeout,
+###            timeout=timeout,
             name='RuleDispatcher',
             min=min_runner,
             max=max_runner,
-            ampChildArgs=(sys.argv[0], )
+            ampChildArgs=(sys.argv[0], ),
+            starter=ProcessStarter(),
         )
 
         # Prépare les schémas de validation XSD.
@@ -264,7 +300,7 @@ class RuleDispatcher(PubSubClient):
         @rtype: C{twisted.internet.defer.Deferred} ou C{None}
         """
         # Si il y a déjà un message en cours de traitement,
-        # on le stocke en base SQLite directement.
+        # on stocke le nouveau en base SQLite directement.
         if self.parallel_messages:
             self.from_retry.store(xml)
             return
@@ -341,7 +377,7 @@ class RuleDispatcher(PubSubClient):
 
             subdeferreds = [buildDeferredList(graph, r[1], idxmpp, xml) \
                             for r in graph.out_edges_iter(node)]
-            work = self.rrp.doWork(rule_runner.RuleRunner,
+            work = self.rrp.doWork(rule_runner.RuleCommand,
                         rule_name=node, idxmpp=idxmpp, xml=xml)
             work.addErrback(handle_rule_error, node)
             subdeferreds.append(work)
@@ -498,7 +534,7 @@ class RuleDispatcher(PubSubClient):
         if raw_event_id:
             ctx.raw_event_id = raw_event_id
 
-        # Le vrai travaille commence ici.
+        # Le vrai travail commence ici.
         self.parallel_messages += 1
 
         # 1 -   On génère un graphe avec des DeferredLists qui reproduit

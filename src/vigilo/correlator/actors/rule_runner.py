@@ -20,7 +20,7 @@ from vigilo.common.gettext import translate
 
 _ = translate(__name__)
 
-class RuleRunner(amp.Command):
+class RuleCommand(amp.Command):
     arguments = [
         ('rule_name', amp.String()),
         ('idxmpp', amp.String()),
@@ -39,13 +39,13 @@ class RuleRunner(amp.Command):
         Exception: 'Exception',
     }
 
-class VigiloAMPChild(child.AMPChild):
+class RuleRunner(child.AMPChild):
     def __init__(self, *args):
         import sys
         sys.argv.insert(0, args[0])
-        super(VigiloAMPChild, self).__init__()
+        super(RuleRunner, self).__init__()
 
-    @RuleRunner.responder
+    @RuleCommand.responder
     def rule_runner(self, rule_name, idxmpp, xml):
         from vigilo.correlator.registry import get_registry
 
@@ -61,6 +61,6 @@ class VigiloAMPChild(child.AMPChild):
                             'name': rule_name,
                         })
 
-        rule.process(idxmpp, xml)
+        rule.process(self, idxmpp, xml)
         logger.debug(_(u'Rule runner: process ends for rule "%s"'), rule_name)
         return {}
