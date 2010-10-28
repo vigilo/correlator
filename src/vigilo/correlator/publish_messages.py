@@ -5,7 +5,7 @@ Fonctions permettant la publication de messages divers sur le bus XMPP.
 """
 
 from twisted.words.xish import domish
-from vigilo.correlator.xml import NS_AGGR, NS_DELAGGR, NS_STATES
+from vigilo.pubsub.xml import NS_AGGR, NS_DELAGGR, NS_STATES
 
 from time import mktime
 

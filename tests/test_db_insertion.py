@@ -8,7 +8,7 @@ from lxml import etree
 from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                         add_to_aggregate
-from vigilo.correlator.xml import NS_EVENTS
+from vigilo.pubsub.xml import NS_EVENTS
 from utils import setup_db, teardown_db
 
 from vigilo.models.tables import State, StateName, Event, \
@@ -90,7 +90,7 @@ class TestDbInsertion(unittest.TestCase):
         info_dictionary = extract_information(etree.fromstring(xml))
         # Insertion de l'événement dans la BDD
         idevent = insert_event(info_dictionary)
-        
+
         assert idevent is not None
         event = DBSession.query(Event).one()
 
@@ -107,10 +107,10 @@ class TestDbInsertion(unittest.TestCase):
             StateName.value_to_statename(event.peak_state))
         self.assertEquals(u'WARNING: Load average is above 4 (4.5)',
                             event.message)
-        
+
         # Insertion de l'état dans la BDD
         insert_state(info_dictionary)
-        
+
         state = DBSession.query(State).filter_by(
                         idsupitem=event.supitem.idsupitem
                     ).one()
@@ -146,7 +146,7 @@ class TestDbInsertion(unittest.TestCase):
         # Insertion de l'événement dans la BDD
         idevent = insert_event(info_dictionary)
 
-        # Aucun événement ne doit être créé 
+        # Aucun événement ne doit être créé
         # pour les services de haut niveau.
         assert idevent is None
 
@@ -166,7 +166,7 @@ class TestDbInsertion(unittest.TestCase):
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))
-        
+
         # Insertion de l'événement dans la BDD
         idevent = insert_event(info_dictionary)
 
@@ -185,14 +185,14 @@ class TestDbInsertion(unittest.TestCase):
             StateName.value_to_statename(event.peak_state))
         self.assertEquals(u'DOWN: No ping response',
                             event.message)
-        
+
         # Insertion de l'état dans la BDD
         insert_state(info_dictionary)
-        
+
         state = DBSession.query(State).filter_by(
                         idsupitem=event.supitem.idsupitem
                     ).one()
-        
+
         # Vérification des informations de l'état dans la BDD.
         self.assertEquals(Host, type(state.supitem))
         self.assertEquals(1239104006, time.mktime(state.timestamp.timetuple()))
@@ -292,7 +292,7 @@ class TestDbInsertion(unittest.TestCase):
         )
         DBSession.add(host1)
         DBSession.flush()
-        
+
         service1 = LowLevelService(
             servicename = u'Processes',
             host = host1,
@@ -302,7 +302,7 @@ class TestDbInsertion(unittest.TestCase):
         )
         DBSession.add(service1)
         DBSession.flush()
-    
+
         service2 = LowLevelService(
             servicename = u'CPU',
             host = host1,
@@ -312,7 +312,7 @@ class TestDbInsertion(unittest.TestCase):
         )
         DBSession.add(service2)
         DBSession.flush()
-        
+
         # On ajoute 1 couple événement/agrégat à la BDD.
         event2 = Event(
             idsupitem = service2.idservice,
@@ -322,8 +322,8 @@ class TestDbInsertion(unittest.TestCase):
         )
         DBSession.add(event2)
         DBSession.flush()
-        
-        events_aggregate1 = CorrEvent( 
+
+        events_aggregate1 = CorrEvent(
             idcause = event2.idevent,
             impact = 1,
             priority = 1,
@@ -335,7 +335,7 @@ class TestDbInsertion(unittest.TestCase):
         events_aggregate1.events.append(event2)
         DBSession.add(events_aggregate1)
         DBSession.flush()
-            
+
         # On ajoute un nouvel événement à la BDD.
         event1 = Event(
             idsupitem = service1.idservice,
@@ -345,14 +345,13 @@ class TestDbInsertion(unittest.TestCase):
         )
         DBSession.add(event1)
         DBSession.flush()
-        
+
         # On ajoute ce nouvel événement à l'agrégat existant.
         add_to_aggregate(event1.idevent, events_aggregate1)
-        
+
         # On vérifie que l'événement a bien été ajouté à l'agrégat.
         self.assertTrue(event1 in events_aggregate1.events )
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     unittest.main()
-

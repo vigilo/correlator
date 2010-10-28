@@ -11,11 +11,11 @@ import transaction
 from sqlalchemy.exc import OperationalError
 from datetime import datetime
 
-from twisted.internet import task, defer, reactor
+from twisted.internet import task, defer, reactor, error
 from twisted.internet.error import ProcessTerminated
 from twisted.words.xish import domish
 from twisted.protocols import amp
-from twisted.python import reflect
+from twisted.python import reflect, log
 from ampoule import pool, main, child
 from wokkel.pubsub import PubSubClient, Item
 from wokkel.generic import parseXml
@@ -33,7 +33,7 @@ from vigilo.connector.sockettonodefw import MESSAGEONETOONE
 from vigilo.models.tables import Change
 from vigilo.models.session import DBSession
 
-from vigilo.correlator.xml import namespaced_tag, NS_EVENTS, \
+from vigilo.pubsub.xml import namespaced_tag, NS_EVENTS, \
                                     NS_TICKET#, NS_DOWNTIME
 from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
@@ -133,25 +133,18 @@ class SendToBus(amp.Command):
     ]
     requiresAnswer = False
 
-class VigiloConnectorFactory(main.AMPConnector):
-    def processEnded(self, status):
-        return
-
 class ProcessStarter(main.ProcessStarter):
-    def startAMPProcess(self, ampChild, ampParent=None, ampChildArgs=()):
-        self._checkRoundTrip(ampChild)
-        fullPath = reflect.qual(ampChild)
-        if ampParent is None:
-            prot = self.connectorFactory(amp.AMP())
-        else:
-            prot = VigiloConnectorFactory(ampParent)
-        args = ampChildArgs + (self.childReactor, fullPath)
-        return self.startPythonProcess(prot, *args)
-
-class Correlator(child.AMPChild):
-    def __init__(self, rule_dispatcher=None):
-        super(Correlator, self).__init__()
+    def __init__(self, rule_dispatcher, *args, **kwargs):
         self.rule_dispatcher = rule_dispatcher
+        super(ProcessStarter, self).__init__(*args, **kwargs)
+
+    def startPythonProcess(self, prot, *args):
+        prot.amp.rule_dispatcher = self.rule_dispatcher
+        return super(ProcessStarter, self).startPythonProcess(prot, *args)
+
+class Correlator(amp.AMP):
+    def __init__(self):
+        super(Correlator, self).__init__()
 
     @SendToBus.responder
     def send_to_bus(self, item):
@@ -214,7 +207,7 @@ class RuleDispatcher(PubSubClient):
         self.rrp = pool.ProcessPool(
             maxIdle=max_idle,
             ampChild=rule_runner.RuleRunner,
-            ampParent=Correlator(self),
+            ampParent=Correlator,
             # @XXX Désactivé pour le moment car pose des problèmes.
             # Lorsqu'un processus atteint le timeout, il est tué,
             # mais lorsqu'une tâche arrive, ampoule semble ne pas
@@ -227,7 +220,7 @@ class RuleDispatcher(PubSubClient):
             min=min_runner,
             max=max_runner,
             ampChildArgs=(sys.argv[0], ),
-            starter=ProcessStarter(),
+            starter=ProcessStarter(self),
         )
 
         # Prépare les schémas de validation XSD.

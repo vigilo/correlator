@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2010-10-22 15:21+0200\n"
+"PO-Revision-Date: 2010-10-28 12:48+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -296,69 +296,69 @@ msgstr ""
 msgid "Topology has been reloaded."
 msgstr "L'arbre topologique a été reconstruit."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:158
+#: src/vigilo/correlator/actors/rule_dispatcher.py:151
 #, python-format
 msgid "Sending this payload to the XMPP bus: %r"
 msgstr "Envoi de ce message sur le bus XMPP : %r"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:273
+#: src/vigilo/correlator/actors/rule_dispatcher.py:266
 #, python-format
 msgid "Got item: %s"
 msgstr "Réception d'un élément : %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:278
+#: src/vigilo/correlator/actors/rule_dispatcher.py:271
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr "Élément non-reconnu ignoré (%s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:287
+#: src/vigilo/correlator/actors/rule_dispatcher.py:280
 msgid "The correlator is shutting down due to a previous error"
 msgstr "Une erreur a été détectée qui va entraîner l'arrêt du corrélateur"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:340
+#: src/vigilo/correlator/actors/rule_dispatcher.py:333
 #, python-format
 msgid "Rule %(rule_name)s timed out"
 msgstr "La règle %(rule_name)s a dépassé le délai d'exécution"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:456
+#: src/vigilo/correlator/actors/rule_dispatcher.py:449
 #, python-format
 msgid "Spawning for payload: %s"
 msgstr "Traitement du message : %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:463
+#: src/vigilo/correlator/actors/rule_dispatcher.py:456
 msgid "Received invalid XMPP item ID (None)"
 msgstr "Réception d'un ID XMPP non valide (None)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:473
+#: src/vigilo/correlator/actors/rule_dispatcher.py:466
 #, python-format
 msgid "Validation failure: %s"
 msgstr "Échec de la validation : %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:513
+#: src/vigilo/correlator/actors/rule_dispatcher.py:506
 msgid "Could not connect to the database server, make sure it is running"
 msgstr ""
 "Échec de la connexion à la base de données, veuillez vous assurer que le "
 "serveur est démarré"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:621
+#: src/vigilo/correlator/actors/rule_dispatcher.py:614
 #, python-format
 msgid "Chat message to forward: '%s'"
 msgstr "Message direct à transmettre : '%s'"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:632
+#: src/vigilo/correlator/actors/rule_dispatcher.py:625
 msgid "Connection initialized"
 msgstr "Connexion initialisée"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:642
+#: src/vigilo/correlator/actors/rule_dispatcher.py:635
 #, python-format
 msgid "Starting the queue manager with a delay of %f seconds."
 msgstr "Démarrage du gestionnaire de file avec un délai de %f secondes."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:656
+#: src/vigilo/correlator/actors/rule_dispatcher.py:649
 msgid "Connection lost"
 msgstr "Connexion perdue"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:694
+#: src/vigilo/correlator/actors/rule_dispatcher.py:687
 #, python-format
 msgid ""
 "Unable to forward one-to-one message to XMPP server (no connection "
@@ -368,7 +368,7 @@ msgstr ""
 "connexion). Le message (%s) a été stocké en vue d'une retransmission "
 "ultérieure."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:713
+#: src/vigilo/correlator/actors/rule_dispatcher.py:706
 #, python-format
 msgid ""
 "Unable to forward the message (%(error)r), it has been stored for later "
@@ -377,12 +377,12 @@ msgstr ""
 "Impossible de transmettre le message (%(xml_src)s) à cause d'une erreur "
 "(%(error)r); il a été stocké en vue d'une retransmission ultérieure."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:724
+#: src/vigilo/correlator/actors/rule_dispatcher.py:717
 #, python-format
 msgid "No destination node configured for messages of type '%s'. Skipping."
 msgstr "Aucun nœud cible configuré pour les messages de type '%s'. Message ignoré."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:733
+#: src/vigilo/correlator/actors/rule_dispatcher.py:726
 #, python-format
 msgid ""
 "Message from Socket impossible to forward (no connection to XMPP server),"
@@ -409,10 +409,12 @@ msgstr ""
 msgid "Rule runner: process ends for rule \"%s\""
 msgstr "Rule runner : arrêt du processus pour la règle \"%s\""
 
-#: src/vigilo/correlator/rules/adapt_frequency.py:92
+#: src/vigilo/correlator/rules/adapt_frequency.py:89
 #, python-format
 msgid "Asking Nagios to set CHECK_INTERVAL for %(object)r to %(delay)d periods."
-msgstr "Demande à Nagios de régler le délai CHECK_INTERVAL pour %(object)r sur %(delay)d périodes."
+msgstr ""
+"Demande à Nagios de régler le délai CHECK_INTERVAL pour %(object)r sur "
+"%(delay)d périodes."
 
 #: src/vigilo/correlator/rules/example.py:23
 #, python-format
@@ -461,3 +463,4 @@ msgid "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)
 msgstr ""
 "Hôte : %(hostname)s, service : %(servicename)s, occurrences : "
 "%(occurrences)d"
+
