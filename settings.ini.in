@@ -84,10 +84,6 @@ rules_timeout = 2
 # corrélés aux journaux système.
 syslog_data_level = 20
 
-# Règles de corrélation actives.
-rules = vigilo.correlator.rules.hls_deps, vigilo.correlator.rules.lls_deps, vigilo.correlator.rules.update_occurrences_count, vigilo.correlator.rules.priority
-
-
 # La priorité associée à une alerte sur un
 # hôte/service technique qui n'impacte aucun
 # service de haut niveau.
@@ -112,6 +108,13 @@ rule_runners_max_idle = 20
 # Délai en secondes entre les vérifications de la présence
 # de messages en attente de retransmission.
 queue_delay = 0.1
+
+[rules]
+# Règles de corrélation actives.
+hls_deps=vigilo.correlator.rules.hls_deps:HighLevelServiceDepsRule
+lls_deps=vigilo.correlator.rules.lls_deps:LowLevelServiceDepsRule
+occ_count=vigilo.correlator.rules.update_occurrences_count:UpdateOccurrencesCountRule
+priority=vigilo.correlator.rules.priority:PriorityRule
 
 [publications]
 # Indique le nœud cible du message en fonction du type.

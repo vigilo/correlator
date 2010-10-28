@@ -5,10 +5,10 @@ ainsi que les dépendances entre ces règles.
 """
 
 import networkx
+import pkg_resources
 
 from vigilo.correlator.datatypes import Named
 from vigilo.correlator.rule import Rule
-from vigilo.correlator.pluginmanager import load_plugin
 
 from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
@@ -78,7 +78,7 @@ class RegistryDict(object):
     def lookup(self, name):
         """"
         Renvoie la règle dont le nom est L{name}.
-        
+
         @param name: Nom de la règle à retourner.
         @type name: C{str}
         @return La règle portant le nom L{name}.
@@ -108,7 +108,7 @@ class RegistryDict(object):
     def __repr__(self):
         """
         Retourne la représentation de cet objet.
-        
+
         @return: La représentation de l'objet.
         @rtype: C{str}
         """
@@ -152,8 +152,20 @@ class Registry(object):
     def __init__(self):
         """Initialise le registre."""
         self.__rules = RegistryDict(Rule)
-        for plugin_name in settings['correlator'].get('rules', []):
-            load_plugin(plugin_name, self)
+        for plugin_name in settings['rules'].itervalues():
+            try:
+                ep = pkg_resources.EntryPoint.parse('rule = %s' % plugin_name)
+            except ValueError:
+                LOGGER.error(_('Not a valid rule name "%s"'), plugin_name)
+                continue
+
+            try:
+                rule = ep.load(False)
+            except ImportError:
+                LOGGER.error(_('Unable to load rule "%s"'), plugin_name)
+                continue
+
+            self.rules.register(rule())
 
     @property
     def rules(self):
@@ -163,4 +175,3 @@ class Registry(object):
 def get_registry():
     """Renvoie l'instance globale du registre des règles de corrélation."""
     return Registry.global_instance()
-

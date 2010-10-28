@@ -24,7 +24,3 @@ class ExampleRule(Rule):
                         "id": idnt,
                         "payload": payload,
                     })
-
-def register(registry):
-    """Enregistre le module."""
-    registry.rules.register(ExampleRule())
