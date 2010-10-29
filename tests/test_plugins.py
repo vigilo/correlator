@@ -5,7 +5,6 @@ Tests portant sur les plugins du corrélateur.
 """
 import unittest
 
-from vigilo.correlator.pluginmanager import load_plugin
 from vigilo.correlator.registry import get_registry
 
 from vigilo.correlator.rule import Rule
@@ -44,4 +43,3 @@ class TestRuleLoading(unittest.TestCase):
         """Échec du chargement d'une règle à cause d'une dépendance."""
         self.assertRaises(RuntimeError, get_registry().rules.register,
             TestRuleWithDependency())
-
