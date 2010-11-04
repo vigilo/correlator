@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2010-10-28 12:48+0200\n"
+"PO-Revision-Date: 2010-11-04 10:52+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -271,6 +271,16 @@ msgstr ""
 "Le singleton a déjà été instancié, demande de création d'une nouvelle "
 "instance ignorée."
 
+#: src/vigilo/correlator/registry.py:159
+#, python-format
+msgid "Not a valid rule name \"%s\""
+msgstr "Nom de règle non valide \"%s\""
+
+#: src/vigilo/correlator/registry.py:165
+#, python-format
+msgid "Unable to load rule \"%s\""
+msgstr "Impossible de charger la règle \"%s\""
+
 #: src/vigilo/correlator/twisted_service.py:50
 msgid "The topology has been reloaded."
 msgstr "L'arbre topologique a été reconstruit."
@@ -409,7 +419,12 @@ msgstr ""
 msgid "Rule runner: process ends for rule \"%s\""
 msgstr "Rule runner : arrêt du processus pour la règle \"%s\""
 
-#: src/vigilo/correlator/rules/adapt_frequency.py:89
+#: src/vigilo/correlator/rules/adapt_frequency.py:88
+#, python-format
+msgid "Ignoring non-existent low-level service (%(service)s on %(host)s)"
+msgstr "Message ignoré concernant un service de bas niveau inexistant (%(service)s sur %(host)s)"
+
+#: src/vigilo/correlator/rules/adapt_frequency.py:153
 #, python-format
 msgid "Asking Nagios to set CHECK_INTERVAL for %(object)r to %(delay)d periods."
 msgstr ""
@@ -463,4 +478,3 @@ msgid "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)
 msgstr ""
 "Hôte : %(hostname)s, service : %(servicename)s, occurrences : "
 "%(occurrences)d"
-

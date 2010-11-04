@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2010-10-28 12:48+0200\n"
+"POT-Creation-Date: 2010-11-04 10:51+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -244,6 +244,16 @@ msgid ""
 "instance."
 msgstr ""
 
+#: src/vigilo/correlator/registry.py:159
+#, python-format
+msgid "Not a valid rule name \"%s\""
+msgstr ""
+
+#: src/vigilo/correlator/registry.py:165
+#, python-format
+msgid "Unable to load rule \"%s\""
+msgstr ""
+
 #: src/vigilo/correlator/twisted_service.py:50
 msgid "The topology has been reloaded."
 msgstr ""
@@ -365,7 +375,12 @@ msgstr ""
 msgid "Rule runner: process ends for rule \"%s\""
 msgstr ""
 
-#: src/vigilo/correlator/rules/adapt_frequency.py:89
+#: src/vigilo/correlator/rules/adapt_frequency.py:88
+#, python-format
+msgid "Ignoring non-existent low-level service (%(service)s on %(host)s)"
+msgstr ""
+
+#: src/vigilo/correlator/rules/adapt_frequency.py:153
 #, python-format
 msgid "Asking Nagios to set CHECK_INTERVAL for %(object)r to %(delay)d periods."
 msgstr ""
