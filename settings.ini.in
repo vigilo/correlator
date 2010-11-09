@@ -42,16 +42,6 @@ backup_table_from_bus = frombus
 backup_table_to_bus = tobus
 
 [correlator]
-# Adresse IP du serveur memcached (optionnelle).
-memcached_host = 127.0.0.1
-
-# Port du serveur memcached.
-memcached_port = 11215
-
-# Type de connexion au serveur memcached.
-# Seul "inet" est supporté pour le moment.
-memcached_type = inet
-
 # URL de la base de données contenant
 # les contextes de corrélation.
 context_db_url = sqlite:///:memory:
@@ -59,8 +49,15 @@ context_db_url = sqlite:///:memory:
 # Délai d'expiration par défaut des contextes.
 context_timeout = 60.
 
-# Mode débogage.
-debug = False
+# Adresse IP du serveur memcached (optionnelle).
+memcached_host = 127.0.0.1
+
+# Port du serveur memcached.
+memcached_port = 11215
+
+# Activation du mode débogage de la connexion
+# à memcached.
+memcached_debug = False
 
 # Validation des messages reçus.
 validate_messages = False
@@ -72,9 +69,6 @@ nagios_hls_jid = connector-nagios@localhost
 # Nom de l'hôte symbolisant les services
 # de haut niveau dans Nagios.
 nagios_hls_host = High-Level-Services
-
-# Taille de la file d'attente des messages XMPP.
-queue_size = 100
 
 # Délai maximum d'exécution pour
 # chaque règle de corrélation.
