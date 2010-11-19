@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2010-11-04 10:52+0100\n"
+"PO-Revision-Date: 2010-11-19 12:29+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -422,7 +422,9 @@ msgstr "Rule runner : arrêt du processus pour la règle \"%s\""
 #: src/vigilo/correlator/rules/adapt_frequency.py:88
 #, python-format
 msgid "Ignoring non-existent low-level service (%(service)s on %(host)s)"
-msgstr "Message ignoré concernant un service de bas niveau inexistant (%(service)s sur %(host)s)"
+msgstr ""
+"Message ignoré concernant un service de bas niveau inexistant "
+"(%(service)s sur %(host)s)"
 
 #: src/vigilo/correlator/rules/adapt_frequency.py:153
 #, python-format
@@ -478,3 +480,4 @@ msgid "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)
 msgstr ""
 "Hôte : %(hostname)s, service : %(servicename)s, occurrences : "
 "%(occurrences)d"
+
