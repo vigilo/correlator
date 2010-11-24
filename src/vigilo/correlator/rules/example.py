@@ -19,7 +19,19 @@ class ExampleRule(Rule):
         super(ExampleRule, self).__init__([])
 
     def process(self, link, idnt, payload):
-        """Traitement du message. Ici on se contente d'afficher une trace."""
+        """
+        Traitement du message par la règle.
+        Ici, on se contente d'afficher une trace.
+
+        @param link: Objet servant de lien avec le dispatcher et pouvant
+            par exemple être utilisé pour envoyer des messages XML sur
+            le bus XMPP.
+        @type link: C{vigilo.correlator.actors.rule_runner.RuleRunner}
+        @param xmpp_id: Identifiant XMPP de l'alerte brute traitée.
+        @type xmpp_id: C{unicode}
+        @param payload: Le message reçu par le corrélateur sur le bus XMPP.
+        @type payload: C{unicode}
+        """
         LOGGER.debug(_(u'id %(id)s payload %(payload)s'), {
                         "id": idnt,
                         "payload": payload,
