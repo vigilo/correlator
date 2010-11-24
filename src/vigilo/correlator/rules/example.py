@@ -18,7 +18,7 @@ class ExampleRule(Rule):
         """Initialisation du module."""
         super(ExampleRule, self).__init__([])
 
-    def process(self, link, idnt, payload):
+    def process(self, link, xmpp_id, payload):
         """
         Traitement du message par la règle.
         Ici, on se contente d'afficher une trace.
