@@ -4,6 +4,7 @@
 Module pour l'exécution d'une règle de corrélation
 avec une limite sur la durée maximale d'exécution.
 """
+import sys
 import os
 from twisted.protocols import amp
 from ampoule import child
@@ -41,7 +42,6 @@ class RuleCommand(amp.Command):
 
 class RuleRunner(child.AMPChild):
     def __init__(self, *args):
-        import sys
         sys.argv.insert(0, args[0])
         super(RuleRunner, self).__init__()
 
@@ -61,6 +61,16 @@ class RuleRunner(child.AMPChild):
                             'name': rule_name,
                         })
 
-        rule.process(self, idxmpp, xml)
+        try:
+            rule.process(self, idxmpp, xml)
+        except:
+            logger.exception(_('Got an exception while running rule %(rule)s. '
+                                'Running the correlator in the foreground '
+                                '(%(prog)s -n) may help troubleshooting'), {
+                                    'rule': rule_name,
+                                    'prog': sys.argv[0],
+                                })
+            raise
+
         logger.debug(_(u'Rule runner: process ends for rule "%s"'), rule_name)
         return {}
