@@ -116,7 +116,7 @@ event = /home/localhost/correlator/event
 aggr = /home/localhost/correlator/aggr
 delaggr = /home/localhost/correlator/delaggr
 state = /home/localhost/correlator/state
-
+command = /home/localhost/correlator/nagios
 
 [loggers]
 keys=root,twisted,multiprocessing,correlation
