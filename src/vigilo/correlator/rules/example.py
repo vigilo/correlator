@@ -33,6 +33,6 @@ class ExampleRule(Rule):
         @type payload: C{unicode}
         """
         LOGGER.debug(_(u'id %(id)s payload %(payload)s'), {
-                        "id": idnt,
+                        "id": xmpp_id,
                         "payload": payload,
                     })
