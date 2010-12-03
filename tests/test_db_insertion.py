@@ -56,13 +56,11 @@ class TestDbInsertion(unittest.TestCase):
         DBSession.add(LowLevelService(
             servicename=u'Load',
             host=host,
-            op_dep=u'+',
             weight=42,
         ))
 
         DBSession.add(HighLevelService(
             servicename=u'Load',
-            op_dep=u'+',
             message=u'Ouch',
             warning_threshold=100,
             critical_threshold=80,
@@ -297,7 +295,6 @@ class TestDbInsertion(unittest.TestCase):
             servicename = u'Processes',
             host = host1,
             command = u'halt',
-            op_dep = u'&',
             weight = 42,
         )
         DBSession.add(service1)
@@ -307,7 +304,6 @@ class TestDbInsertion(unittest.TestCase):
             servicename = u'CPU',
             host = host1,
             command = u'halt',
-            op_dep = u'&',
             weight = 42,
         )
         DBSession.add(service2)

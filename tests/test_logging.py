@@ -186,7 +186,6 @@ class TestLogging(unittest.TestCase):
             servicename = u'LLS',
             host = self.host,
             command = u'halt',
-            op_dep = u'&',
             weight = 42,
         )
         DBSession.flush()

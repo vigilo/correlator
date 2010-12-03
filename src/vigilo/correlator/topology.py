@@ -7,7 +7,7 @@ from sqlalchemy.sql.expression import not_, and_, or_, desc
 
 import networkx as nx
 
-from vigilo.models.tables import Dependency
+from vigilo.models.tables import Dependency, DependencyGroup
 from vigilo.models.tables import Event, CorrEvent, StateName
 
 from vigilo.common.logging import get_logger
@@ -34,13 +34,16 @@ class Topology(nx.DiGraph):
 
         # On récupère dans la BDD la liste des dépendances.
         dependencies = DBSession.query(
-                            Dependency.idsupitem1,
-                            Dependency.idsupitem2
+                            DependencyGroup.iddependent,
+                            Dependency.idsupitem
+                        ).join(
+                            (Dependency, Dependency.idgroup == \
+                                DependencyGroup.idgroup),
                         ).all()
 
         # On ajoute ces dépendances dans le graphe en tant qu'arcs.
         for dependency in dependencies:
-            self.add_edge(dependency.idsupitem2, dependency.idsupitem1)
+            self.add_edge(dependency.idsupitem, dependency.iddependent)
 
     def get_first_predecessors_aggregates(self, item_id):
         """
