@@ -15,11 +15,11 @@ jid = correlator@localhost
 # Mot de passe correspondant.
 password = correlator
 
-# Nœuds XMPP souscrits (surveillés).
-watched_topics = /home/localhost/connector-nagios/event, /home/localhost/connector-nagios/downtime
-
-# Nœuds XMPP gérés (dont nous sommes propriétaire).
-owned_topics = /home/localhost/correlator/event, /home/localhost/correlator/aggr, /home/localhost/correlator/delaggr, /home/localhost/correlator/state
+# Liste des noms des topics auxquels le corrélateur est abonné,
+# séparés par des virgules.
+# À minima, il doit être abonné aux événements bruts publiés par
+# le connector-nagios.
+subscriptions = /vigilo/event,
 
 [database]
 # URL d'accès à la base de données.
@@ -112,11 +112,11 @@ priority=vigilo.correlator.rules.priority:PriorityRule
 
 [publications]
 # Indique le nœud cible du message en fonction du type.
-event = /home/localhost/correlator/event
-aggr = /home/localhost/correlator/aggr
-delaggr = /home/localhost/correlator/delaggr
-state = /home/localhost/correlator/state
-command = /home/localhost/correlator/nagios
+event = /vigilo/correvent
+aggr = /vigilo/aggr
+delaggr = /vigilo/delaggr
+state = /vigilo/state
+command = /vigilo/nagios
 
 [loggers]
 keys=root,twisted,multiprocessing,correlation
