@@ -28,6 +28,7 @@ from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
 from vigilo.connector.store import DbRetry
+from vigilo.connector.forwarder import XMPPNotConnectedError
 from vigilo.connector.sockettonodefw import MESSAGEONETOONE
 
 from vigilo.models.tables import Change
@@ -556,6 +557,7 @@ class RuleDispatcher(PubSubClient):
         correlation_graph.addCallback(sendResult, xml, info_dictionary)
         return correlation_graph
 
+    @defer.inlineCallbacks
     def __sendQueuedMessages(self):
         """
         Déclenche l'envoi des messages stockées localement (retransmission
@@ -565,7 +567,7 @@ class RuleDispatcher(PubSubClient):
         # Tout d'abord, réinsertion des messages dans la table en sortie.
         needs_vacuum = False
         while True:
-            msg = self.to_retry.unstore()
+            msg = yield self.to_retry.unstore()
             if msg is None:
                 break
             else:
@@ -574,7 +576,7 @@ class RuleDispatcher(PubSubClient):
                 if item is None:
                     pass
                 else:
-                    self.sendItem(msg)
+                    yield self.sendItem(msg)
 
         # On fait du nettoyage au besoin.
         if needs_vacuum:
@@ -586,7 +588,7 @@ class RuleDispatcher(PubSubClient):
         # immédiatement un message dont l'envoi initial aurait échoué.
         needs_vacuum = False
         if not self.parallel_messages:
-            msg = self.from_retry.unstore()
+            msg = yield self.from_retry.unstore()
             if msg is not None:
                 needs_vacuum = True
                 self.handleMessage(msg)
@@ -664,9 +666,18 @@ class RuleDispatcher(PubSubClient):
         if not isinstance(item, etree.ElementBase):
             item = parseXml(item)
         if item.name == MESSAGEONETOONE:
-            return self.__sendOneToOneXml(item)
+            result = self.__sendOneToOneXml(item)
         else:
-            return self.__publishXml(item)
+            result = self.__publishXml(item)
+        result.addErrback(self._send_failed, item.toXml().encode('utf8'))
+        return result
+
+    def _send_failed(self, e, msg):
+        """errback: remet le message en base"""
+        errmsg = _('Unable to forward the message (%(reason)s). '
+                   'it has been stored for later retransmission')
+        LOGGER.error(errmsg % {"reason": e.getErrorMessage()})
+        return self.to_retry.store(msg)
 
     def __sendOneToOneXml(self, xml):
         """
@@ -683,16 +694,10 @@ class RuleDispatcher(PubSubClient):
         msg.addElement("body", content=body)
         # if not connected store the message
         if self.xmlstream is None:
-            xml_src = xml.toXml().encode('utf8')
-            LOGGER.error(_(u'Unable to forward one-to-one message to XMPP '
-                            'server (no connection established). The message '
-                            '(%s) has been stored for later retransmission.'),
-                            xml_src)
-            self.to_retry.store(xml_src)
-            return False
+            result = defer.fail(XMPPNotConnectedError())
         else:
-            self.send(msg)
-            return True
+            result = self.send(msg)
+        return result
 
     def __publishXml(self, xml):
         """
@@ -700,30 +705,15 @@ class RuleDispatcher(PubSubClient):
         @param xml: le message a envoyé sous forme XML
         @type xml: twisted.words.xish.domish.Element
         """
-        def eb(e, xml):
-            """errback"""
-            xml_src = xml.toXml().encode('utf8')
-            LOGGER.error(_(u'Unable to forward the message (%(error)r), it '
-                        'has been stored for later retransmission '
-                        '(%(xml_src)s)'), {
-                            'xml_src': xml_src,
-                            'error': e,
-                        })
-            self.to_retry.store(xml_src)
-
         item = Item(payload=xml)
-
         if xml.name not in self._nodetopublish:
             LOGGER.error(_(u"No destination node configured for messages "
                            "of type '%s'. Skipping."), xml.name)
-            return
+            return defer.succeed(True)
         node = self._nodetopublish[xml.name]
         try:
             result = self.publish(self._service, node, [item])
-            result.addErrback(eb, xml)
         except AttributeError:
-            xml_src = xml.toXml().encode('utf8')
-            LOGGER.error(_(u'Message from Socket impossible to forward'
-                           ' (no connection to XMPP server), the message '
-                           'is stored for later reemission (%s)') % xml_src)
-            self.to_retry.store(xml_src)
+            result = defer.fail(XMPPNotConnectedError())
+        return result
+
