@@ -53,9 +53,9 @@ class RuleRunner(child.AMPChild):
         reg = get_registry()
         rule = reg.rules.lookup(rule_name)
 
-        logger.debug(_(u'Rule runner: process begins for rule "%s"'), rule_name)
-        logger.debug(_(u'Process id: %(pid)r | Parent id: %(ppid)r | '
-                        'Rule name: %(name)s'), {
+        logger.debug(u'Rule runner: process begins for rule "%s"', rule_name)
+        logger.debug(u'Process id: %(pid)r | Parent id: %(ppid)r | '
+                      'Rule name: %(name)s', {
                             'pid': os.getpid(),
                             'ppid': os.getppid(),
                             'name': rule_name,
@@ -72,5 +72,5 @@ class RuleRunner(child.AMPChild):
                                 })
             raise
 
-        logger.debug(_(u'Rule runner: process ends for rule "%s"'), rule_name)
+        logger.debug(u'Rule runner: process ends for rule "%s"', rule_name)
         return {}

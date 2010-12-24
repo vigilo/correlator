@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2010-11-19 12:29+0100\n"
-"PO-Revision-Date: 2010-11-19 12:29+0100\n"
+"POT-Creation-Date: 2010-12-24 21:56+0100\n"
+"PO-Revision-Date: 2010-12-24 21:57+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -18,12 +18,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.4\n"
 
-#: src/vigilo/correlator/compute_hls_states.py:148
+#: src/vigilo/correlator/compute_hls_states.py:151
 #, python-format
 msgid "Dependancies have the following weights: %r"
 msgstr "Dependancies have the following weights: %r"
 
-#: src/vigilo/correlator/compute_hls_states.py:186
+#: src/vigilo/correlator/compute_hls_states.py:189
 #, python-format
 msgid ""
 "High-level service %(name)r: weight = %(weight)r, state = %(state)r "
@@ -32,22 +32,22 @@ msgstr ""
 "High-level service %(name)r: weight = %(weight)r, state = %(state)r "
 "(%(output)r)"
 
-#: src/vigilo/correlator/compute_hls_states.py:238
+#: src/vigilo/correlator/compute_hls_states.py:241
 #, python-format
 msgid "End of impact for HLS %r"
 msgstr "End of impact for HLS %r"
 
-#: src/vigilo/correlator/compute_hls_states.py:255
+#: src/vigilo/correlator/compute_hls_states.py:258
 #, python-format
 msgid "End of impact for item (%(hostname)r, %(servicename)r)"
 msgstr "End of impact for item (%(hostname)r, %(servicename)r)"
 
-#: src/vigilo/correlator/compute_hls_states.py:277
+#: src/vigilo/correlator/compute_hls_states.py:280
 #, python-format
 msgid "HLS %(hls1)r is impacted by HLS %(hls2)r"
 msgstr "HLS %(hls1)r is impacted by HLS %(hls2)r"
 
-#: src/vigilo/correlator/compute_hls_states.py:295
+#: src/vigilo/correlator/compute_hls_states.py:298
 #, python-format
 msgid ""
 "The HLS %r already belonged to this impacted path, ignoring request to "
@@ -56,16 +56,16 @@ msgstr ""
 "The HLS %r already belonged to this impacted path, ignoring request to "
 "add it again."
 
-#: src/vigilo/correlator/compute_hls_states.py:324
+#: src/vigilo/correlator/compute_hls_states.py:327
 msgid "Copying path"
 msgstr "Copying path"
 
-#: src/vigilo/correlator/compute_hls_states.py:339
+#: src/vigilo/correlator/compute_hls_states.py:342
 #, python-format
 msgid "HLS %(hls)r is impacted by item (%(host)r, %(service)r)"
 msgstr "HLS %(hls)r is impacted by item (%(host)r, %(service)r)"
 
-#: src/vigilo/correlator/compute_hls_states.py:377
+#: src/vigilo/correlator/compute_hls_states.py:380
 #, python-format
 msgid "Setting weight for '%s' to None"
 msgstr "Setting weight for '%s' to None"
@@ -291,7 +291,7 @@ msgstr ""
 "Could not set signal handlers. The correlator may not be able to shutdown"
 " cleanly"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:113
+#: src/vigilo/correlator/actors/rule_dispatcher.py:114
 msgid ""
 "No information from Vigiconf concerning the topology's last modification "
 "date. Therefore the topology has NOT been rebuilt."
@@ -299,138 +299,126 @@ msgstr ""
 "No information from Vigiconf concerning the topology's last modification "
 "date. Therefore the topology has NOT been rebuilt."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:125
+#: src/vigilo/correlator/actors/rule_dispatcher.py:126
 msgid "Topology has been reloaded."
 msgstr "Topology has been reloaded."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:151
+#: src/vigilo/correlator/actors/rule_dispatcher.py:152
 #, python-format
 msgid "Sending this payload to the XMPP bus: %r"
 msgstr "Sending this payload to the XMPP bus: %r"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:266
+#: src/vigilo/correlator/actors/rule_dispatcher.py:267
 #, python-format
 msgid "Got item: %s"
 msgstr "Got item: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:271
+#: src/vigilo/correlator/actors/rule_dispatcher.py:272
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr "Skipping unrecognized item (%s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:280
+#: src/vigilo/correlator/actors/rule_dispatcher.py:281
 msgid "The correlator is shutting down due to a previous error"
 msgstr "The correlator is shutting down due to a previous error"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:333
+#: src/vigilo/correlator/actors/rule_dispatcher.py:334
 #, python-format
 msgid "Rule %(rule_name)s timed out"
 msgstr "Rule %(rule_name)s timed out"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:449
+#: src/vigilo/correlator/actors/rule_dispatcher.py:450
 #, python-format
 msgid "Spawning for payload: %s"
 msgstr "Spawning for payload: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:456
+#: src/vigilo/correlator/actors/rule_dispatcher.py:457
 msgid "Received invalid XMPP item ID (None)"
 msgstr "Received invalid XMPP item ID (None)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:466
+#: src/vigilo/correlator/actors/rule_dispatcher.py:467
 #, python-format
 msgid "Validation failure: %s"
 msgstr "Validation failure: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:506
+#: src/vigilo/correlator/actors/rule_dispatcher.py:507
 msgid "Could not connect to the database server, make sure it is running"
 msgstr "Could not connect to the database server, make sure it is running"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:614
+#: src/vigilo/correlator/actors/rule_dispatcher.py:616
 #, python-format
 msgid "Chat message to forward: '%s'"
 msgstr "Chat message to forward: '%s'"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:625
+#: src/vigilo/correlator/actors/rule_dispatcher.py:627
 msgid "Connection initialized"
 msgstr "Connection initialized"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:635
+#: src/vigilo/correlator/actors/rule_dispatcher.py:637
 #, python-format
 msgid "Starting the queue manager with a delay of %f seconds."
 msgstr "Starting the queue manager with a delay of %f seconds."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:649
+#: src/vigilo/correlator/actors/rule_dispatcher.py:651
 msgid "Connection lost"
 msgstr "Connection lost"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:687
+#: src/vigilo/correlator/actors/rule_dispatcher.py:677
 #, python-format
 msgid ""
-"Unable to forward one-to-one message to XMPP server (no connection "
-"established). The message (%s) has been stored for later retransmission."
+"Unable to forward the message (%(reason)s). it has been stored for later "
+"retransmission"
 msgstr ""
-"Unable to forward one-to-one message to XMPP server (no connection "
-"established). The message (%s) has been stored for later retransmission."
+"Unable to forward the message (%(reason)s). it has been stored for later "
+"retransmission"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:706
-#, python-format
-msgid ""
-"Unable to forward the message (%(error)r), it has been stored for later "
-"retransmission (%(xml_src)s)"
-msgstr ""
-"Unable to forward the message (%(error)r), it has been stored for later "
-"retransmission (%(xml_src)s)"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:717
+#: src/vigilo/correlator/actors/rule_dispatcher.py:710
 #, python-format
 msgid "No destination node configured for messages of type '%s'. Skipping."
 msgstr "No destination node configured for messages of type '%s'. Skipping."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:726
+#: src/vigilo/correlator/actors/rule_runner.py:67
 #, python-format
 msgid ""
-"Message from Socket impossible to forward (no connection to XMPP server),"
-" the message is stored for later reemission (%s)"
+"Got an exception while running rule %(rule)s. Running the correlator in "
+"the foreground (%(prog)s -n) may help troubleshooting"
 msgstr ""
-"Message from Socket impossible to forward (no connection to XMPP server),"
-" the message is stored for later reemission (%s)"
+"Got an exception while running rule %(rule)s. Running the correlator in "
+"the foreground (%(prog)s -n) may help troubleshooting"
 
-#: src/vigilo/correlator/actors/rule_runner.py:56
+#: src/vigilo/correlator/rules/adapt_frequency.py:56
 #, python-format
-msgid "Rule runner: process begins for rule \"%s\""
-msgstr "Rule runner: process begins for rule \"%s\""
+msgid ""
+"The rule \"%(rule)s\" requires a section called \"%(section)s\" be "
+"present in the configuration file. Skipping this rule until the "
+"configuration gets fixed!"
+msgstr ""
+"The rule \"%(rule)s\" requires a section called \"%(section)s\" be "
+"present in the configuration file. Skipping this rule until the "
+"configuration gets fixed!"
 
-#: src/vigilo/correlator/actors/rule_runner.py:57
+#: src/vigilo/correlator/rules/adapt_frequency.py:70
 #, python-format
-msgid "Process id: %(pid)r | Parent id: %(ppid)r | Rule name: %(name)s"
-msgstr "Process id: %(pid)r | Parent id: %(ppid)r | Rule name: %(name)s"
+msgid ""
+"The rule \"%(rule)s\" requires a parameter called \"%(param)s\" under the"
+" section [%(section)s]. Skipping this rule until its configuration gets "
+"fixed!"
+msgstr ""
+"The rule \"%(rule)s\" requires a parameter called \"%(param)s\" under the"
+" section [%(section)s]. Skipping this rule until its configuration gets "
+"fixed!"
 
-#: src/vigilo/correlator/actors/rule_runner.py:65
-#, python-format
-msgid "Rule runner: process ends for rule \"%s\""
-msgstr "Rule runner: process ends for rule \"%s\""
-
-#: src/vigilo/correlator/rules/adapt_frequency.py:88
-#, python-format
-msgid "Ignoring non-existent low-level service (%(service)s on %(host)s)"
-msgstr "Ignoring non-existent low-level service (%(service)s on %(host)s)"
-
-#: src/vigilo/correlator/rules/adapt_frequency.py:153
-#, python-format
-msgid "Asking Nagios to set CHECK_INTERVAL for %(object)r to %(delay)d periods."
-msgstr "Asking Nagios to set CHECK_INTERVAL for %(object)r to %(delay)d periods."
-
-#: src/vigilo/correlator/rules/example.py:23
+#: src/vigilo/correlator/rules/example.py:35
 #, python-format
 msgid "id %(id)s payload %(payload)s"
 msgstr "id %(id)s payload %(payload)s"
 
-#: src/vigilo/correlator/rules/hls_deps.py:98
+#: src/vigilo/correlator/rules/hls_deps.py:110
 #, python-format
 msgid "Impacted HLS = %(affected_hls)r for (%(hostname)r, %(servicename)r)"
 msgstr "Impacted HLS = %(affected_hls)r for (%(hostname)r, %(servicename)r)"
 
-#: src/vigilo/correlator/rules/priority.py:73
+#: src/vigilo/correlator/rules/priority.py:77
 #, python-format
 msgid ""
 "The priority for the alert on (%(hostname)r, %(servicename)r) is "
@@ -439,7 +427,7 @@ msgstr ""
 "The priority for the alert on (%(hostname)r, %(servicename)r) is "
 "%(priority)r."
 
-#: src/vigilo/correlator/rules/priority.py:114
+#: src/vigilo/correlator/rules/priority.py:118
 #, python-format
 msgid ""
 "The priority of the correlated event(s) %(updated)d has been updated, "
@@ -448,7 +436,7 @@ msgstr ""
 "The priority of the correlated event(s) %(updated)d has been updated, "
 "based on information about the HLS %(hls)r"
 
-#: src/vigilo/correlator/rules/update_occurrences_count.py:85
+#: src/vigilo/correlator/rules/update_occurrences_count.py:89
 #, python-format
 msgid ""
 "The state for '%(servicename)s' on '%(hostname)s' did not change or "
@@ -461,7 +449,7 @@ msgstr ""
 "incremented. New state = %(statename)r vs %(previous_statename)r -- "
 "Occurrences: %(occurrences)d"
 
-#: src/vigilo/correlator/rules/update_occurrences_count.py:102
+#: src/vigilo/correlator/rules/update_occurrences_count.py:106
 #, python-format
 msgid "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)d"
 msgstr "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)d"
