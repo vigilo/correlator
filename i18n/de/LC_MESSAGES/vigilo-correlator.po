@@ -379,8 +379,8 @@ msgid ""
 "Unable to forward the message (%(reason)s). it has been stored for later "
 "retransmission"
 msgstr ""
-"Die Nachricht (%(error)r) kann nicht weitergeleitet werden, wird "
-"gespeichert und später erneut gesendet (%(xml_src)s)"
+"Die Nachricht kann nicht weitergeleitet werden (%(reason)s), wird "
+"gespeichert und später erneut gesendet"
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:710
 #, python-format

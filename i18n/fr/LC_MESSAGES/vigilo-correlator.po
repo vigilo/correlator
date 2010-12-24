@@ -374,8 +374,8 @@ msgid ""
 "Unable to forward the message (%(reason)s). it has been stored for later "
 "retransmission"
 msgstr ""
-"Impossible de transmettre le message (%(xml_src)s) à cause d'une erreur "
-"(%(error)r); il a été stocké en vue d'une retransmission ultérieure."
+"Impossible de transmettre le message à cause d'une erreur "
+"(%(reason)s), il a été stocké en vue d'une retransmission ultérieure."
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:710
 #, python-format
