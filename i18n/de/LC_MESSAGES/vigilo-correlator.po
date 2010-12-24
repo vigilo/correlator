@@ -280,12 +280,12 @@ msgstr ""
 #: src/vigilo/correlator/registry.py:159
 #, python-format
 msgid "Not a valid rule name \"%s\""
-msgstr ""
+msgstr "Nicht ein gültiger Regelname \"%s\""
 
 #: src/vigilo/correlator/registry.py:165
 #, python-format
 msgid "Unable to load rule \"%s\""
-msgstr ""
+msgstr "Unfähig, die Regel \"%s\" zu laden"
 
 #: src/vigilo/correlator/twisted_service.py:50
 msgid "The topology has been reloaded."
@@ -314,7 +314,7 @@ msgstr "Topologie wurde erneut geladen."
 #: src/vigilo/correlator/actors/rule_dispatcher.py:152
 #, python-format
 msgid "Sending this payload to the XMPP bus: %r"
-msgstr ""
+msgstr "Senden dieser Nutzlast auf den XMPP Bus: %r"
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:267
 #, python-format
@@ -393,6 +393,8 @@ msgid ""
 "Got an exception while running rule %(rule)s. Running the correlator in "
 "the foreground (%(prog)s -n) may help troubleshooting"
 msgstr ""
+"Ausnahme während der Ausführung der Regel %(rule)s. Ausführen der "
+"Korrelator im Vordergrund (%(prog)s -n) kann Problemlösungen helfen"
 
 #: src/vigilo/correlator/rules/adapt_frequency.py:56
 #, python-format
@@ -401,6 +403,9 @@ msgid ""
 "present in the configuration file. Skipping this rule until the "
 "configuration gets fixed!"
 msgstr ""
+"Die Regel \"%(rule)s\" benötigt eine Sektion \"%(section)s\" "
+"in der Konfigurationsdatei. Überspringen dieser Regel, bis die "
+"Konfiguration wird festgelegt !"
 
 #: src/vigilo/correlator/rules/adapt_frequency.py:70
 #, python-format
@@ -409,6 +414,9 @@ msgid ""
 " section [%(section)s]. Skipping this rule until its configuration gets "
 "fixed!"
 msgstr ""
+"Die Regel \"%(rule)s\" benötigt einen Parameter \"%(param)s\" unter der "
+"Sektion [%(section)s]. Überspringen dieser Regel, bis die Konfiguration "
+"wird festgelegt !"
 
 #: src/vigilo/correlator/rules/example.py:35
 #, python-format
