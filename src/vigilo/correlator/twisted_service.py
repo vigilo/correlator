@@ -27,6 +27,10 @@ from vigilo.models.configure import configure_db
 configure_db(settings['database'], 'sqlalchemy_',
     settings['database']['db_basename'])
 
+from vigilo.common.conf import setup_plugins_path
+setup_plugins_path(settings["correlator"].get("pluginsdir",
+                   "/etc/vigilo/correlator/plugins"))
+
 from vigilo.correlator.memcached_connection import MemcachedConnection, \
                                                     MemcachedConnectionError
 from vigilo.correlator.registry import get_registry

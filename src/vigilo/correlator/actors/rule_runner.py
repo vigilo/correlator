@@ -16,6 +16,8 @@ from vigilo.models.configure import configure_db
 configure_db(settings['database'], 'sqlalchemy_',
     settings['database']['db_basename'])
 
+from vigilo.common.conf import setup_plugins_path
+
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
@@ -43,6 +45,8 @@ class RuleCommand(amp.Command):
 class RuleRunner(child.AMPChild):
     def __init__(self, *args):
         sys.argv.insert(0, args[0])
+        setup_plugins_path(settings["correlator"].get("pluginsdir",
+                           "/etc/vigilo/correlator/plugins"))
         super(RuleRunner, self).__init__()
 
     @RuleCommand.responder
