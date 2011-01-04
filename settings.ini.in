@@ -62,10 +62,6 @@ memcached_debug = False
 # Validation des messages reçus.
 validate_messages = False
 
-# JID du connecteur qui reçoit les notifications
-# concernant les services de haut niveau.
-nagios_hls_jid = connector-nagios@localhost
-
 # Nom de l'hôte symbolisant les services
 # de haut niveau dans Nagios.
 nagios_hls_host = High-Level-Services
