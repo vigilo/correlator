@@ -5,7 +5,7 @@ Fonctions permettant la publication de messages divers sur le bus XMPP.
 """
 
 from twisted.words.xish import domish
-from vigilo.pubsub.xml import NS_AGGR, NS_DELAGGR, NS_STATES
+from vigilo.pubsub.xml import NS_AGGR, NS_DELAGGR, NS_STATE
 
 from time import mktime
 
@@ -79,7 +79,7 @@ def publish_state(forwarder, info_dictionary):
 
     # Création d'une arborescence xml représentant
     # le message à publier sur le bus XMPP.
-    pl = domish.Element((NS_STATES, 'state'))
+    pl = domish.Element((NS_STATE, 'state'))
 
     # Ajout de la balise timestamp
     tag = pl.addElement('timestamp')

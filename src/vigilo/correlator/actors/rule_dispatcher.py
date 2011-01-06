@@ -34,7 +34,7 @@ from vigilo.connector.sockettonodefw import MESSAGEONETOONE
 from vigilo.models.tables import Change
 from vigilo.models.session import DBSession
 
-from vigilo.pubsub.xml import namespaced_tag, NS_EVENTS, \
+from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, \
                                     NS_TICKET#, NS_DOWNTIME
 from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
@@ -238,7 +238,7 @@ class RuleDispatcher(PubSubClient):
             os.environ['XML_CATALOG_FILES'] = catalog_fname
 
             file_mapping = {
-                namespaced_tag(NS_EVENTS, 'events'): 'data/schemas/event1.xsd',
+                namespaced_tag(NS_EVENT, 'events'): 'data/schemas/event1.xsd',
             }
 
             for tag, filename in file_mapping:
@@ -490,7 +490,7 @@ class RuleDispatcher(PubSubClient):
 
         # Sinon, s'il ne s'agit pas d'un message d'événement (c'est-à-dire
         # un message d'alerte de changement d'état), on ne le traite pas.
-        if dom[0].tag != namespaced_tag(NS_EVENTS, 'event'):
+        if dom[0].tag != namespaced_tag(NS_EVENT, 'event'):
             return
 
         # On initialise le contexte et on y insère

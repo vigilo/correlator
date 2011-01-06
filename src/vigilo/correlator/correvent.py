@@ -11,7 +11,7 @@ import logging
 from sqlalchemy.orm.exc import NoResultFound
 from lxml import etree
 
-from vigilo.pubsub.xml import namespaced_tag, NS_EVENTS
+from vigilo.pubsub.xml import namespaced_tag, NS_EVENT
 from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates
 from vigilo.correlator.publish_messages import publish_aggregate, \
@@ -238,7 +238,7 @@ def make_correvent(forwarder, dom, idnt):
                 service_tag.text = service.servicename
                 data_log[DATA_LOG_IMPACTED_HLS].append(service.servicename)
     # Détermine le timestamp de l'événement.
-    timestamp = dom.findtext(namespaced_tag(NS_EVENTS, "timestamp"))
+    timestamp = dom.findtext(namespaced_tag(NS_EVENT, "timestamp"))
     try:
         timestamp = datetime.fromtimestamp(int(timestamp))
     except (ValueError, TypeError):
@@ -294,7 +294,7 @@ def make_correvent(forwarder, dom, idnt):
     data_log[DATA_LOG_HOST] = hostname
     data_log[DATA_LOG_SERVICE] = servicename
     data_log[DATA_LOG_MESSAGE] = dom.findtext(
-        namespaced_tag(NS_EVENTS, 'message'), '')
+        namespaced_tag(NS_EVENT, 'message'), '')
 
     # Si l'événement porte sur l'hôte, il faut refléter cela.
     if not data_log[DATA_LOG_SERVICE]:
