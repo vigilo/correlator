@@ -8,7 +8,7 @@ from lxml import etree
 from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                         add_to_aggregate
-from vigilo.pubsub.xml import NS_EVENTS
+from vigilo.pubsub.xml import NS_EVENT
 from utils import setup_db, teardown_db
 
 from vigilo.models.tables import State, StateName, Event, \
@@ -82,7 +82,7 @@ class TestDbInsertion(unittest.TestCase):
     <service>Load</service>
     <state>WARNING</state>
     <message>WARNING: Load average is above 4 (4.5)</message>
-</event>""" % {'xmlns': NS_EVENTS}
+</event>""" % {'xmlns': NS_EVENT}
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))
@@ -136,7 +136,7 @@ class TestDbInsertion(unittest.TestCase):
     <service>Load</service>
     <state>WARNING</state>
     <message>WARNING: Load average is above 4 (4.5)</message>
-</event>""" % {'xmlns': NS_EVENTS, 'hls_host': settings['correlator']['nagios_hls_host']}
+</event>""" % {'xmlns': NS_EVENT, 'hls_host': settings['correlator']['nagios_hls_host']}
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))
@@ -160,7 +160,7 @@ class TestDbInsertion(unittest.TestCase):
     <host>server.example.com</host>
     <state>DOWN</state>
     <message>DOWN: No ping response</message>
-</event>""" % {'xmlns': NS_EVENTS}
+</event>""" % {'xmlns': NS_EVENT}
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))

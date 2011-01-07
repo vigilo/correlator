@@ -12,7 +12,7 @@ from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
                             Dependency, Event, CorrEvent, Change
 
-from vigilo.pubsub.xml import NS_EVENTS
+from vigilo.pubsub.xml import NS_EVENT
 from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import insert_event, insert_state
 from vigilo.correlator.correvent import make_correvent
@@ -94,7 +94,7 @@ class TestLogging(unittest.TestCase):
         timestamp = datetime.now()
 
         infos = {
-            'xmlns': NS_EVENTS,
+            'xmlns': NS_EVENT,
             'ts': timestamp,
             'service': service_name,
             'state': new_state,
