@@ -2,15 +2,22 @@
 """
 Test du rule_runner.
 """
-#import unittest
-from twisted.trial import unittest
+
+import os
+import sys
 from time import sleep
 from cStringIO import StringIO
 
-#from twisted.internet import reactor
+# ATTENTION: contrairement aux autres modules, ici il faut utiliser
+# twisted.trial, sinon ça ne marche pas (ça dérange AMPoule). Attention à bien
+# vérifier que les échecs ne sont pas interceptés par nose.
+from twisted.trial import unittest
+from twisted.internet import reactor
+#import unittest
+#from nose.twistedtools import reactor, deferred
+
 from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.internet.error import ProcessTerminated
-from twisted.internet import reactor
 # On réutilise les mécanismes d'ampoule.
 from ampoule.test.test_process import FakeAMP, _FakeT
 from ampoule import main, pool
@@ -50,8 +57,15 @@ class TimeoutAMPChild(RuleRunner):
 
 class TestRuleException(unittest.TestCase):
     """ Classe de test du comportement du rule dispatcher en cas d'erreurs."""
+
     def setUp(self):
         super(TestRuleException, self).setUp()
+
+        # Permet de gérer l'environnement créé par Buildout
+        self.starter = main.ProcessStarter(env={
+                    "PYTHONPATH": ":".join(sys.path),
+                    "VIGILO_SETTINGS": os.environ["VIGILO_SETTINGS"],
+                    })
 
         # Permet d'attendre le lancement du reactor
         # avant de continuer l'exécution des tests.
@@ -59,40 +73,39 @@ class TestRuleException(unittest.TestCase):
         reactor.callLater(0, d.callback, None)
         return d
 
-    # Désactivé pour le moment car il pose des problèmes sur vigilo-dev
-    # et d'autres machines. Le problème semble aléatoire mais n'affecte
-    # que les tests unitaires.
-#    @inlineCallbacks
-#    def test_rule_exception(self):
-#        """Test d'une règle qui lève une exception."""
-#        pp = pool.ProcessPool(
-#            ampChild=ExceptionAMPChild,
-#            timeout=2,
-#            name='ExceptionRuleDispatcher',
-#            min=1, max=1,
-#        )
-#        yield pp.start()
+    @inlineCallbacks
+    def test_rule_exception(self):
+        """Test d'une règle qui lève une exception."""
+        pp = pool.ProcessPool(
+            ampChild=ExceptionAMPChild,
+            timeout=2,
+            name='ExceptionRuleDispatcher',
+            min=1, max=1,
+            starter=self.starter,
+            ampChildArgs=("dummy"),
+        )
+        yield pp.start()
 
-#        def _fail():
-#            self.fail("Expected an exception!")
+        def _fail():
+            self.fail("Expected an exception!")
 
-#        def _checks(failure):
-#            try:
-#                failure.raiseException()
-#            except Exception, e:
-#                self.assertEquals(e.message, SpecificException.message)
-#            else:
-#                _fail()
+        def _checks(failure):
+            try:
+                failure.raiseException()
+            except Exception, e:
+                self.assertEquals(e.message, SpecificException.message)
+            else:
+                _fail()
 
-#        work = pp.doWork(
-#            ExceptionRuleCommand,
-#            rule_name='Exception',
-#            idxmpp='bar',
-#            xml='bar',
-#        )
-#        work.addCallbacks(lambda *args: _fail, _checks)
-#        yield work
-#        yield pp.stop()
+        work = pp.doWork(
+            ExceptionRuleCommand,
+            rule_name='Exception',
+            idxmpp='bar',
+            xml='bar',
+        )
+        work.addCallbacks(lambda *args: _fail, _checks)
+        yield work
+        yield pp.stop()
 
     @inlineCallbacks
     def test_rule_timeout(self):
@@ -102,15 +115,19 @@ class TestRuleException(unittest.TestCase):
             timeout=2,
             name='TimeoutRuleDispatcher',
             min=1, max=1,
+            starter=self.starter,
+            ampChildArgs=("dummy"),
         )
         yield pp.start()
 
-        def _fail():
+        def _fail(r):
             self.fail("Expected an exception!")
 
         def _checks(failure):
             self.assertTrue(failure.check(ProcessTerminated),
                 "Incorrect exception")
+            self.assertEqual(failure.value.signal, 9,
+                "Le process s'est arrêté de la mauvaise façon")
 
         work = pp.doWork(
             TimeoutRuleCommand,
@@ -118,6 +135,7 @@ class TestRuleException(unittest.TestCase):
             idxmpp='foo',
             xml='foo',
         )
-        work.addCallbacks(lambda *args: _fail, _checks)
+        work.addCallbacks(_fail, _checks)
         yield work
         yield pp.stop()
+

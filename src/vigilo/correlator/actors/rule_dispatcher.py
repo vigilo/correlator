@@ -16,6 +16,7 @@ from twisted.internet.error import ProcessTerminated
 from twisted.words.xish import domish
 from twisted.protocols import amp
 from twisted.python import reflect, log
+from twisted.python.failure import Failure
 from ampoule import pool, main, child
 from wokkel.pubsub import PubSubClient, Item
 from wokkel.generic import parseXml
@@ -296,7 +297,7 @@ class RuleDispatcher(PubSubClient):
         # Si il y a déjà un message en cours de traitement,
         # on stocke le nouveau en base SQLite directement.
         if self.parallel_messages:
-            self.from_retry.store(xml)
+            d = self.from_retry.put(xml)
             return
 
         def handle_rule_error(failure, rule_name):
@@ -565,37 +566,27 @@ class RuleDispatcher(PubSubClient):
         """
 
         # Tout d'abord, réinsertion des messages dans la table en sortie.
-        needs_vacuum = False
         while True:
-            msg = yield self.to_retry.unstore()
+            msg = yield self.to_retry.pop()
             if msg is None:
                 break
             else:
-                needs_vacuum = True
                 item = parseXml(msg)
                 if item is None:
                     pass
                 else:
-                    yield self.sendItem(msg)
-
-        # On fait du nettoyage au besoin.
-        if needs_vacuum:
-            self.to_retry.vacuum()
+                    result = self.sendItem(msg)
+                    if result is not None:
+                        yield result
 
         # On essaye de traiter un nouveau message qui serait en attente en
         # entrée du corrélateur.
         # On fait les traitements dans cet ordre afin d'éviter de renvoyer
         # immédiatement un message dont l'envoi initial aurait échoué.
-        needs_vacuum = False
         if not self.parallel_messages:
-            msg = yield self.from_retry.unstore()
+            msg = yield self.from_retry.pop()
             if msg is not None:
-                needs_vacuum = True
                 self.handleMessage(msg)
-
-        # On fait du nettoyage au besoin.
-        if needs_vacuum:
-            self.from_retry.vacuum()
 
     def chatReceived(self, msg):
         """
@@ -666,18 +657,17 @@ class RuleDispatcher(PubSubClient):
         if not isinstance(item, etree.ElementBase):
             item = parseXml(item)
         if item.name == MESSAGEONETOONE:
-            result = self.__sendOneToOneXml(item)
+            self.__sendOneToOneXml(item)
         else:
             result = self.__publishXml(item)
-        result.addErrback(self._send_failed, item.toXml().encode('utf8'))
-        return result
+            return result
 
     def _send_failed(self, e, msg):
         """errback: remet le message en base"""
         errmsg = _('Unable to forward the message (%(reason)s). '
                    'it has been stored for later retransmission')
         LOGGER.error(errmsg % {"reason": e.getErrorMessage()})
-        return self.to_retry.store(msg)
+        return self.to_retry.put(msg)
 
     def __sendOneToOneXml(self, xml):
         """
@@ -694,10 +684,10 @@ class RuleDispatcher(PubSubClient):
         msg.addElement("body", content=body)
         # if not connected store the message
         if self.xmlstream is None:
-            result = defer.fail(XMPPNotConnectedError())
+            self._send_failed(Failure(XMPPNotConnectedError()),
+                              xml.toXml().encode('utf8'))
         else:
-            result = self.send(msg)
-        return result
+            self.xmlstream.send(msg)
 
     def __publishXml(self, xml):
         """
@@ -715,5 +705,6 @@ class RuleDispatcher(PubSubClient):
             result = self.publish(self._service, node, [item])
         except AttributeError:
             result = defer.fail(XMPPNotConnectedError())
+        result.addErrback(self._send_failed, xml.toXml().encode('utf8'))
         return result
 
