@@ -78,7 +78,7 @@ class TestRuleException(unittest.TestCase):
         """Test d'une règle qui lève une exception."""
         pp = pool.ProcessPool(
             ampChild=ExceptionAMPChild,
-            timeout=2,
+            timeout=10,
             name='ExceptionRuleDispatcher',
             min=1, max=1,
             starter=self.starter,
