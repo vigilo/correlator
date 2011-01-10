@@ -30,7 +30,7 @@ from vigilo.common.gettext import translate
 
 from vigilo.connector.store import DbRetry
 from vigilo.connector.forwarder import XMPPNotConnectedError
-from vigilo.connector.sockettonodefw import MESSAGEONETOONE
+from vigilo.connector import MESSAGEONETOONE
 
 from vigilo.models.tables import Change
 from vigilo.models.session import DBSession
