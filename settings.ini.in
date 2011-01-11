@@ -112,7 +112,7 @@ event = /vigilo/correvent
 aggr = /vigilo/aggr
 delaggr = /vigilo/delaggr
 state = /vigilo/state
-command = /vigilo/nagios
+command = /vigilo/command
 
 [loggers]
 keys=root,twisted,multiprocessing,correlation
