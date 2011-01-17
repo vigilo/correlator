@@ -155,6 +155,10 @@ class MemcachedConnection(object):
             Cette méthode n'existe que pour faciliter le travail des
             tests unitaires de cette classe.
         """
+        # TODO: Comprendre pourquoi la méthode __del__ n'est pas appelée.
+        # En attendant on détruit explicitement les données de la BDD.
+        if cls.instance.__connection_db_metadata:
+            cls.instance.__connection_db_metadata.drop_all()
         del cls.instance
         cls.instance = None
 

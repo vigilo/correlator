@@ -70,8 +70,23 @@ class Context(object):
         if not topology:
             topology = Topology()
             self.__connection.set('vigilo:topology', topology)
-            self.last_topology_update = datetime.now()
+            self.__connection.set('vigilo:last_topology_update', datetime.now())
+        #LOGGER.debug(_(
+        #    'Topology retrieved:'
+        #    '\n\t- Nodes: %(nodes)s'
+        #    '\n\t- Dependencies: %(edges)s'), {
+        #        'nodes': topology.nodes(),
+        #        'edges': topology.edges(),
+        #})
         return topology
+
+    @property
+    def last_topology_update(self):
+        """
+        Récupère la date de la dernière mise à jour de l'arbre topologique.
+        @rtype: L{datetime}.
+        """
+        return self.__connection.get('vigilo:last_topology_update')
 
     def __getattr__(self, prop):
         """
