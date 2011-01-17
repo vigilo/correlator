@@ -41,6 +41,12 @@ backup_table_from_bus = frombus
 # à destination du bus XMPP.
 backup_table_to_bus = tobus
 
+# Nom d'hôte utilisé pour signaler à Vigilo que ce connecteur fonctionne
+# correctement. Cela doit correspondre au nom d'hôte configuré dans VigiConf
+# pour cette machine. Par défaut, on utilise le nom d'hôte court (sans le
+# domaine DNS)
+#hostname = hostname
+
 [correlator]
 # URL de la base de données contenant
 # les contextes de corrélation.
