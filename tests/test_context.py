@@ -88,7 +88,11 @@ class TestApiFunctions(unittest.TestCase):
         )
         DBSession.add(host2)
         DBSession.flush()
-        dg = DependencyGroup(dependent=host1, operator=u'&')
+        dg = DependencyGroup(
+            dependent=host1,
+            operator=u'&',
+            role=u'topology',
+        )
         DBSession.add(dg)
         DBSession.flush()
         d = Dependency(group=dg, supitem=host2)
@@ -117,4 +121,3 @@ class TestApiFunctions(unittest.TestCase):
         # topologique renseignée dans le contexte est bien
         # postérieure à la date calculée précédemment.
         self.assertTrue(ctx.last_topology_update > date)
-

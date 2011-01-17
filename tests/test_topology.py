@@ -116,10 +116,26 @@ class TestTopologyFunctions(unittest.TestCase):
         Ajout de quelques dépendances entre services de bas
         niveau dans la BDD, préalable à certains des test.
         """
-        dep_group1 = DependencyGroup(dependent=self.service1, operator=u'&')
-        dep_group2 = DependencyGroup(dependent=self.service2, operator=u'&')
-        dep_group3 = DependencyGroup(dependent=self.service3, operator=u'&')
-        dep_group4 = DependencyGroup(dependent=self.service4, operator=u'&')
+        dep_group1 = DependencyGroup(
+            dependent=self.service1,
+            operator=u'&',
+            role=u'topology',
+        )
+        dep_group2 = DependencyGroup(
+            dependent=self.service2,
+            operator=u'&',
+            role=u'topology',
+        )
+        dep_group3 = DependencyGroup(
+            dependent=self.service3,
+            operator=u'&',
+            role=u'topology',
+        )
+        dep_group4 = DependencyGroup(
+            dependent=self.service4,
+            operator=u'&',
+            role=u'topology',
+        )
         DBSession.add(dep_group1)
         DBSession.add(dep_group2)
         DBSession.add(dep_group3)
