@@ -190,7 +190,9 @@ class RuleDispatcher(PubSubClient):
         """
         super(RuleDispatcher, self).__init__()
         self.from_retry = DbRetry(dbfilename, from_table)
+        self.from_retry.initdb()
         self.to_retry = DbRetry(dbfilename, to_table)
+        self.to_retry.initdb()
         self._service = service
         self._nodetopublish = nodetopublish
         self.parallel_messages = 0
@@ -707,4 +709,3 @@ class RuleDispatcher(PubSubClient):
             result = defer.fail(XMPPNotConnectedError())
         result.addErrback(self._send_failed, xml.toXml().encode('utf8'))
         return result
-
