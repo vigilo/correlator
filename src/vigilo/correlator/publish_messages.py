@@ -33,13 +33,13 @@ def publish_aggregate(forwarder, aggregate_id_list, event_id_list):
     aggregates = pl.addElement('aggregates')
     for aggregate_id in aggregate_id_list:
         aggregate = aggregates.addElement('aggregate')
-        aggregate.addContent(str(aggregate_id))
+        aggregate.addContent(unicode(aggregate_id))
 
     # Création de la liste des événements
     alerts = pl.addElement('alerts')
     for alert_id in event_id_list:
         alert = alerts.addElement('alert')
-        alert.addContent(str(alert_id))
+        alert.addContent(unicode(alert_id))
 
     forwarder.sendItem(pl.toXml())
 
@@ -61,7 +61,7 @@ def delete_published_aggregates(forwarder, aggregate_id_list):
     aggregates = pl.addElement('aggregates')
     for aggregate_id in aggregate_id_list:
         aggregate = aggregates.addElement('aggregate')
-        aggregate.addContent(str(aggregate_id))
+        aggregate.addContent(unicode(aggregate_id))
 
     forwarder.sendItem(pl.toXml())
 
@@ -84,25 +84,25 @@ def publish_state(forwarder, info_dictionary):
     # Ajout de la balise timestamp
     tag = pl.addElement('timestamp')
     timestamp = mktime(info_dictionary["timestamp"].timetuple())
-    tag.addContent(str(int(timestamp)))
+    tag.addContent(unicode(int(timestamp)))
 
     # Ajout de la balise host
     if not info_dictionary["host"]:
         info_dictionary["host"] = settings['correlator']['nagios_hls_host']
     tag = pl.addElement('host')
-    tag.addContent(str(info_dictionary["host"]))
+    tag.addContent(unicode(info_dictionary["host"]))
 
     if info_dictionary["service"]:
         # Ajout de la balise service
         tag = pl.addElement('service')
-        tag.addContent(str(info_dictionary["service"]))
+        tag.addContent(unicode(info_dictionary["service"]))
 
     # Ajout de la balise state
     tag = pl.addElement('state')
-    tag.addContent(str(info_dictionary["state"]))
+    tag.addContent(unicode(info_dictionary["state"]))
 
     # Ajout de la balise message
     tag = pl.addElement('message')
-    tag.addContent(str(info_dictionary["message"]))
+    tag.addContent(unicode(info_dictionary["message"]))
 
     forwarder.sendItem(pl.toXml())
