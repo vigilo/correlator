@@ -537,7 +537,7 @@ class RuleDispatcher(PubSubClient):
         # 1 -   On génère un graphe avec des DeferredLists qui reproduit
         #       le graphe des dépendances entre les règles de corrélation.
 
-        payload = etree.tostring(dom[0], encoding='utf-8')
+        payload = etree.tostring(dom[0])
         correlation_graph = buildExecutionGraph(idxmpp, payload)
 
         # 2 -   Quand toutes les règles de corrélation ont été exécutées,
@@ -657,7 +657,7 @@ class RuleDispatcher(PubSubClient):
 
     def sendItem(self, item):
         if not isinstance(item, etree.ElementBase):
-            item = parseXml(item)
+            item = parseXml(item.encode('utf-8'))
         if item.name == MESSAGEONETOONE:
             self.__sendOneToOneXml(item)
         else:
