@@ -23,7 +23,7 @@ subscriptions = /vigilo/event,
 
 [database]
 # URL d'accès à la base de données.
-sqlalchemy_url = postgres://vigilo:vigilo@localhost/vigilo
+sqlalchemy_url = postgres://vigilo:vigilo@127.0.0.1/vigilo
 
 # Préfixe des tables.
 db_basename = vigilo_
