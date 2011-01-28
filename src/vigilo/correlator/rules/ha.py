@@ -9,6 +9,7 @@ similaire à la suivante ::
     [vigilo.correlator.rules.ha]
     vigiconf_jid = vigiconf@localhost
     hls_prefix = vigilo-server:
+    max_recovery_time = 15
     # Conversion du nom d'hôte Nagios vers le nom dans appgroups-servers.py
     #server_template = %s.vigilo.example.com
 
@@ -24,9 +25,13 @@ from vigilo.correlator.context import Context
 from vigilo.common.conf import settings
 settings.load_module(__name__)
 
+from vigilo.models.session import DBSession
+from vigilo.models.tables import StateName, HighLevelService, HLSHistory
+from datetime import datetime, timedelta
+from sqlalchemy.sql.expression import desc
+
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
-from vigilo.models.tables import StateName
 
 from vigilo.connector import MESSAGEONETOONE
 from vigilo.pubsub.xml import NS_COMMAND
@@ -87,7 +92,7 @@ class HighAvailabilityRule(Rule):
         if not ctx.servicename.startswith(prefix):
             return # rien à faire
         server = ctx.servicename[len(prefix):]
-
+        
         if ctx.previous_state is not None:
             previous_statename = None
         else:
@@ -97,7 +102,25 @@ class HighAvailabilityRule(Rule):
             return # Pas de changement
 
         if ctx.statename == u"OK":
-            action = "enable"
+            # On récupère la durée de l'interruption de service.
+            previous_state_duration = self._get_previous_state_duration(ctx.servicename)
+            # Si elle est inférieure à la durée autorisée, on
+            # envoie un message à VigiConf pour réactiver le serveur.
+            if previous_state_duration and \
+                previous_state_duration <= timedelta(minutes=int(
+                    settings[__name__]["max_recovery_time"]
+                )):
+                action = "enable"
+            # Sinon, une intervention manuelle sera nécessaire.
+            else:
+                LOGGER.info(_("Vigilo server %(server)s was down for a too "\
+                    "long duration (%(duration)s) before becoming avalaible "\
+                    "again, a manual VigiConf deployment will be necessary."), {
+                        "server": server,
+                        "duration": previous_state_duration
+                })
+                return
+
         elif ctx.statename == u"CRITICAL":
             action = "disable"
         else:
@@ -117,6 +140,19 @@ class HighAvailabilityRule(Rule):
             return server
         else:
             return server_template % server
+
+    def _get_previous_state_duration(self, servicename):
+        timestamps = DBSession.query(
+            HLSHistory.timestamp
+        ).join(
+            (HighLevelService, HLSHistory.idhls == HighLevelService.idservice),
+        ).filter(HighLevelService.servicename == servicename
+        ).order_by(desc(HLSHistory.timestamp))
+        try:
+            duration = timestamps[0][0] - timestamps[1][0]
+        except IndexError:
+            return None
+        return duration
 
     def _build_message(self, server, action):
         message = """
