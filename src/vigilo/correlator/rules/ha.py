@@ -9,7 +9,7 @@ similaire à la suivante ::
     [vigilo.correlator.rules.ha]
     vigiconf_jid = vigiconf@localhost
     hls_prefix = vigilo-server:
-    max_recovery_time = 15
+    max_auto_recovery = 15
     # Conversion du nom d'hôte Nagios vers le nom dans appgroups-servers.py
     #server_template = %s.vigilo.example.com
 
@@ -108,7 +108,7 @@ class HighAvailabilityRule(Rule):
             # envoie un message à VigiConf pour réactiver le serveur.
             if previous_state_duration and \
                 previous_state_duration <= timedelta(minutes=int(
-                    settings[__name__]["max_recovery_time"]
+                    settings[__name__]["max_auto_recovery"]
                 )):
                 action = "enable"
             # Sinon, une intervention manuelle sera nécessaire.
