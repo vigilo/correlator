@@ -123,6 +123,7 @@ aggr = /vigilo/aggr
 delaggr = /vigilo/delaggr
 state = /vigilo/state
 command = /vigilo/command
+perf = /vigilo/perf
 
 [loggers]
 keys=root,twisted,multiprocessing,correlation

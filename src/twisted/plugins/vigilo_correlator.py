@@ -8,6 +8,9 @@ from twisted.application import service
 from twisted.words.protocols.jabber.jid import JID
 from twisted.internet import reactor
 
+from vigilo.common.conf import settings
+settings.load_module('vigilo.correlator')
+
 from vigilo.common.gettext import translate
 from vigilo.common.logging import get_logger
 from vigilo.connector import client, options
@@ -17,7 +20,7 @@ from vigilo.common.conf import setup_plugins_path
 from vigilo.correlator.memcached_connection import MemcachedConnection, \
                                                     MemcachedConnectionError
 from vigilo.correlator.registry import get_registry
-from vigilo.correlator.pubsub import CorrServiceMaker
+#from vigilo.correlator.pubsub import CorrServiceMaker
 
 _ = translate('vigilo.correlator')
 LOGGER = get_logger('vigilo.correlator')
@@ -61,7 +64,6 @@ class CorrelatorServiceMaker(object):
 
     def makeService(self, options):
         """Crée un service client du bus XMPP"""
-        from vigilo.common.conf import settings
 
         # Configuration de l'accès à la base de données.
         from vigilo.models.configure import configure_db
@@ -90,6 +92,14 @@ class CorrelatorServiceMaker(object):
             _service
         )
         msg_handler.setHandlerParent(xmpp_client)
+
+        # Statistiques
+        from vigilo.connector.status import StatusPublisher
+        servicename = options.get("name", "vigilo-correlator")
+        stats_publisher = StatusPublisher(msg_handler,
+                            settings["connector"].get("hostname", None),
+                            servicename=servicename)
+        stats_publisher.setHandlerParent(xmpp_client)
 
         root_service = service.MultiService()
         xmpp_client.setServiceParent(root_service)

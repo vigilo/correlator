@@ -197,6 +197,7 @@ class RuleDispatcher(PubSubClient):
         self._nodetopublish = nodetopublish
         self.parallel_messages = 0
         self.loop_call = task.LoopingCall(self.__sendQueuedMessages)
+        self._messages_received = 0
 
         # Préparation du pool d'exécuteurs de règles.
         timeout = settings['correlator'].as_int('rules_timeout')
@@ -533,6 +534,7 @@ class RuleDispatcher(PubSubClient):
 
         # Le vrai travail commence ici.
         self.parallel_messages += 1
+        self._messages_received += 1
 
         # 1 -   On génère un graphe avec des DeferredLists qui reproduit
         #       le graphe des dépendances entre les règles de corrélation.
@@ -623,7 +625,7 @@ class RuleDispatcher(PubSubClient):
         # locale toutes les queue_delay secondes, ou 0.1 par défaut.
         try:
             queue_delay = float(settings['correlator'].get(
-                'queue_delay', None))
+                'queue_delay', 0.1))
         except ValueError:
             queue_delay = 0.1
 
@@ -631,6 +633,7 @@ class RuleDispatcher(PubSubClient):
                         'of %f seconds.'), queue_delay)
         self.loop_call.start(queue_delay)
         self.rrp.start()
+        self._messages_received = 0
 
     def connectionLost(self, reason):
         """
@@ -709,3 +712,23 @@ class RuleDispatcher(PubSubClient):
             result = defer.fail(XMPPNotConnectedError())
         result.addErrback(self._send_failed, xml.toXml().encode('utf8'))
         return result
+
+    def getStats(self):
+        """Récupère des métriques de fonctionnement du correlateur"""
+        stats = {
+            "received": self._messages_received,
+            }
+        backup_in_size_d = self.from_retry.qsize()
+        backup_out_size_d = self.to_retry.qsize()
+        backup_size_d = defer.DeferredList([backup_in_size_d,
+                                            backup_out_size_d])
+        def add_backup_sizes(backup_sizes):
+            for index, direction in enumerate(["in", "out"]):
+                success, backup_size = backup_sizes[index]
+                if not success:
+                    backup_size = "U"
+                stats["backup_%s" % direction] = backup_size
+            return stats
+        backup_size_d.addCallback(add_backup_sizes)
+        return backup_size_d
+
