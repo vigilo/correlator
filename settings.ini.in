@@ -85,8 +85,12 @@ syslog_data_level = 20
 # service de haut niveau.
 unknown_priority_value = 4
 
-# Indique si les alertes sont triées par
-# priorité croissante ou décroissante.
+; Ordre de tri pour la priorité des événements.
+; - Utiliser "asc" si la priorité est inversement proportionnelle à sa
+;   valeur (ie: plus le nombre est bas, plus la priorité est élevée).
+; - Utiliser "desc" si la priorité est proportionnelle à sa valeur
+;   (ie: plus le nombre est élevé, plus la priorité est élevée).
+; NE PAS METTRE DE GUILLEMETS/APOSTROPHES AUTOUR DE LA VALEUR.
 priority_order = asc
 
 # Nombre minimum et maximum de processus dédiés
