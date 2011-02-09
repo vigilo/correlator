@@ -84,9 +84,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_sysconfdir}/vigilo
 %config(noreplace) %{_sysconfdir}/vigilo/%{module}
 %config(noreplace) %{_sysconfdir}/sysconfig/*
-%{python26_sitelib}/vigilo
-%{python26_sitelib}/*.egg-info
-%{python26_sitelib}/*-nspkg.pth
+%{python26_sitelib}/*
 %dir %{_localstatedir}/lib/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/lib/vigilo/%{module}
 %attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}

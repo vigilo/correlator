@@ -66,7 +66,9 @@ setup(name='vigilo-correlator',
             'vigilo.correlator',
             'vigilo.correlator.actors',
             'vigilo.correlator.rules',
+            'twisted',
             ],
+        package_data={'twisted': ['plugins/vigilo_correlator.py']},
         entry_points={
             'console_scripts': [
                 'vigilo-correlator = vigilo.correlator.main:main',
