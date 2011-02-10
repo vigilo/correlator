@@ -11,8 +11,12 @@ from twisted.internet import reactor
 from vigilo.common.conf import settings
 settings.load_module('vigilo.correlator')
 
-from vigilo.common.gettext import translate
 from vigilo.common.logging import get_logger
+LOGGER = get_logger('vigilo.correlator')
+
+from vigilo.common.gettext import translate
+_ = translate('vigilo.correlator')
+
 from vigilo.connector import client, options
 from vigilo.pubsub.checknode import VerificationNode
 from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
@@ -22,8 +26,6 @@ from vigilo.correlator.memcached_connection import MemcachedConnection, \
 from vigilo.correlator.registry import get_registry
 #from vigilo.correlator.pubsub import CorrServiceMaker
 
-_ = translate('vigilo.correlator')
-LOGGER = get_logger('vigilo.correlator')
 
 def log_debug_info(*args):
     LOGGER.debug('pid: %d', os.getpid())
@@ -95,10 +97,13 @@ class CorrelatorServiceMaker(object):
 
         # Statistiques
         from vigilo.connector.status import StatusPublisher
-        servicename = options.get("name", "vigilo-correlator")
+        servicename = options["name"]
+        if servicename is None:
+            servicename = "vigilo-correlator"
         stats_publisher = StatusPublisher(msg_handler,
-                            settings["connector"].get("hostname", None),
-                            servicename=servicename)
+                        settings["connector"].get("hostname", None),
+                        servicename=servicename,
+                        node=settings["connector"].get("status_node", None))
         stats_publisher.setHandlerParent(xmpp_client)
 
         root_service = service.MultiService()

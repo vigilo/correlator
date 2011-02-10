@@ -7,7 +7,6 @@ __all__ = ( 'Context', )
 from datetime import datetime
 
 from vigilo.common.conf import settings
-settings.load_module(__name__)
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate

@@ -23,7 +23,6 @@ from wokkel.generic import parseXml
 from lxml import etree
 
 from vigilo.common.conf import settings
-settings.load_module(__name__)
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
