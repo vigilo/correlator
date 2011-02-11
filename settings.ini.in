@@ -1,25 +1,33 @@
 [bus]
-# Le traffic XMPP doit-il être journalisé ?
-log_traffic = False
+# Nom ou adresse IP du serveur XMPP à utiliser.
+host = vigilo-bus.example.com
 
-# Nom d'hôte ou adresse IP du serveur XMPP.
-host = localhost
-
-# Service de publication XMPP, en général,
-# de la forme "pubsub.<serveur XMPP>".
+# Nom du service de publication pour les messages.
 service = pubsub.localhost
 
-# Identifiant de connexion Jabber.
+# Nom d'utilisateur à utiliser pour se connecter au bus.
 jid = correlator@localhost
 
-# Mot de passe correspondant.
+# Mot de passe associé au JID donné.
 password = correlator
+
+# Priorité statique. Si cette valeur n'est pas renseignée, la priorité est
+# automatiquement choisie en fonction du nombre de connecteurs utilisant le
+# même compte sur le bus.
+#priority = 1
+
+# Indique s'il faut chiffrer la connexion (True) ou simplement compresser
+# le flux (False).
+require_tls = False
 
 # Liste des noms des topics auxquels le corrélateur est abonné,
 # séparés par des virgules.
 # À minima, il doit être abonné aux événements bruts publiés par
 # le connector-nagios.
 subscriptions = /vigilo/event,
+
+# Le trafic lié au bus XMPP doit-il être enregistré dans les logs ?
+log_traffic = False
 
 [database]
 # URL d'accès à la base de données.
