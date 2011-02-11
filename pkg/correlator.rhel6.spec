@@ -25,6 +25,12 @@ Requires:   python-twisted-words
 Requires:   python-networkx
 Requires:   python-ampoule
 
+# Init
+Requires(pre): shadow-utils
+Requires(post): chkconfig
+Requires(preun): chkconfig
+Requires(preun): initscripts
+Requires(postun): initscripts
 
 %description
 Vigilo event correlator.
@@ -34,7 +40,9 @@ This application is part of the Vigilo Project <http://vigilo-project.org>
 %setup -q
 
 %build
-make PYTHON=%{__python} SYSCONFDIR=%{_sysconfdir} LOCALSTATEDIR=%{_localstatedir}
+make PYTHON=%{__python} \
+    SYSCONFDIR=%{_sysconfdir} \
+    LOCALSTATEDIR=%{_localstatedir}
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -44,9 +52,6 @@ make install \
     SYSCONFDIR=%{_sysconfdir} \
     LOCALSTATEDIR=%{_localstatedir} \
     PYTHON=%{__python}
-
-# Splitted Twisted
-sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/site-packages/vigilo*.egg-info/requires.txt
 
 %find_lang %{name}
 
@@ -58,12 +63,16 @@ exit 0
 
 %post
 /sbin/chkconfig --add %{name} || :
-/sbin/service %{name} condrestart > /dev/null 2>&1 || :
 
 %preun
 if [ $1 = 0 ]; then
     /sbin/service %{name} stop > /dev/null 2>&1 || :
     /sbin/chkconfig --del %{name} || :
+fi
+
+%postun
+if [ "$1" -ge "1" ] ; then
+    /sbin/service %{name} condrestart > /dev/null 2>&1 || :
 fi
 
 
@@ -75,13 +84,13 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING doc/*
 %attr(755,root,root) %{_bindir}/%{name}
 %attr(744,root,root) %{_initrddir}/%{name}
-%dir %{_sysconfdir}/vigilo
-%config(noreplace) %{_sysconfdir}/vigilo/%{module}
-%config(noreplace) %{_sysconfdir}/sysconfig/*
+%dir %{_sysconfdir}/vigilo/
+%dir %{_sysconfdir}/vigilo/%{module}
+%attr(640,root,%{name}) %config(noreplace) %{_sysconfdir}/vigilo/%{module}/settings.ini
+%config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %{python_sitelib}/*
 %dir %{_localstatedir}/lib/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/lib/vigilo/%{module}
-%attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
 
 
 %changelog

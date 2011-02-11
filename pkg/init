@@ -19,10 +19,12 @@
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/vigilo-correlator
 NAME=vigilo-correlator
+TAPNAME=vigilo-correlator
 LOCK_FILE=/var/lock/subsys/$NAME
 
-USER=$NAME
-PID_FILE=/var/run/$NAME/$NAME.pid
+USER=vigilo-correlator
+PID_FILE=/var/run/$NAME.pid
+TWISTD_OPTIONS=""
 OPTIONS=""
 
 if [ -f /etc/sysconfig/$NAME ] ; then
@@ -32,7 +34,7 @@ if [ -f /etc/init.d/functions ] ; then
     . /etc/init.d/functions
 fi
 
-export USER PID_FILE OPTIONS
+export USER PID_FILE TWISTD_OPTIONS OPTIONS
 
 test -x $DAEMON || exit 0
 
@@ -40,29 +42,31 @@ start() {
     [ -f $LOCK_FILE ] && return
 
     if [ "$1" = "debug" ]; then
-        OUTPUT="--logfile - -n"
+        TWISTD_OPTIONS="$TWISTD_OPTIONS --logfile - -n"
+        OUTPUT=""
     else
-        OUTPUT="--logfile /dev/null >/dev/null 2>&1"
+        TWISTD_OPTIONS="$TWISTD_OPTIONS --logfile /dev/null"
+        OUTPUT=">/dev/null 2>&1"
     fi
 
     echo -n "Starting $NAME: "
-    su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE $OPTIONS $OUTPUT"
+    eval $DAEMON -u $USER -g `id -g $USER` --pidfile $PID_FILE \
+            $TWISTD_OPTIONS $TAPNAME $OPTIONS $OUTPUT
     RETVAL=$?
     [ "$1" = "debug" ] && return
     if [ $RETVAL -eq 0 ]; then
-        # Wait 3s to make sure it started properly
+        # Wait 3s to make sure it started properly (auth)
         i=0
         while [ $i -lt 3 ]; do
-            if ! pgrep -f $DAEMON >/dev/null; then
+            sleep 1
+            if ! pidofproc -p $PID_FILE $DAEMON >/dev/null; then
                 RETVAL=1
                 break
             fi
             let "i += 1"
-            gprintf "."
-            sleep 1
+            echo -n "."
         done
-        [ $RETVAL -eq 0 ] && success
-        [ $RETVAL -ne 0 ] && failure
+        [ $RETVAL -eq 0 ] && success || failure
     else
         failure
     fi

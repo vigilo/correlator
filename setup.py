@@ -3,14 +3,14 @@
 import os, sys
 from setuptools import setup
 
+sysconfdir = os.getenv("SYSCONFDIR", "/etc")
+localstatedir = os.getenv("LOCALSTATEDIR", "/var")
+
 tests_require = [
     'coverage',
     'nose',
     'pylint',
 ]
-
-sysconfdir = os.getenv("SYSCONFDIR", "/etc")
-localstatedir = os.getenv("LOCALSTATEDIR", "/var")
 
 def install_i18n(i18ndir, destdir):
     data_files = []
@@ -27,7 +27,6 @@ def install_i18n(i18ndir, destdir):
                 )
     return data_files
 
-
 setup(name='vigilo-correlator',
         version='2.0.0',
         author='Vigilo Team',
@@ -39,7 +38,6 @@ setup(name='vigilo-correlator',
         +'alerts to reduce information overload and help point out\n'
         +'the cause of a problem.\n',
         install_requires=[
-            # dashes become underscores
             'setuptools',
             'lxml',
             # @TODO Doit-on utiliser twisted.protocols.memcache à la place ?
@@ -50,14 +48,6 @@ setup(name='vigilo-correlator',
             'networkx',
             'ampoule',
             ],
-        extras_require={
-            'tests': tests_require,
-            },
-        message_extractors={
-            'src': [
-                ('**.py', 'python', None),
-            ],
-        },
         namespace_packages = [
             'vigilo',
             ],
@@ -69,17 +59,24 @@ setup(name='vigilo-correlator',
             'twisted',
             ],
         package_data={'twisted': ['plugins/vigilo_correlator.py']},
+        message_extractors={
+            'src': [
+                ('**.py', 'python', None),
+            ],
+        },
+        extras_require={
+            'tests': tests_require,
+        },
         entry_points={
             'console_scripts': [
-                'vigilo-correlator = vigilo.correlator.main:main',
+                'vigilo-correlator = twisted.scripts.twistd:run',
                 ],
-            },
+        },
         package_dir={'': 'src'},
         data_files=[
                     (os.path.join(sysconfdir, "vigilo/correlator"),
                         ["settings.ini"]),
                     (os.path.join(localstatedir, "lib/vigilo/correlator"), []),
-                    (os.path.join(localstatedir, "run/vigilo-correlator"), []),
                    ] + install_i18n("i18n", os.path.join(sys.prefix, 'share', 'locale')),
         )
 

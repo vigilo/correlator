@@ -12,6 +12,7 @@ URL:        http://www.projet-vigilo.org
 Group:      System/Servers
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-build
 License:    GPLv2
+Buildarch:  noarch
 
 BuildRequires:   python-setuptools
 BuildRequires:   python-babel
@@ -50,9 +51,6 @@ Requires:   python-paste
 
 Requires(pre): rpm-helper
 
-Buildarch:  noarch
-
-
 %description
 Vigilo event correlator.
 This application is part of the Vigilo Project <http://vigilo-project.org>
@@ -61,16 +59,18 @@ This application is part of the Vigilo Project <http://vigilo-project.org>
 %setup -q
 
 %build
-make PYTHON=%{_bindir}/python SYSCONFDIR=%{_sysconfdir} LOCALSTATEDIR=%{_localstatedir}
+make PYTHON=%{__python} \
+    SYSCONFDIR=%{_sysconfdir} \
+    LOCALSTATEDIR=%{_localstatedir}
 
 %install
 rm -rf $RPM_BUILD_ROOT
 make install \
-	DESTDIR=$RPM_BUILD_ROOT \
-	PREFIX=%{_prefix} \
-	SYSCONFDIR=%{_sysconfdir} \
-	LOCALSTATEDIR=%{_localstatedir} \
-	PYTHON=%{_bindir}/python
+    DESTDIR=$RPM_BUILD_ROOT \
+    PREFIX=%{_prefix} \
+    SYSCONFDIR=%{_sysconfdir} \
+    LOCALSTATEDIR=%{_localstatedir} \
+    PYTHON=%{_bindir}/python
 
 # Splitted Twisted
 sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/site-packages/vigilo*.egg-info/requires.txt
@@ -96,13 +96,13 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING doc/*
 %attr(755,root,root) %{_bindir}/%{name}
 %attr(744,root,root) %{_initrddir}/%{name}
-%dir %{_sysconfdir}/vigilo
-%config(noreplace) %{_sysconfdir}/vigilo/%{module}
-%config(noreplace) %{_sysconfdir}/sysconfig/*
+%dir %{_sysconfdir}/vigilo/
+%dir %{_sysconfdir}/vigilo/%{module}
+%attr(640,root,%{name}) %config(noreplace) %{_sysconfdir}/vigilo/%{module}/settings.ini
+%config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %{python_sitelib}/*
 %dir %{_localstatedir}/lib/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/lib/vigilo/%{module}
-%attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
 
 
 %changelog
