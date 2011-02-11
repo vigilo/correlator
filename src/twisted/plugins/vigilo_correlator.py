@@ -24,7 +24,6 @@ from vigilo.common.conf import setup_plugins_path
 from vigilo.correlator.memcached_connection import MemcachedConnection, \
                                                     MemcachedConnectionError
 from vigilo.correlator.registry import get_registry
-#from vigilo.correlator.pubsub import CorrServiceMaker
 
 
 def log_debug_info(*args):
