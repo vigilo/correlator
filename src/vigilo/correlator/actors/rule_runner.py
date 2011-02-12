@@ -10,6 +10,7 @@ from twisted.protocols import amp
 from ampoule import child
 
 from vigilo.common.conf import settings
+settings.load_module(__name__)
 
 from vigilo.models.configure import configure_db
 configure_db(settings['database'], 'sqlalchemy_',

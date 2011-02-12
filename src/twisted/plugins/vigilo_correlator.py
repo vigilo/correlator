@@ -17,6 +17,11 @@ LOGGER = get_logger('vigilo.correlator')
 from vigilo.common.gettext import translate
 _ = translate('vigilo.correlator')
 
+# Configuration de l'accès à la base de données.
+from vigilo.models.configure import configure_db
+configure_db(settings['database'], 'sqlalchemy_',
+    settings['database']['db_basename'])
+
 from vigilo.connector import client, options
 from vigilo.pubsub.checknode import VerificationNode
 from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
@@ -65,11 +70,6 @@ class CorrelatorServiceMaker(object):
 
     def makeService(self, options):
         """Crée un service client du bus XMPP"""
-
-        # Configuration de l'accès à la base de données.
-        from vigilo.models.configure import configure_db
-        configure_db(settings['database'], 'sqlalchemy_',
-            settings['database']['db_basename'])
 
         # Enregistre les règles de corrélation dans le registre.
         # À LAISSER ABSOLUMENT.
