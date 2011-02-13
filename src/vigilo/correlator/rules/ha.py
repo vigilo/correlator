@@ -104,21 +104,22 @@ class HighAvailabilityRule(Rule):
         if ctx.statename == u"OK":
             # On récupère la durée de l'interruption de service.
             previous_state_duration = self._get_previous_state_duration(ctx.servicename)
+            threshold = int(settings[__name__].get("max_auto_recovery", 0))
             # Si elle est inférieure à la durée autorisée, on
             # envoie un message à VigiConf pour réactiver le serveur.
-            if previous_state_duration and \
-                previous_state_duration <= timedelta(minutes=int(
-                    settings[__name__]["max_auto_recovery"]
-                )):
+            if threshold == 0:
+                action = "enable" # Pas de limite
+            elif (previous_state_duration and
+                    previous_state_duration <= timedelta(minutes=threshold)):
                 action = "enable"
             # Sinon, une intervention manuelle sera nécessaire.
             else:
-                LOGGER.info(_("Vigilo server %(server)s was down for a too "\
-                    "long duration (%(duration)s) before becoming avalaible "\
-                    "again, a manual VigiConf deployment will be necessary."), {
-                        "server": server,
-                        "duration": previous_state_duration
-                })
+                LOGGER.warning(_("Vigilo server %(server)s was disabled for "
+                    "too long (%(duration)s) before becoming avalaible "
+                    "again, a manual VigiConf deployment will be necessary."),
+                    { "server": server,
+                      "duration": previous_state_duration
+                    })
                 return
 
         elif ctx.statename == u"CRITICAL":
