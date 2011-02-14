@@ -19,8 +19,7 @@ _ = translate('vigilo.correlator')
 
 # Configuration de l'accès à la base de données.
 from vigilo.models.configure import configure_db
-configure_db(settings['database'], 'sqlalchemy_',
-    settings['database']['db_basename'])
+configure_db(settings['database'], 'sqlalchemy_')
 
 from vigilo.connector import client, options
 from vigilo.pubsub.checknode import VerificationNode
