@@ -45,6 +45,12 @@ class RuleCommand(amp.Command):
 class RuleRunner(child.AMPChild):
     def __init__(self, *args):
         sys.argv.insert(0, args[0])
+        # Suppression du log sur la sortie standard (doublons)
+        import twisted.python.log as twisted_logging
+        for o in twisted_logging.theLogPublisher.observers[:]:
+            if o.im_class == twisted_logging.FileLogObserver:
+                twisted_logging.removeObserver(o)
+        # Plugins
         setup_plugins_path(settings["correlator"].get("pluginsdir",
                            "/etc/vigilo/correlator/plugins"))
         super(RuleRunner, self).__init__()
