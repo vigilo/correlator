@@ -83,10 +83,13 @@ sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/si
 
 %post
 %_post_service %{name}
+%{_libdir}/twisted-dropin-cache >/dev/null || :
 
 %preun
 %_preun_service %{name}
 
+%postun
+%{_libdir}/twisted-dropin-cache >/dev/null || :
 
 %clean
 rm -rf $RPM_BUILD_ROOT

@@ -63,6 +63,7 @@ exit 0
 
 %post
 /sbin/chkconfig --add %{name} || :
+%{_libexecdir}/twisted-dropin-cache-%{pybasever} >/dev/null || :
 
 %preun
 if [ $1 = 0 ]; then
@@ -74,6 +75,7 @@ fi
 if [ "$1" -ge "1" ] ; then
     /sbin/service %{name} condrestart > /dev/null 2>&1 || :
 fi
+%{_libexecdir}/twisted-dropin-cache-%{pybasever} >/dev/null || :
 
 
 %clean
