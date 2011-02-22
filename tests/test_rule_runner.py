@@ -34,9 +34,9 @@ from vigilo.correlator.actors.rule_runner import RuleCommand, RuleRunner
 LOGGER = get_logger('vigilo.correlator.tests')
 
 class SpecificException(Exception):
-    message = "Oops!"
+    msg = "Oops!"
     def __init__(self):
-        super(SpecificException, self).__init__(self.message)
+        super(SpecificException, self).__init__(self.msg)
 
 class ExceptionRuleCommand(RuleCommand):
     pass
@@ -93,7 +93,7 @@ class TestRuleException(unittest.TestCase):
             try:
                 failure.raiseException()
             except Exception, e:
-                self.assertEquals(e.message, SpecificException.message)
+                self.assertEquals(str(e), SpecificException.msg)
             else:
                 _fail()
 
@@ -138,4 +138,3 @@ class TestRuleException(unittest.TestCase):
         work.addCallbacks(_fail, _checks)
         yield work
         yield pp.stop()
-
