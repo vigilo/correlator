@@ -20,6 +20,7 @@ install: settings.ini $(PYTHON)
 
 clean: clean_python
 	rm -f settings.ini
+	rm -f src/twisted/plugins/dropin.cache
 
 lint: lint_pylint
 tests: tests_nose

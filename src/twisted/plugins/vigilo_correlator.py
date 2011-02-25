@@ -5,8 +5,9 @@ import threading, os, signal
 from zope.interface import implements
 from twisted.plugin import IPlugin
 from twisted.application import service
-from twisted.words.protocols.jabber.jid import JID
-from twisted.internet import reactor
+
+# ATTENTION: interdit d'importer le reactor ici, sinon les sous-process ampoule
+# quittent en erreur avec "reactor already installed"
 
 from vigilo.common.conf import settings
 settings.load_module('vigilo.correlator')
@@ -21,13 +22,8 @@ _ = translate('vigilo.correlator')
 from vigilo.models.configure import configure_db
 configure_db(settings['database'], 'sqlalchemy_')
 
-from vigilo.connector import client, options
-from vigilo.pubsub.checknode import VerificationNode
-from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
 from vigilo.common.conf import setup_plugins_path
-from vigilo.correlator.memcached_connection import MemcachedConnection, \
-                                                    MemcachedConnectionError
-from vigilo.correlator.registry import get_registry
+from vigilo.connector import options
 
 
 def log_debug_info(*args):
@@ -70,8 +66,17 @@ class CorrelatorServiceMaker(object):
     def makeService(self, options):
         """Crée un service client du bus XMPP"""
 
+        from twisted.internet import reactor
+        from twisted.words.protocols.jabber.jid import JID
+        from vigilo.connector import client
+        from vigilo.pubsub.checknode import VerificationNode
+        from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
+        from vigilo.correlator.memcached_connection import \
+                MemcachedConnection, MemcachedConnectionError
+
         # Enregistre les règles de corrélation dans le registre.
         # À LAISSER ABSOLUMENT.
+        from vigilo.correlator.registry import get_registry
         get_registry()
 
         setup_plugins_path(settings["correlator"].get("pluginsdir",
