@@ -125,9 +125,6 @@ def check_topology(last_topology_update):
         conn.delete('vigilo:topology')
         LOGGER.info(_(u"Topology has been reloaded."))
 
-class DependencyError(Exception):
-    pass
-
 class SendToBus(amp.Command):
     arguments = [
         ('item', amp.Unicode()),
@@ -212,14 +209,7 @@ class RuleDispatcher(PubSubClient):
             maxIdle=max_idle,
             ampChild=rule_runner.RuleRunner,
             ampParent=Correlator,
-            # @XXX Désactivé pour le moment car pose des problèmes.
-            # Lorsqu'un processus atteint le timeout, il est tué,
-            # mais lorsqu'une tâche arrive, ampoule semble ne pas
-            # attendre que le processus soit créé pour lui envoyer
-            # la tâche. On tombe dans une race condition et la règle
-            # échoue (à cause d'un timeout). Plusieurs messages
-            # peuvent ainsi défiler sans être traités...
-###            timeout=timeout,
+            timeout=timeout,
             name='RuleDispatcher',
             min=min_runner,
             max=max_runner,
@@ -248,6 +238,80 @@ class RuleDispatcher(PubSubClient):
                 schema_file = pkg_resources.resource_stream(
                         'vigilo.pubsub', filename)
                 self.schema[tag] = etree.XMLSchema(file=schema_file)
+
+    def __build_execution_tree(self):
+        d = defer.Deferred()
+        cache = {}
+
+        rules_graph = get_registry().rules.rules_graph
+        subdeferreds = [
+            self.__build_sub_execution_tree(cache, d, rules_graph, r)
+            for r in rules_graph.nodes_iter()
+            if not rules_graph.in_degree(r)
+        ]
+        # La corrélation sur l'alerte n'échoue que si TOUTES les règles
+        # de corrélation ont échoué. Elle réussit lorsque TOUTES les règles
+        # ont été exécutées.
+        end = defer.DeferredList(
+            subdeferreds,
+            fireOnOneCallback=0,
+            fireOnOneErrback=0,
+        )
+        return (d, end)
+
+    def __build_sub_execution_tree(self, cache, trigger, rules_graph, rule):
+        if cache.has_key(rule):
+            return cache[rule]
+
+        dependencies = [
+            self.__build_sub_execution_tree(cache, trigger, rules_graph, r[1])
+            for r in rules_graph.out_edges_iter(rule)
+        ]
+
+        if not dependencies:
+            dependencies = [trigger]
+
+        def rule_failure(failure, rule_name):
+            if failure.check(ProcessTerminated):
+                LOGGER.warning(_('Rule %(rule_name)s timed out'), {
+                    'rule_name': rule_name
+                })
+            return failure
+
+        # L'exécution de la règle échoue si au moins une de ses dépendances
+        # n'a pas pu être exécutée. À l'inverse, elle n'est exécutée que
+        # lorsque TOUTES ses dépendances ont été exécutées.
+        dl = defer.DeferredList(
+            dependencies,
+            fireOnOneCallback=0,
+            fireOnOneErrback=1,
+        )
+        dl.addCallback(self.__do_work, rule)
+        dl.addErrback(rule_failure, rule)
+        cache[rule] = dl
+        return dl
+
+    def __do_work(self, result, rule_name):
+        # result est une liste de tuples (1) de tuples (2) :
+        # - le tuple (1) est composé d'un booléen indiquant
+        #   si le deferred s'est exécuté (toujours True ici
+        #   car fireOnOneCallback vaut 0).
+        # - le tuple (2) contient l'identifiant XMPP et le XML.
+        idxmpp, xml = result[0][1]
+
+        d = defer.Deferred()
+
+        def cb(result, idxmpp, xml):
+            d.callback((idxmpp, xml))
+
+        def eb(failure, rule_name):
+            d.errback(failure, rule_name)
+
+        work = self.rrp.doWork(rule_runner.RuleCommand,
+            rule_name=rule_name, idxmpp=idxmpp, xml=xml)
+        work.addCallback(cb, idxmpp, xml)
+        work.addErrback(eb, rule_name)
+        return d
 
     def itemsReceived(self, event):
         """
@@ -302,109 +366,6 @@ class RuleDispatcher(PubSubClient):
             d = self.from_retry.put(xml)
             return
 
-        def handle_rule_error(failure, rule_name):
-            """
-            Parcourt les erreurs Twisted survenues pendant l'exécution
-            d'une règle à la recherche d'informations indiquant que la
-            règle a dépassé le délai autorisé.
-            Lorsqu'une telle erreur est trouvée, un message est loggué
-            et une nouvelle exception (différente) est levée.
-            Ceci permet d'empêcher l'exécution des règles qui dépendent
-            de la règle qui a échoué, tout en évitant d'enregistrer à
-            nouveau le message d'erreur pour les règles dépendantes.
-
-            @param failure: Erreur remontée par Twisted.
-            @type failure: C{twisted.python.failure.Failure}
-            @param rule_name: Nom de la règle de corrélation à l'origine
-                du problème.
-            @type rule_name: C{basestring}
-            @return: L'erreur originale ou une nouvelle erreur.
-            @type: C{Exception} ou C{twisted.python.failure.Failure}
-            """
-            # On remonte la pile des FirstError jusqu'à
-            # tomber sur la véritable erreur.
-            while True:
-                try:
-                    failure.raiseException()
-                # S'il s'agit d'une FirstError, il faut analyser
-                # l'erreur sous-jacente (sub-failure).
-                except defer.FirstError, e:
-                    failure = e.subFailure
-                # L'exception ProcessTerminated est levée lorsqu'une règle
-                # vient juste d'échouer (timeout).
-                # On enregistre le problème et on lève une (autre) exception.
-                except ProcessTerminated:
-                    LOGGER.info(_(u'Rule %(rule_name)s timed out'), {
-                        'rule_name': rule_name,
-                    })
-                    return DependencyError(failure)
-                # Pour les autres types d'exception, on les transmet
-                # intactes pour qu'un autre errback puisse éventuellement
-                # les traiter.
-                except Exception:
-                    break
-            return failure
-
-        deferred_cache = {}
-        def buildDeferredList(graph, node, idxmpp, xml):
-            """
-            Construit récursivement les nœuds intermédiaires de l'arbre
-            de C{Deferred}s correspondant à l'arbre des dépendances
-            entre les règles de corrélation.
-
-            N'utilisez pas directement cette fonction, à la place,
-            utilisez buildExecutionGraph() qui appelera buildDeferredList()
-            au besoin.
-
-            @param graph: Graphe des dépendances entre règles.
-            @type graph: C{networkx.DiGraph}
-            @param node: Nom de la règle de corrélation en cours de
-                traitement dans le graphe.
-            @type node: C{basestring}
-            @param idxmpp: Identifiant XMPP du message à traiter.
-            @type idxmpp: C{basestring}
-            @param xml: Message XML sérialisé à traiter.
-            @type xml: C{unicode}
-            @return: DeferredList correspondant au traitement de la règle
-                et de ses dépendances.
-            @rtype: C{twisted.internet.defer.DeferredList}
-            """
-            if deferred_cache.has_key(node):
-                return deferred_cache[node]
-
-            subdeferreds = [buildDeferredList(graph, r[1], idxmpp, xml) \
-                            for r in graph.out_edges_iter(node)]
-            work = self.rrp.doWork(rule_runner.RuleCommand,
-                        rule_name=node, idxmpp=idxmpp, xml=xml)
-            work.addErrback(handle_rule_error, node)
-            subdeferreds.append(work)
-            dl = defer.DeferredList(subdeferreds, fireOnOneErrback=1)
-            dl.addErrback(handle_rule_error, node)
-
-            deferred_cache[node] = dl
-            return dl
-
-        def buildExecutionGraph(idxmpp, payload):
-            """
-            Construit l'arbre de C{Deferred}s correspondant à l'arbre
-            des dépendances entre les règles.
-
-            @param idxmpp: Identifiant XMPP du message à traiter.
-            @type idxmpp: C{basestring}
-            @param xml: Message XML sérialisé à traiter.
-            @type xml: C{unicode}
-            @return: DeferredList correspondant au traitement des règles
-                qui ne sont en dépendance d'aucune autre (ie: les sources
-                dans le graphe des dépendances).
-            @rtype: C{twisted.internet.defer.DeferredList}
-            """
-            rules_graph = get_registry().rules.rules_graph
-            subdeferreds = [buildDeferredList(rules_graph, r, idxmpp, payload)
-                            for r in rules_graph.nodes_iter() \
-                            if not rules_graph.in_degree(r)]
-            graph = defer.DeferredList(subdeferreds)
-            return graph
-
         def sendResult(result, xml, info_dictionary):
             """
             Traite le résultat de l'exécution de TOUTES les règles
@@ -419,11 +380,6 @@ class RuleDispatcher(PubSubClient):
             @param info_dictionary: Informations extraites du message XML.
             @param info_dictionary: C{dict}
             """
-            # On ne doit pas émettre plus de résultats que
-            # le nombre de calculs qui nous a été demandé.
-            assert(self.parallel_messages > 0)
-            self.parallel_messages -= 1
-
             # On publie sur le bus XMPP l'état de l'hôte
             # ou du service concerné par l'alerte courante.
             publish_state(self, info_dictionary)
@@ -531,35 +487,51 @@ class RuleDispatcher(PubSubClient):
         if raw_event_id:
             ctx.raw_event_id = raw_event_id
 
-        # Le vrai travail commence ici.
         self.parallel_messages += 1
         self._messages_received += 1
 
-        # 1 -   On génère un graphe avec des DeferredLists qui reproduit
-        #       le graphe des dépendances entre les règles de corrélation.
-
+        # On construit l'arbre d'exécution, on prépare la suite
+        # du traitement (code à exécuter en sortie) et on déclenche
+        # l'exécution des règles de corrélation.
         payload = etree.tostring(dom[0])
-        correlation_graph = buildExecutionGraph(idxmpp, payload)
+        tree_start, tree_end = self.__build_execution_tree()
 
-        # 2 -   Quand toutes les règles de corrélation ont été exécutées,
-        #       le callback associé à correlation_graph est appelé pour
-        #       finaliser le traitement (envoyer l'événement corrélé).
+        def finalize_correlation(result):
+            # On ne doit pas émettre plus de résultats que
+            # le nombre de calculs qui nous a été demandé.
+            assert(self.parallel_messages > 0)
+            self.parallel_messages -= 1
+            return result
 
-        # À la fin des traitements, on doit ignorer les erreurs issues
-        # d'une règle précédente (elles ont déjà enregistrées et le
-        # traitement de la corrélation doit continuer dans ce cas).
-        def ignore_previous_dependency_failures(failure):
-            """
-            Capture l'exception DependencyError qui indique qu'une
-            des règles de corrélation a échoué.
-            """
-            if failure.check(DependencyError):
-                return ""
+        def correlation_eb(failure, idxmpp, payload):
+            LOGGER.error(_('Correlation failed for '
+                            'message #%(id)s (%(payload)s)'), {
+                'id': idxmpp,
+                'payload': payload,
+            })
             return failure
 
-        correlation_graph.addErrback(ignore_previous_dependency_failures)
-        correlation_graph.addCallback(sendResult, xml, info_dictionary)
-        return correlation_graph
+        def send_result_eb(failure):
+            LOGGER.error(_('Unable to store correlated alert for '
+                            'message #%(id)s (%(payload)s)'), {
+                'id': idxmpp,
+                'payload': payload,
+            })
+
+        # Libère les processus de corrélation pour le message suivant.
+        tree_end.addBoth(finalize_correlation)
+
+        # Gère les erreurs détectées à la fin du processus de corrélation,
+        # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
+        tree_end.addCallbacks(
+            sendResult, correlation_eb,
+            callbackArgs=[xml, info_dictionary],
+            errbackArgs=[idxmpp, payload],
+        )
+        tree_end.addErrback(send_result_eb, idxmpp, payload)
+
+        # On lance le processus de corrélation.
+        tree_start.callback((idxmpp, payload))
 
     @defer.inlineCallbacks
     def __sendQueuedMessages(self):
@@ -730,4 +702,3 @@ class RuleDispatcher(PubSubClient):
             return stats
         backup_size_d.addCallback(add_backup_sizes)
         return backup_size_d
-
