@@ -52,13 +52,6 @@ setup(name='vigilo-correlator',
             'vigilo',
             ],
         packages=find_packages("src")+["twisted"],
-        #packages=[
-        #    'vigilo',
-        #    'vigilo.correlator',
-        #    'vigilo.correlator.actors',
-        #    'vigilo.correlator.rules',
-        #    'twisted',
-        #    ],
         package_data={'twisted': ['plugins/vigilo_correlator.py']},
         message_extractors={
             'src': [
