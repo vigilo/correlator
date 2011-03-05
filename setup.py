@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
 import os, sys
-from setuptools import setup
+from setuptools import setup, find_packages
 
 sysconfdir = os.getenv("SYSCONFDIR", "/etc")
 localstatedir = os.getenv("LOCALSTATEDIR", "/var")
@@ -51,13 +51,14 @@ setup(name='vigilo-correlator',
         namespace_packages = [
             'vigilo',
             ],
-        packages=[
-            'vigilo',
-            'vigilo.correlator',
-            'vigilo.correlator.actors',
-            'vigilo.correlator.rules',
-            'twisted',
-            ],
+        packages=find_packages("src")+["twisted"],
+        #packages=[
+        #    'vigilo',
+        #    'vigilo.correlator',
+        #    'vigilo.correlator.actors',
+        #    'vigilo.correlator.rules',
+        #    'twisted',
+        #    ],
         package_data={'twisted': ['plugins/vigilo_correlator.py']},
         message_extractors={
             'src': [
