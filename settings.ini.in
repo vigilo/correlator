@@ -147,7 +147,7 @@ level=INFO
 handlers=syslog,console
 
 [logger_twisted]
-level=INFO
+level=WARNING
 qualname=twisted
 propagate=0
 handlers=syslog,console
