@@ -7,9 +7,23 @@ Il faut configurer la règle en ajoutant dans le settings.ini une section
 similaire à la suivante ::
 
     [vigilo.correlator.rules.ha]
+
+    # Identifiant jabber du connector-vigiconf
     vigiconf_jid = vigiconf@localhost
+
+    # Préfixe du nom des services représentant l'état des serveurs vigilo
     hls_prefix = vigilo-server:
+
+    # Nom du service indiquant aux administrateurs
+    # qu'un redéploiement manuel est nécessaire et nom
+    # de l'hôte associé (hébergeant la base de données)
+    deployment_service = deployment
+    deployment_host = vigilo-admin-server
+
+    # Durée maximale au-delà de laquelle le rétablissement
+    # ne peut plus s'opérer de manière automatique
     max_auto_recovery = 15
+
     # Conversion du nom d'hôte Nagios vers le nom dans appgroups-servers.py
     #server_template = %s.vigilo.example.com
 
@@ -27,6 +41,7 @@ settings.load_module(__name__)
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import StateName, HighLevelService, HLSHistory
+import time
 from datetime import datetime, timedelta
 from sqlalchemy.sql.expression import desc
 
@@ -92,7 +107,7 @@ class HighAvailabilityRule(Rule):
         if not ctx.servicename.startswith(prefix):
             return # rien à faire
         server = ctx.servicename[len(prefix):]
-        
+
         if ctx.previous_state is not None:
             previous_statename = None
         else:
@@ -120,6 +135,8 @@ class HighAvailabilityRule(Rule):
                     { "server": server,
                       "duration": previous_state_duration
                     })
+                message = self._build_nagios_message()
+                link.callRemote(rule_dispatcher.SendToBus, item=message)
                 return
 
         elif ctx.statename == u"CRITICAL":
@@ -132,7 +149,7 @@ class HighAvailabilityRule(Rule):
                       "%(status)s"), {"server": server, "status": action})
 
         server = self._get_server_name(server)
-        message = self._build_message(server, action)
+        message = self._build_vigiconf_message(server, action)
         link.callRemote(rule_dispatcher.SendToBus, item=message)
 
     def _get_server_name(self, server):
@@ -155,7 +172,7 @@ class HighAvailabilityRule(Rule):
             return None
         return duration
 
-    def _build_message(self, server, action):
+    def _build_vigiconf_message(self, server, action):
         message = """
             <%(onetoone)s to="%(vigiconf)s">
                 <command xmlns="%(ns)s">
@@ -170,5 +187,22 @@ class HighAvailabilityRule(Rule):
             "ns": NS_COMMAND,
             "action": action,
             "server": server,
+            }
+        return message
+
+    def _build_nagios_message(self):
+        message = """
+            <command xmlns="%(ns)s">
+                <timestamp>%(timestamp)f</timestamp>
+                <cmdname>PROCESS_SERVICE_CHECK_RESULT</cmdname>
+                <value>%(host)s;%(service)s;%(return_code)s;%(output)s</value>
+            </command>
+        """ % {
+            "ns": NS_COMMAND,
+            "timestamp": time.time(),
+            "service": settings[__name__]["deployment_service"],
+            "host": settings[__name__]["deployment_host"],
+            "return_code": 2,
+            "output": _("Manual deployment necessary."),
             }
         return message
