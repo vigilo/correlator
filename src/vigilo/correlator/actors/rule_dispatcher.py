@@ -304,8 +304,8 @@ class RuleDispatcher(PubSubClient):
         def cb(result, idxmpp, xml):
             d.callback((idxmpp, xml))
 
-        def eb(failure, rule_name):
-            d.errback(failure, rule_name)
+        def eb(failure, rule_name, *args):
+            d.errback(failure)
 
         work = self.rrp.doWork(rule_runner.RuleCommand,
             rule_name=rule_name, idxmpp=idxmpp, xml=xml)
