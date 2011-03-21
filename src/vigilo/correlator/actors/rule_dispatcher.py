@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
 """
-Ce module est un demi-connecteur qui assure la redirection des messages
-issus du bus XMPP vers une file d'attente (C{Queue.Queue} ou compatible).
+Ce module fournit les mécanismes permettant de traiter les messages
+provenant du bus XMPP, afin que ceux-ci soient corrélés.
+
+Il met également à disposition un moyen pour les règles de corrélation
+d'émettre de nouveaux messages XML à destination du bus (par exemple,
+des commandes pour Nagios).
 """
 import sys
 import os.path

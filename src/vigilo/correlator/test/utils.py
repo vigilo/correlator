@@ -11,7 +11,7 @@ import sys
 import nose
 
 from vigilo.common.conf import settings
-settings.load_module(__name__)
+settings.load_file('settings_tests.ini')
 
 from vigilo.models.configure import configure_db
 configure_db(settings['database'], 'sqlalchemy_')
@@ -79,7 +79,11 @@ with_mc = nose.with_setup(setup_mc, teardown_mc)
 #Create an empty database before we start our tests for this module
 def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
-    metadata.create_all()
+    from vigilo.models.tables.grouppath import GroupPath
+    tables = metadata.tables.copy()
+    del tables[GroupPath.__tablename__]
+    metadata.create_all(tables=tables.itervalues())
+    metadata.create_all(tables=[GroupPath.__table__])
 
 #Teardown that database
 def teardown_db():
