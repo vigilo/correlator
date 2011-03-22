@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-11-19 12:29+0100\n"
-"PO-Revision-Date: 2010-12-24 21:57+0100\n"
+"PO-Revision-Date: 2011-03-22 09:57+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -17,6 +17,18 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.4\n"
+
+#: src/twisted/plugins/vigilo_correlator.py:39
+msgid "The topology has been reloaded."
+msgstr "Die Topologie wurde erneut geladen."
+
+#: src/twisted/plugins/vigilo_correlator.py:53
+msgid ""
+"Could not set signal handlers. The correlator may not be able to shutdown"
+" cleanly"
+msgstr ""
+"Signalhandler konnte nicht eingestellt werden. Es kann sein, dass der "
+"Korrelator nicht sauber herunterfahren kann"
 
 #: src/vigilo/correlator/compute_hls_states.py:151
 #, python-format
@@ -32,38 +44,38 @@ msgstr ""
 "High-level-Service %(name)r: Gewichtung = %(weight)r, Status = %(state)r "
 "(%(output)r)"
 
-#: src/vigilo/correlator/compute_hls_states.py:241
+#: src/vigilo/correlator/compute_hls_states.py:239
 #, python-format
 msgid "End of impact for HLS %r"
 msgstr "Auswirkung für HLS %r beendet"
 
-#: src/vigilo/correlator/compute_hls_states.py:258
+#: src/vigilo/correlator/compute_hls_states.py:256
 #, python-format
 msgid "End of impact for item (%(hostname)r, %(servicename)r)"
 msgstr "Auswirkungen für Element (%(hostname)r, %(servicename)r) beendet"
 
-#: src/vigilo/correlator/compute_hls_states.py:280
+#: src/vigilo/correlator/compute_hls_states.py:278
 #, python-format
 msgid "HLS %(hls1)r is impacted by HLS %(hls2)r"
 msgstr "HLS %(hls1)r ist von HLS %(hls2)r betroffen"
 
-#: src/vigilo/correlator/compute_hls_states.py:298
+#: src/vigilo/correlator/compute_hls_states.py:296
 #, python-format
 msgid ""
 "The HLS %r already belonged to this impacted path, ignoring request to "
 "add it again."
 msgstr "HLS %r gehörte bereits zum betroffenen Pfad,  HInzufügen wurde ignoriert"
 
-#: src/vigilo/correlator/compute_hls_states.py:327
+#: src/vigilo/correlator/compute_hls_states.py:325
 msgid "Copying path"
 msgstr "Pfad wird kopiert"
 
-#: src/vigilo/correlator/compute_hls_states.py:342
+#: src/vigilo/correlator/compute_hls_states.py:340
 #, python-format
 msgid "HLS %(hls)r is impacted by item (%(host)r, %(service)r)"
 msgstr "HLS %(hls)r ist von Element (%(host)r, %(service)r) betroffen"
 
-#: src/vigilo/correlator/compute_hls_states.py:380
+#: src/vigilo/correlator/compute_hls_states.py:378
 #, python-format
 msgid "Setting weight for '%s' to None"
 msgstr "Gewichtung für '%s' wird auf Keine gesetzt"
@@ -232,22 +244,22 @@ msgstr "handle_ticket: Verlauf des Ereignisses %r erfolgreich aktualisiert."
 msgid "Deleted %(nb_deleted)d expired correlation contexts"
 msgstr "Gelöschte %(nb_deleted)d abgelaufene Korrelationskontexte"
 
-#: src/vigilo/correlator/memcached_connection.py:187
+#: src/vigilo/correlator/memcached_connection.py:191
 #, python-format
 msgid "Establishing connection to MemcacheD server (%s)..."
 msgstr "Verbindung zum MemcacheD Server (%s) wird hergestellt..."
 
-#: src/vigilo/correlator/memcached_connection.py:209
+#: src/vigilo/correlator/memcached_connection.py:213
 #, python-format
 msgid "Trying to set value '%(value)s' for key '%(key)s'."
 msgstr "Versucht den Wert '%(value)s' für Schlüssel '%(key)s' einzustellen."
 
-#: src/vigilo/correlator/memcached_connection.py:254
+#: src/vigilo/correlator/memcached_connection.py:258
 #, python-format
 msgid "Trying to get the value of the key '%(key)s'."
 msgstr "Versucht, den Wert von Schlüssel '%(key)s' zu erhalten."
 
-#: src/vigilo/correlator/memcached_connection.py:303
+#: src/vigilo/correlator/memcached_connection.py:307
 #, python-format
 msgid "Trying to delete the key '%(key)s'."
 msgstr "Versucht, den Schlüssel '%(key)s' zu löschen."
@@ -287,19 +299,7 @@ msgstr "Nicht ein gültiger Regelname \"%s\""
 msgid "Unable to load rule \"%s\""
 msgstr "Unfähig, die Regel \"%s\" zu laden"
 
-#: src/vigilo/correlator/twisted_service.py:50
-msgid "The topology has been reloaded."
-msgstr "Die Topologie wurde erneut geladen."
-
-#: src/vigilo/correlator/twisted_service.py:64
-msgid ""
-"Could not set signal handlers. The correlator may not be able to shutdown"
-" cleanly"
-msgstr ""
-"Signalhandler konnte nicht eingestellt werden. Es kann sein, dass der "
-"Korrelator nicht sauber herunterfahren kann"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:114
+#: src/vigilo/correlator/actors/rule_dispatcher.py:118
 msgid ""
 "No information from Vigiconf concerning the topology's last modification "
 "date. Therefore the topology has NOT been rebuilt."
@@ -307,73 +307,83 @@ msgstr ""
 "Keine Information von Vigiconf über das letzte Änderungsdatum der "
 "Topologie. Deshalb wurde die Topologie NICHT erneut erstellt."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:126
+#: src/vigilo/correlator/actors/rule_dispatcher.py:130
 msgid "Topology has been reloaded."
 msgstr "Topologie wurde erneut geladen."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:152
+#: src/vigilo/correlator/actors/rule_dispatcher.py:153
 #, python-format
 msgid "Sending this payload to the XMPP bus: %r"
 msgstr "Senden dieser Nutzlast auf den XMPP Bus: %r"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:267
-#, python-format
-msgid "Got item: %s"
-msgstr "Element: %s vorhanden"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:272
-#, python-format
-msgid "Skipping unrecognized item (%s)"
-msgstr "Unbekanntes Element (%s) wird übersprungen"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:281
-msgid "The correlator is shutting down due to a previous error"
-msgstr "Der Korrelator wird aufgrund eines vorhergehenden Fehlers heruntergefahren"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:334
+#: src/vigilo/correlator/actors/rule_dispatcher.py:280
 #, python-format
 msgid "Rule %(rule_name)s timed out"
 msgstr "Regel %(rule_name)s abgelaufen"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:450
+#: src/vigilo/correlator/actors/rule_dispatcher.py:338
+#, python-format
+msgid "Got item: %s"
+msgstr "Element: %s vorhanden"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:343
+#, python-format
+msgid "Skipping unrecognized item (%s)"
+msgstr "Unbekanntes Element (%s) wird übersprungen"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:352
+msgid "The correlator is shutting down due to a previous error"
+msgstr "Der Korrelator wird aufgrund eines vorhergehenden Fehlers heruntergefahren"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:413
 #, python-format
 msgid "Spawning for payload: %s"
 msgstr "Erzeugen für Nutzlast: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:457
+#: src/vigilo/correlator/actors/rule_dispatcher.py:420
 msgid "Received invalid XMPP item ID (None)"
 msgstr "Ungültige XMPP Element ID (None) erhalten"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:467
+#: src/vigilo/correlator/actors/rule_dispatcher.py:430
 #, python-format
 msgid "Validation failure: %s"
 msgstr "Fehler bei Überprüfung: %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:507
+#: src/vigilo/correlator/actors/rule_dispatcher.py:470
 msgid "Could not connect to the database server, make sure it is running"
 msgstr ""
 "Verbindung zum Datenbank-Server konnte nicht hergestellt werden, "
 "überprüfen, dass dieser gestartet wurde"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:616
+#: src/vigilo/correlator/actors/rule_dispatcher.py:511
+#, python-format
+msgid "Correlation failed for message #%(id)s (%(payload)s)"
+msgstr ""
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:519
+#, python-format
+msgid "Unable to store correlated alert for message #%(id)s (%(payload)s)"
+msgstr ""
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:586
 #, python-format
 msgid "Chat message to forward: '%s'"
 msgstr "Chat Nachricht zur Weiterleitung: '%s'"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:627
+#: src/vigilo/correlator/actors/rule_dispatcher.py:597
 msgid "Connection initialized"
 msgstr "Verbindung initialisiert"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:637
+#: src/vigilo/correlator/actors/rule_dispatcher.py:607
 #, python-format
 msgid "Starting the queue manager with a delay of %f seconds."
 msgstr "Warteschlangen-Manager wird in %f Sekunden gestartet."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:651
+#: src/vigilo/correlator/actors/rule_dispatcher.py:622
 msgid "Connection lost"
 msgstr "Verbindung verloren"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:677
+#: src/vigilo/correlator/actors/rule_dispatcher.py:647
 #, fuzzy, python-format
 msgid ""
 "Unable to forward the message (%(reason)s). it has been stored for later "
@@ -382,12 +392,12 @@ msgstr ""
 "Die Nachricht kann nicht weitergeleitet werden (%(reason)s), wird "
 "gespeichert und später erneut gesendet"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:710
+#: src/vigilo/correlator/actors/rule_dispatcher.py:680
 #, python-format
 msgid "No destination node configured for messages of type '%s'. Skipping."
 msgstr "Kein Zielknoten für Nachrichten vom Typ '%s' konfiguriert. Überspringen."
 
-#: src/vigilo/correlator/actors/rule_runner.py:67
+#: src/vigilo/correlator/actors/rule_runner.py:76
 #, python-format
 msgid ""
 "Got an exception while running rule %(rule)s. Running the correlator in "
@@ -397,17 +407,19 @@ msgstr ""
 "Korrelator im Vordergrund (%(prog)s -n) kann Problemlösungen helfen"
 
 #: src/vigilo/correlator/rules/adapt_frequency.py:56
+#: src/vigilo/correlator/rules/ha.py:70
 #, python-format
 msgid ""
 "The rule \"%(rule)s\" requires a section called \"%(section)s\" be "
 "present in the configuration file. Skipping this rule until the "
 "configuration gets fixed!"
 msgstr ""
-"Die Regel \"%(rule)s\" benötigt eine Sektion \"%(section)s\" "
-"in der Konfigurationsdatei. Überspringen dieser Regel, bis die "
-"Konfiguration wird festgelegt !"
+"Die Regel \"%(rule)s\" benötigt eine Sektion \"%(section)s\" in der "
+"Konfigurationsdatei. Überspringen dieser Regel, bis die Konfiguration "
+"wird festgelegt !"
 
 #: src/vigilo/correlator/rules/adapt_frequency.py:70
+#: src/vigilo/correlator/rules/ha.py:83
 #, python-format
 msgid ""
 "The rule \"%(rule)s\" requires a parameter called \"%(param)s\" under the"
@@ -422,6 +434,27 @@ msgstr ""
 #, python-format
 msgid "id %(id)s payload %(payload)s"
 msgstr "id %(id)s Nutzlast %(payload)s"
+
+#: src/vigilo/correlator/rules/ha.py:132
+#, python-format
+msgid ""
+"Vigilo server %(server)s was disabled for too long (%(duration)s) before "
+"becoming avalaible again, a manual VigiConf deployment will be necessary."
+msgstr ""
+
+#: src/vigilo/correlator/rules/ha.py:145
+#, python-format
+msgid "Unsupported state: %s"
+msgstr ""
+
+#: src/vigilo/correlator/rules/ha.py:148
+#, python-format
+msgid "Flagging Vigilo server %(server)s with status %(status)s"
+msgstr ""
+
+#: src/vigilo/correlator/rules/ha.py:206
+msgid "Manual deployment necessary."
+msgstr ""
 
 #: src/vigilo/correlator/rules/hls_deps.py:110
 #, python-format
@@ -464,20 +497,11 @@ msgstr ""
 msgid "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)d"
 msgstr "Host: %(hostname)s, Service: %(servicename)s, Vorkommen: %(occurrences)d"
 
-#~ msgid "Rule runner: process begins for rule \"%s\""
-#~ msgstr "Regel-Programm: Prozess für Regel \"%s\"wird begonnen"
+#: src/vigilo/correlator/test/test_logging.py:255
+msgid "Received 'WARNING' message on lls1"
+msgstr ""
 
-#~ msgid "Process id: %(pid)r | Parent id: %(ppid)r | Rule name: %(name)s"
-#~ msgstr "Prozess id: %(pid)r | Übergeordnet id: %(ppid)r | Regelname: %(name)s"
-
-#~ msgid "Rule runner: process ends for rule \"%s\""
-#~ msgstr "Regel-Programm:šProzess für Regel \"%s\" wird beendet"
-
-#~ msgid "Ignoring non-existent low-level service (%(service)s on %(host)s)"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Asking Nagios to set CHECK_INTERVAL for"
-#~ " %(object)r to %(delay)d periods."
-#~ msgstr ""
+#: src/vigilo/correlator/test/test_logging.py:276
+msgid "Received 'CRITICAL' message on lls1"
+msgstr ""
 
