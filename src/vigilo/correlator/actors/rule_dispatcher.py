@@ -456,13 +456,6 @@ class RuleDispatcher(PubSubSender):
         payload = etree.tostring(dom[0])
         tree_start, tree_end = self.__build_execution_tree()
 
-        def finalize_correlation(result):
-            # On ne doit pas émettre plus de résultats que
-            # le nombre de calculs qui nous a été demandé.
-            assert(self.parallel_messages > 0)
-            self.parallel_messages -= 1
-            return result
-
         def correlation_eb(failure, idxmpp, payload):
             LOGGER.error(_('Correlation failed for '
                             'message #%(id)s (%(payload)s)'), {
@@ -477,9 +470,6 @@ class RuleDispatcher(PubSubSender):
                 'id': idxmpp,
                 'payload': payload,
             })
-
-        # Libère les processus de corrélation pour le message suivant.
-        #tree_end.addBoth(finalize_correlation)
 
         # Gère les erreurs détectées à la fin du processus de corrélation,
         # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
