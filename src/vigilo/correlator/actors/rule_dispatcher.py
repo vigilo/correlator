@@ -32,7 +32,7 @@ from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
 from vigilo.connector.store import DbRetry
-from vigilo.connector.forwarder import XMPPNotConnectedError
+from vigilo.connector.forwarder import PubSubSender, XMPPNotConnectedError
 from vigilo.connector import MESSAGEONETOONE
 
 from vigilo.models.tables import Change
@@ -154,53 +154,20 @@ class Correlator(amp.AMP):
         self.rule_dispatcher.sendItem(item)
         return {}
 
-class RuleDispatcher(PubSubClient):
+class RuleDispatcher(PubSubSender):
     """
     Cette classe corrèle les messages reçus depuis le bus XMPP
     et envoie ensuite les résultats sur le bus.
     """
 
-    def __init__(self, dbfilename, from_table, to_table,
-        nodetopublish, service):
-        """
-        Initialisation du demi-connecteur.
-
-        @param dbfilename: Emplacement du fichier SQLite de sauvegarde.
-            Ce fichier est utilisé pour stocker temporairement les messages.
-            Les messages dans cette base de données seront automatiquement
-            traités lorsque les éléments nécessaires au traitement seront
-            de nouveau disponibles.
-        @type dbfilename: C{basestring}
-        @param from_table: Nom de la table à utiliser dans le fichier
-            de sauvegarde L{dbfilename} pour stocker les messages qui
-            arrivent dans le corrélateur mais qui ne peuvent pas être
-            traités immédiatement.
-        @type from_table: C{basestring}
-        @param to_table: Nom de la table à utiliser dans le fichier
-            de sauvegarde L{dbfilename} pour stocker les messages qui
-            ont été traités par le corrélateur mais pour lesquels
-            l'envoi des résultats sur le bus XMPP a échoué (par exemple,
-            parce que la connexion avec le bus a été perdue).
-        @type to_table: C{basestring}
-        @param nodetopublish: Dictionnaire pour la correspondance entre
-            le type de message et le noeud PubSub de destination.
-        @type nodetopublish: C{dict}
-        @param service: Le service de souscription qui gère les nœuds.
-        @type service: L{twisted.words.protocols.jabber.jid.JID}
-        """
+    def __init__(self):
         super(RuleDispatcher, self).__init__()
-        self.from_retry = DbRetry(dbfilename, from_table)
-        self.from_retry.initdb()
-        self.to_retry = DbRetry(dbfilename, to_table)
-        self.to_retry.initdb()
-        self._service = service
-        self._nodetopublish = nodetopublish
-        self.parallel_messages = 0
-        self.loop_call = task.LoopingCall(self.__sendQueuedMessages)
-        self._messages_received = 0
+        self.max_send_simult = 1
 
         # Préparation du pool d'exécuteurs de règles.
         timeout = settings['correlator'].as_int('rules_timeout')
+        if timeout == 0:
+            timeout = None
         min_runner = settings['correlator'].as_int('min_rule_runners')
         max_runner = settings['correlator'].as_int('max_rule_runners')
 
@@ -221,27 +188,27 @@ class RuleDispatcher(PubSubClient):
             starter=ProcessStarter(self),
         )
 
-        # Prépare les schémas de validation XSD.
-        self.schema = {}
-        try:
-            validate = settings['correlator'].as_bool('validate_messages')
-        except KeyError:
-            validate = False
+        ## Prépare les schémas de validation XSD.
+        #self.schema = {}
+        #try:
+        #    validate = settings['correlator'].as_bool('validate_messages')
+        #except KeyError:
+        #    validate = False
 
-        if validate:
-            catalog_fname = pkg_resources.resource_filename(
-                    'vigilo.pubsub', 'data/catalog.xml')
-            # We override whatever this was set to.
-            os.environ['XML_CATALOG_FILES'] = catalog_fname
+        #if validate:
+        #    catalog_fname = pkg_resources.resource_filename(
+        #            'vigilo.pubsub', 'data/catalog.xml')
+        #    # We override whatever this was set to.
+        #    os.environ['XML_CATALOG_FILES'] = catalog_fname
 
-            file_mapping = {
-                namespaced_tag(NS_EVENT, 'events'): 'data/schemas/event1.xsd',
-            }
+        #    file_mapping = {
+        #        namespaced_tag(NS_EVENT, 'events'): 'data/schemas/event1.xsd',
+        #    }
 
-            for tag, filename in file_mapping:
-                schema_file = pkg_resources.resource_stream(
-                        'vigilo.pubsub', filename)
-                self.schema[tag] = etree.XMLSchema(file=schema_file)
+        #    for tag, filename in file_mapping:
+        #        schema_file = pkg_resources.resource_stream(
+        #                'vigilo.pubsub', filename)
+        #        self.schema[tag] = etree.XMLSchema(file=schema_file)
 
     def __build_execution_tree(self):
         d = defer.Deferred()
@@ -335,25 +302,15 @@ class RuleDispatcher(PubSubClient):
             # stderr pollution caused by http://bugs.python.org/issue5508
             # and some touchiness on domish attribute access.
             xml = item.toXml()
-            LOGGER.debug(_(u'Got item: %s'), xml)
             if item.name != 'item':
                 # The alternative is 'retract', which we silently ignore
                 # We receive retractations in FIFO order,
                 # ejabberd keeps 10 items before retracting old items.
                 LOGGER.debug(_(u'Skipping unrecognized item (%s)'), item.name)
                 continue
-            try:
-                self.handleMessage(xml)
-            except MemcachedConnectionError:
-                # MemcachedConnection génère déjà un log concernant
-                # l'état de fonctionnement de memcached.
-                # Ici, on prévient simplement que l'on va arrêter
-                # le corrélateur.
-                LOGGER.error(_(u'The correlator is shutting down due '
-                                'to a previous error'))
-                reactor.stop()
+            self.forwardMessage(xml)
 
-    def handleMessage(self, xml):
+    def processMessage(self, xml):
         """
         Transfère un message XML sérialisé vers la file.
 
@@ -364,11 +321,6 @@ class RuleDispatcher(PubSubClient):
             le message n'a pas pu être traité (ex: message invalide).
         @rtype: C{twisted.internet.defer.Deferred} ou C{None}
         """
-        # Si il y a déjà un message en cours de traitement,
-        # on stocke le nouveau en base SQLite directement.
-        if self.parallel_messages:
-            d = self.from_retry.put(xml)
-            return
 
         def sendResult(result, xml, info_dictionary):
             """
@@ -410,7 +362,7 @@ class RuleDispatcher(PubSubClient):
             transaction.commit()
             transaction.begin()
 
-        LOGGER.debug(_(u'Spawning for payload: %s'), xml)
+        #LOGGER.debug(_(u'Spawning for payload: %s'), xml)
         dom = etree.fromstring(xml)
 
         # Extraction de l'id XMPP.
@@ -420,15 +372,15 @@ class RuleDispatcher(PubSubClient):
             LOGGER.error(_(u"Received invalid XMPP item ID (None)"))
             return
 
-        if self.schema.get(dom[0].tag) is not None:
-            # Validation before dispatching.
-            # This breaks the policy of not doing computing
-            # in the main process, but this must be computed once.
-            try:
-                self.schema[dom[0].tag].assertValid(dom[0])
-            except etree.DocumentInvalid, e:
-                LOGGER.error(_(u"Validation failure: %s"), e.message)
-                return
+        #-#if self.schema.get(dom[0].tag) is not None:
+        #-#    # Validation before dispatching.
+        #-#    # This breaks the policy of not doing computing
+        #-#    # in the main process, but this must be computed once.
+        #-#    try:
+        #-#        self.schema[dom[0].tag].assertValid(dom[0])
+        #-#    except etree.DocumentInvalid, e:
+        #-#        LOGGER.error(_(u"Validation failure: %s"), e.message)
+        #-#        return
 
         # Extraction des informations du message
         info_dictionary = extract_information(dom[0])
@@ -458,7 +410,12 @@ class RuleDispatcher(PubSubClient):
 
         # On initialise le contexte et on y insère
         # les informations de l'alerte traitée.
-        ctx = Context(idxmpp)
+        try:
+            ctx = Context(idxmpp)
+        except MemcachedConnectionError:
+            LOGGER.error(_("Error connecting to MemcacheD! Check its log "
+                           "for more information"))
+            return
         ctx.hostname = info_dictionary["host"]
         ctx.servicename = info_dictionary["service"]
         ctx.statename = info_dictionary["state"]
@@ -491,8 +448,7 @@ class RuleDispatcher(PubSubClient):
         if raw_event_id:
             ctx.raw_event_id = raw_event_id
 
-        self.parallel_messages += 1
-        self._messages_received += 1
+        self._messages_sent += 1
 
         # On construit l'arbre d'exécution, on prépare la suite
         # du traitement (code à exécuter en sortie) et on déclenche
@@ -523,7 +479,7 @@ class RuleDispatcher(PubSubClient):
             })
 
         # Libère les processus de corrélation pour le message suivant.
-        tree_end.addBoth(finalize_correlation)
+        #tree_end.addBoth(finalize_correlation)
 
         # Gère les erreurs détectées à la fin du processus de corrélation,
         # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
@@ -536,56 +492,7 @@ class RuleDispatcher(PubSubClient):
 
         # On lance le processus de corrélation.
         tree_start.callback((idxmpp, payload))
-
-    @defer.inlineCallbacks
-    def __sendQueuedMessages(self):
-        """
-        Déclenche l'envoi des messages stockées localement (retransmission
-        des messages suite à une panne).
-        """
-
-        # Tout d'abord, réinsertion des messages dans la table en sortie.
-        while True:
-            msg = yield self.to_retry.pop()
-            if msg is None:
-                break
-            else:
-                item = parseXml(msg)
-                if item is None:
-                    pass
-                else:
-                    result = self.sendItem(msg)
-                    if result is not None:
-                        yield result
-
-        # On essaye de traiter un nouveau message qui serait en attente en
-        # entrée du corrélateur.
-        # On fait les traitements dans cet ordre afin d'éviter de renvoyer
-        # immédiatement un message dont l'envoi initial aurait échoué.
-        if not self.parallel_messages:
-            msg = yield self.from_retry.pop()
-            if msg is not None:
-                self.handleMessage(msg)
-
-    def chatReceived(self, msg):
-        """
-        function to treat a received chat message
-
-        @param msg: msg to treat
-        @type  msg: twisted.words.xish.domish.Element
-
-        """
-        # Il ne devrait y avoir qu'un seul corps de message (body)
-        bodys = [element for element in msg.elements()
-                         if element.name in ('body',)]
-
-        for b in bodys:
-            # the data we need is just underneath
-            # les données dont on a besoin sont juste en dessous
-            for data in b.elements():
-                LOGGER.debug(_(u"Chat message to forward: '%s'"),
-                               data.toXml().encode('utf8'))
-                self.messageForward(data.toXml().encode('utf8'))
+        return tree_end
 
     def connectionInitialized(self):
         """
@@ -593,22 +500,7 @@ class RuleDispatcher(PubSubClient):
         est prête.
         """
         super(RuleDispatcher, self).connectionInitialized()
-        self.xmlstream.addObserver("/message[@type='chat']", self.chatReceived)
-        LOGGER.debug(_(u'Connection initialized'))
-
-        # Vérifie la présence de messages dans la base de données
-        # locale toutes les queue_delay secondes, ou 0.1 par défaut.
-        try:
-            queue_delay = float(settings['correlator'].get(
-                'queue_delay', 0.1))
-        except ValueError:
-            queue_delay = 0.1
-
-        LOGGER.info(_(u'Starting the queue manager with a delay '
-                        'of %f seconds.'), queue_delay)
-        self.loop_call.start(queue_delay)
         self.rrp.start()
-        self._messages_received = 0
 
     def connectionLost(self, reason):
         """
@@ -621,8 +513,6 @@ class RuleDispatcher(PubSubClient):
         super(RuleDispatcher, self).connectionLost(reason)
         LOGGER.debug(_(u'Connection lost'))
 
-        if self.loop_call.running:
-            self.loop_call.stop()
         try:
             self.rrp.stop()
         except KeyError:
@@ -637,72 +527,9 @@ class RuleDispatcher(PubSubClient):
         if not isinstance(item, etree.ElementBase):
             item = parseXml(item.encode('utf-8'))
         if item.name == MESSAGEONETOONE:
-            self.__sendOneToOneXml(item)
+            self.sendOneToOneXml(item)
+            return defer.succeed(None)
         else:
-            result = self.__publishXml(item)
+            result = self.publishXml(item)
             return result
 
-    def _send_failed(self, e, msg):
-        """errback: remet le message en base"""
-        errmsg = _('Unable to forward the message (%(reason)s). '
-                   'it has been stored for later retransmission')
-        LOGGER.error(errmsg % {"reason": e.getErrorMessage()})
-        return self.to_retry.put(msg)
-
-    def __sendOneToOneXml(self, xml):
-        """
-        function to send a XML msg to a particular jabber user
-        @param xml: le message a envoyé sous forme XML
-        @type xml: twisted.words.xish.domish.Element
-        """
-        # il faut l'envoyer vers un destinataire en particulier
-        msg = domish.Element((None, "message"))
-        msg["to"] = xml['to']
-        msg["from"] = self.parent.jid.userhostJID().full()
-        msg["type"] = 'chat'
-        body = xml.firstChildElement()
-        msg.addElement("body", content=body)
-        # if not connected store the message
-        if self.xmlstream is None:
-            self._send_failed(Failure(XMPPNotConnectedError()),
-                              xml.toXml().encode('utf8'))
-        else:
-            self.xmlstream.send(msg)
-
-    def __publishXml(self, xml):
-        """
-        function to publish a XML msg to node
-        @param xml: le message a envoyé sous forme XML
-        @type xml: twisted.words.xish.domish.Element
-        """
-        item = Item(payload=xml)
-        if xml.name not in self._nodetopublish:
-            LOGGER.error(_(u"No destination node configured for messages "
-                           "of type '%s'. Skipping."), xml.name)
-            return defer.succeed(True)
-        node = self._nodetopublish[xml.name]
-        try:
-            result = self.publish(self._service, node, [item])
-        except AttributeError:
-            result = defer.fail(XMPPNotConnectedError())
-        result.addErrback(self._send_failed, xml.toXml().encode('utf8'))
-        return result
-
-    def getStats(self):
-        """Récupère des métriques de fonctionnement du correlateur"""
-        stats = {
-            "received": self._messages_received,
-            }
-        backup_in_size_d = self.from_retry.qsize()
-        backup_out_size_d = self.to_retry.qsize()
-        backup_size_d = defer.DeferredList([backup_in_size_d,
-                                            backup_out_size_d])
-        def add_backup_sizes(backup_sizes):
-            for index, direction in enumerate(["in", "out"]):
-                success, backup_size = backup_sizes[index]
-                if not success:
-                    backup_size = "U"
-                stats["backup_%s" % direction] = backup_size
-            return stats
-        backup_size_d.addCallback(add_backup_sizes)
-        return backup_size_d
