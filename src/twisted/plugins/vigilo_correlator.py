@@ -89,18 +89,12 @@ class CorrelatorServiceMaker(object):
         _service = JID(settings['bus']['service'])
         nodetopublish = settings.get('publications', {})
 
-        msg_handler = RuleDispatcher(
-            settings['connector']['backup_file'],
-            settings['connector']['backup_table_from_bus'],
-            settings['connector']['backup_table_to_bus'],
-            nodetopublish,
-            _service
-        )
+        msg_handler = RuleDispatcher()
         msg_handler.setHandlerParent(xmpp_client)
 
         # Présence
         from vigilo.connector.presence import PresenceManager
-        presence_manager = PresenceManager()
+        presence_manager = PresenceManager(msg_handler)
         presence_manager.setHandlerParent(xmpp_client)
 
         # Statistiques
