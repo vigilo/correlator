@@ -166,8 +166,9 @@ class RuleDispatcher(PubSubSender):
 
         # Préparation du pool d'exécuteurs de règles.
         timeout = settings['correlator'].as_int('rules_timeout')
-        if timeout == 0:
+        if timeout <= 0:
             timeout = None
+
         min_runner = settings['correlator'].as_int('min_rule_runners')
         max_runner = settings['correlator'].as_int('max_rule_runners')
 
