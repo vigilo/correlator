@@ -1,14 +1,11 @@
-%define module  correlator
-%define name    vigilo-%{module}
-%define version 2.0.0
-%define release 1%{?svn}%{?dist}
+%define module  @SHORT_NAME@
 
-Name:       %{name}
-Summary:    Vigilo correlator
-Version:    %{version}
-Release:    %{release}
+Name:       vigilo-%{module}
+Summary:    @SUMMARY@
+Version:    @VERSION@
+Release:    1%{?svn}%{?dist}
 Source0:    %{name}-%{version}.tar.gz
-URL:        http://www.projet-vigilo.org
+URL:        @URL@
 Group:      System/Servers
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-build
 License:    GPLv2
@@ -18,7 +15,10 @@ BuildRequires:   python-distribute
 BuildRequires:   python-babel
 
 Requires:   python-distribute
-Requires:   vigilo-common vigilo-pubsub vigilo-connector vigilo-models
+Requires:   vigilo-common
+Requires:   vigilo-connector
+Requires:   vigilo-pubsub
+Requires:   vigilo-models
 Requires:   python-lxml
 Requires:   python-memcached
 Requires:   python-twisted-words
@@ -33,7 +33,7 @@ Requires(preun): initscripts
 Requires(postun): initscripts
 
 %description
-Vigilo event correlator.
+@DESCRIPTION@
 This application is part of the Vigilo Project <http://vigilo-project.org>
 
 %prep

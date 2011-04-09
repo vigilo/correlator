@@ -32,11 +32,11 @@ setup(name='vigilo-correlator',
         author='Vigilo Team',
         author_email='contact@projet-vigilo.org',
         url='http://www.projet-vigilo.org/',
-        description='vigilo correlation component',
         license='http://www.gnu.org/licenses/gpl-2.0.html',
-        long_description='The vigilo correlation engine aggregates vigilo\n'
-        +'alerts to reduce information overload and help point out\n'
-        +'the cause of a problem.\n',
+        description="Vigilo correlator",
+        long_description="The Vigilo correlation engine aggregates alerts "
+                         "to reduce information overload and help point "
+                         "out the cause of a problem.",
         install_requires=[
             'setuptools',
             'lxml',
