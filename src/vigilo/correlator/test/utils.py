@@ -80,10 +80,12 @@ with_mc = nose.with_setup(setup_mc, teardown_mc)
 def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
     from vigilo.models.tables.grouppath import GroupPath
+    from vigilo.models.tables.usersupitem import UserSupItem
     tables = metadata.tables.copy()
     del tables[GroupPath.__tablename__]
+    del tables[UserSupItem.__tablename__]
     metadata.create_all(tables=tables.itervalues())
-    metadata.create_all(tables=[GroupPath.__table__])
+    metadata.create_all(tables=[GroupPath.__table__, UserSupItem.__table__])
 
 #Teardown that database
 def teardown_db():
