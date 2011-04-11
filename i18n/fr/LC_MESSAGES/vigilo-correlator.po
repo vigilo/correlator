@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2011-03-22 09:57+0100\n"
+"PO-Revision-Date: 2011-04-11 10:48+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -311,86 +311,46 @@ msgstr "L'arbre topologique a été reconstruit."
 msgid "Sending this payload to the XMPP bus: %r"
 msgstr "Envoi de ce message sur le bus XMPP : %r"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:280
+#: src/vigilo/correlator/actors/rule_dispatcher.py:248
 #, python-format
 msgid "Rule %(rule_name)s timed out"
 msgstr "La règle %(rule_name)s a dépassé le délai d'exécution"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:338
-#, python-format
-msgid "Got item: %s"
-msgstr "Réception d'un élément : %s"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:343
+#: src/vigilo/correlator/actors/rule_dispatcher.py:310
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr "Élément non-reconnu ignoré (%s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:352
-msgid "The correlator is shutting down due to a previous error"
-msgstr "Une erreur a été détectée qui va entraîner l'arrêt du corrélateur"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:413
-#, python-format
-msgid "Spawning for payload: %s"
-msgstr "Traitement du message : %s"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:420
+#: src/vigilo/correlator/actors/rule_dispatcher.py:373
 msgid "Received invalid XMPP item ID (None)"
 msgstr "Réception d'un ID XMPP non valide (None)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:430
-#, python-format
-msgid "Validation failure: %s"
-msgstr "Échec de la validation : %s"
+#: src/vigilo/correlator/actors/rule_dispatcher.py:417
+msgid "Error connecting to MemcacheD! Check its log for more information"
+msgstr "Error lors de la connexion à MemcacheD ! Lisez le contenu des "
+"journaux système pour plus d'information"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:470
+#: src/vigilo/correlator/actors/rule_dispatcher.py:428
 msgid "Could not connect to the database server, make sure it is running"
 msgstr ""
 "Échec de la connexion à la base de données, veuillez vous assurer que le "
 "serveur est démarré"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:511
+#: src/vigilo/correlator/actors/rule_dispatcher.py:461
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr "La corrélation a échoué pour le message #%(id)s (%(payload)s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:519
+#: src/vigilo/correlator/actors/rule_dispatcher.py:469
 #, python-format
 msgid "Unable to store correlated alert for message #%(id)s (%(payload)s)"
-msgstr "Impossible de sauvegarder l'alerte corrélée pour le message #%(id)s (%(payload)s)"
+msgstr ""
+"Impossible de sauvegarder l'alerte corrélée pour le message #%(id)s "
+"(%(payload)s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:586
-#, python-format
-msgid "Chat message to forward: '%s'"
-msgstr "Message direct à transmettre : '%s'"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:597
-msgid "Connection initialized"
-msgstr "Connexion initialisée"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:607
-#, python-format
-msgid "Starting the queue manager with a delay of %f seconds."
-msgstr "Démarrage du gestionnaire de file avec un délai de %f secondes."
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:622
+#: src/vigilo/correlator/actors/rule_dispatcher.py:505
 msgid "Connection lost"
 msgstr "Connexion perdue"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:647
-#, fuzzy, python-format
-msgid ""
-"Unable to forward the message (%(reason)s). it has been stored for later "
-"retransmission"
-msgstr ""
-"Impossible de transmettre le message à cause d'une erreur (%(reason)s), "
-"il a été stocké en vue d'une retransmission ultérieure."
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:680
-#, python-format
-msgid "No destination node configured for messages of type '%s'. Skipping."
-msgstr "Aucun nœud cible configuré pour les messages de type '%s'. Message ignoré."
 
 #: src/vigilo/correlator/actors/rule_runner.py:76
 #, python-format
@@ -436,8 +396,9 @@ msgid ""
 "Vigilo server %(server)s was disabled for too long (%(duration)s) before "
 "becoming avalaible again, a manual VigiConf deployment will be necessary."
 msgstr ""
-"Le serveur Vigilo %(server)s a été désactivé pendant trop longtemps (%(duration)s) "
-"avant d'être de nouveau disponible. Un déploiement manuel via VigiConf sera nécessaire."
+"Le serveur Vigilo %(server)s a été désactivé pendant trop longtemps "
+"(%(duration)s) avant d'être de nouveau disponible. Un déploiement manuel "
+"via VigiConf sera nécessaire."
 
 #: src/vigilo/correlator/rules/ha.py:145
 #, python-format
@@ -503,3 +464,39 @@ msgstr "Message 'WARNING' reçu sur lls1"
 #: src/vigilo/correlator/test/test_logging.py:276
 msgid "Received 'CRITICAL' message on lls1"
 msgstr "Message 'CRITICAL' reçu sur lls1"
+
+#~ msgid "Got item: %s"
+#~ msgstr "Réception d'un élément : %s"
+
+#~ msgid "The correlator is shutting down due to a previous error"
+#~ msgstr "Une erreur a été détectée qui va entraîner l'arrêt du corrélateur"
+
+#~ msgid "Spawning for payload: %s"
+#~ msgstr "Traitement du message : %s"
+
+#~ msgid "Validation failure: %s"
+#~ msgstr "Échec de la validation : %s"
+
+#~ msgid "Chat message to forward: '%s'"
+#~ msgstr "Message direct à transmettre : '%s'"
+
+#~ msgid "Connection initialized"
+#~ msgstr "Connexion initialisée"
+
+#~ msgid "Starting the queue manager with a delay of %f seconds."
+#~ msgstr "Démarrage du gestionnaire de file avec un délai de %f secondes."
+
+#~ msgid ""
+#~ "Unable to forward the message "
+#~ "(%(reason)s). it has been stored for "
+#~ "later retransmission"
+#~ msgstr ""
+#~ "Impossible de transmettre le message à"
+#~ " cause d'une erreur (%(reason)s), il "
+#~ "a été stocké en vue d'une "
+#~ "retransmission ultérieure."
+
+#~ msgid "No destination node configured for messages of type '%s'. Skipping."
+#~ msgstr ""
+#~ "Aucun nœud cible configuré pour les "
+#~ "messages de type '%s'. Message ignoré."
