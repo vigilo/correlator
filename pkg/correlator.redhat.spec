@@ -86,14 +86,15 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}.lang
 %defattr(644,root,root,755)
-%doc COPYING doc/*
+%doc COPYING.txt README.txt
 %attr(755,root,root) %{_bindir}/%{name}
 %attr(744,root,root) %{_initrddir}/%{name}
 %dir %{_sysconfdir}/vigilo/
 %dir %{_sysconfdir}/vigilo/%{module}
 %attr(640,root,%{name}) %config(noreplace) %{_sysconfdir}/vigilo/%{module}/settings.ini
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
-%{python26_sitelib}/*
+%{python26_sitelib}/vigilo*
+%{python26_sitelib}/twisted*
 %dir %{_localstatedir}/lib/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/lib/vigilo/%{module}
 %attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
