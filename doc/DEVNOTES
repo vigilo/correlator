@@ -1,33 +1,4 @@
-# In another shell
-( PATH=/sbin:$PATH; PYTHONPATH=. runsvdir service; )
-
-python ./extra/bootstrap.py
-./bin/buildout
-# That node thing should be configured in /etc/ejabberd/ejabberdctl.cfg
-# Mandriva doesn't define a default, and ends up with inconsistent values.
-sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator localhost coloration
-sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register correlator.tests localhost coloration
-sudo -u ejabberd -H /usr/sbin/ejabberdctl --node ejabberd@"$(hostname -s)" register esper localhost prosper
-./bin/python /usr/bin/nosetests -v tests/
-./bin/python /usr/bin/pylint --rcfile=extra/pylintrc src/vigilo
-./bin/python /usr/bin/ipython
-./bin/python /usr/bin/twistd -ny ./src/vigilo/corr/twisted_service.tac
-# memdump comes with libmemcached 0.30+
-MEMCACHED_SERVERS=localhost:11215 memdump
-
-# Global XML catalog
-sudo xmlcatalog --noout \
-    --add rewriteURI \
-    http://www.codesynthesis.com/projects/xsstl/ \
-    file:///$HOME/var/co/git-svn/vigilo-base/pubsub/src/vigilo/pubsub/data/xsstl/ \
-    /etc/xml/catalog
-
-# Two ways to run the twisted tests
-./bin/python ./tests/runtests.py \
-		--with-coverage --cover-erase --cover-inclusive \
-		tests.test_pubsub:XmppClient.testForwarders
-VIGILO_SETTINGS_MODULE=settings_tests ./bin/trial -e  \
-		tests.test_pubsub.XmppClient.testForwarders
+Quelques notes (un peu anciennes) sur le développement du module
 
 Pubsub monitoring
 	http://x60br.berlios.de/
