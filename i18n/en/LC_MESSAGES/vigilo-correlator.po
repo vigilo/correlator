@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2011-04-11 10:48+0200\n"
-"PO-Revision-Date: 2011-04-11 10:48+0200\n"
+"POT-Creation-Date: 2011-04-15 23:39+0200\n"
+"PO-Revision-Date: 2011-04-15 23:39+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -258,22 +258,26 @@ msgstr "Trying to get the value of the key '%(key)s'."
 msgid "Trying to delete the key '%(key)s'."
 msgstr "Trying to delete the key '%(key)s'."
 
-#: src/vigilo/correlator/registry.py:55
+#: src/vigilo/correlator/registry.py:55 src/vigilo/correlator/registry.py:60
 #, python-format
-msgid "Rule %r has already been registered, ignoring attempt to re-register it."
-msgstr "Rule %r has already been registered, ignoring attempt to re-register it."
+msgid ""
+"Rule %(name)s (%(class)s) has already been registered, ignoring attempt "
+"to re-register it."
+msgstr ""
+"Rule %(name)s (%(class)s) has already been registered, ignoring attempt "
+"to re-register it."
 
-#: src/vigilo/correlator/registry.py:63
+#: src/vigilo/correlator/registry.py:69
 #, python-format
 msgid "The rule %(depended)r must be loaded before %(dependent)r."
 msgstr "The rule %(depended)r must be loaded before %(dependent)r."
 
-#: src/vigilo/correlator/registry.py:71
+#: src/vigilo/correlator/registry.py:77
 #, python-format
 msgid "Successfully registered rule %r"
 msgstr "Successfully registered rule %r"
 
-#: src/vigilo/correlator/registry.py:129
+#: src/vigilo/correlator/registry.py:142
 msgid ""
 "Singleton has already been instanciated, ignoring attempt to create a new"
 " instance."
@@ -281,15 +285,15 @@ msgstr ""
 "Singleton has already been instanciated, ignoring attempt to create a new"
 " instance."
 
-#: src/vigilo/correlator/registry.py:159
+#: src/vigilo/correlator/registry.py:177
 #, python-format
 msgid "Not a valid rule name \"%s\""
 msgstr "Not a valid rule name \"%s\""
 
-#: src/vigilo/correlator/registry.py:165
+#: src/vigilo/correlator/registry.py:183
 #, python-format
-msgid "Unable to load rule \"%s\""
-msgstr "Unable to load rule \"%s\""
+msgid "Unable to load rule \"%(name)s\" (%(class)s)"
+msgstr "Unable to load rule \"%(name)s\" (%(class)s)"
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:118
 msgid ""
@@ -353,8 +357,8 @@ msgstr ""
 "Got an exception while running rule %(rule)s. Running the correlator in "
 "the foreground (%(prog)s -n) may help troubleshooting"
 
-#: src/vigilo/correlator/rules/adapt_frequency.py:56
-#: src/vigilo/correlator/rules/ha.py:70
+#: src/vigilo/correlator/rules/adapt_frequency.py:52
+#: src/vigilo/correlator/rules/ha.py:67
 #, python-format
 msgid ""
 "The rule \"%(rule)s\" requires a section called \"%(section)s\" be "
@@ -365,8 +369,8 @@ msgstr ""
 "present in the configuration file. Skipping this rule until the "
 "configuration gets fixed!"
 
-#: src/vigilo/correlator/rules/adapt_frequency.py:70
-#: src/vigilo/correlator/rules/ha.py:83
+#: src/vigilo/correlator/rules/adapt_frequency.py:66
+#: src/vigilo/correlator/rules/ha.py:80
 #, python-format
 msgid ""
 "The rule \"%(rule)s\" requires a parameter called \"%(param)s\" under the"
@@ -377,12 +381,12 @@ msgstr ""
 " section [%(section)s]. Skipping this rule until its configuration gets "
 "fixed!"
 
-#: src/vigilo/correlator/rules/example.py:35
+#: src/vigilo/correlator/rules/example.py:33
 #, python-format
 msgid "id %(id)s payload %(payload)s"
 msgstr "id %(id)s payload %(payload)s"
 
-#: src/vigilo/correlator/rules/ha.py:132
+#: src/vigilo/correlator/rules/ha.py:129
 #, python-format
 msgid ""
 "Vigilo server %(server)s was disabled for too long (%(duration)s) before "
@@ -391,26 +395,26 @@ msgstr ""
 "Vigilo server %(server)s was disabled for too long (%(duration)s) before "
 "becoming avalaible again, a manual VigiConf deployment will be necessary."
 
-#: src/vigilo/correlator/rules/ha.py:145
+#: src/vigilo/correlator/rules/ha.py:142
 #, python-format
 msgid "Unsupported state: %s"
 msgstr "Unsupported state: %s"
 
-#: src/vigilo/correlator/rules/ha.py:148
+#: src/vigilo/correlator/rules/ha.py:145
 #, python-format
 msgid "Flagging Vigilo server %(server)s with status %(status)s"
 msgstr "Flagging Vigilo server %(server)s with status %(status)s"
 
-#: src/vigilo/correlator/rules/ha.py:206
+#: src/vigilo/correlator/rules/ha.py:203
 msgid "Manual deployment necessary."
 msgstr "Manual deployment necessary."
 
-#: src/vigilo/correlator/rules/hls_deps.py:110
+#: src/vigilo/correlator/rules/hls_deps.py:106
 #, python-format
 msgid "Impacted HLS = %(affected_hls)r for (%(hostname)r, %(servicename)r)"
 msgstr "Impacted HLS = %(affected_hls)r for (%(hostname)r, %(servicename)r)"
 
-#: src/vigilo/correlator/rules/priority.py:77
+#: src/vigilo/correlator/rules/priority.py:75
 #, python-format
 msgid ""
 "The priority for the alert on (%(hostname)r, %(servicename)r) is "
@@ -419,7 +423,7 @@ msgstr ""
 "The priority for the alert on (%(hostname)r, %(servicename)r) is "
 "%(priority)r."
 
-#: src/vigilo/correlator/rules/priority.py:118
+#: src/vigilo/correlator/rules/priority.py:116
 #, python-format
 msgid ""
 "The priority of the correlated event(s) %(updated)d has been updated, "
@@ -428,7 +432,7 @@ msgstr ""
 "The priority of the correlated event(s) %(updated)d has been updated, "
 "based on information about the HLS %(hls)r"
 
-#: src/vigilo/correlator/rules/update_occurrences_count.py:89
+#: src/vigilo/correlator/rules/update_occurrences_count.py:86
 #, python-format
 msgid ""
 "The state for '%(servicename)s' on '%(hostname)s' did not change or "
@@ -441,7 +445,7 @@ msgstr ""
 "incremented. New state = %(statename)r vs %(previous_statename)r -- "
 "Occurrences: %(occurrences)d"
 
-#: src/vigilo/correlator/rules/update_occurrences_count.py:106
+#: src/vigilo/correlator/rules/update_occurrences_count.py:103
 #, python-format
 msgid "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)d"
 msgstr "Host: %(hostname)s, service: %(servicename)s, occurrences: %(occurrences)d"

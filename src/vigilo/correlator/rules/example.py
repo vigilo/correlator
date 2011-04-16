@@ -14,9 +14,7 @@ _ = translate(__name__)
 class ExampleRule(Rule):
     """Module d'exemple pour les règles de corrélation."""
 
-    def __init__(self):
-        """Initialisation du module."""
-        super(ExampleRule, self).__init__([])
+    depends = []
 
     def process(self, link, xmpp_id, payload):
         """

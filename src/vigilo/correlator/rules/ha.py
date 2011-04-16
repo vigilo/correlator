@@ -6,7 +6,7 @@ Gestion de la haute-disponibilité de la plate-forme Vigilo.
 Il faut configurer la règle en ajoutant dans le settings.ini une section
 similaire à la suivante ::
 
-    [vigilo.correlator.rules.ha]
+    [HighAvailabilityRule]
 
     # Identifiant jabber du connector-vigiconf
     vigiconf_jid = vigiconf@localhost
@@ -61,12 +61,9 @@ class MissingConfig(Exception):
 
 class HighAvailabilityRule(Rule):
 
-    def __init__(self):
-        super(HighAvailabilityRule, self).__init__([])
-
     def check_config(self):
         """Vérification de la bonne configuration de la règle."""
-        if __name__ not in settings:
+        if self.name not in settings:
             message = _('The rule "%(rule)s" requires a section called '
                         '"%(section)s" be present in the configuration '
                         'file. Skipping this rule until the configuration '
@@ -75,11 +72,11 @@ class HighAvailabilityRule(Rule):
                                 __name__,
                                 self.__class__.__name__
                             ),
-                            'section': __name__,
+                            'section': self.name,
                         }
             raise MissingConfig(message)
         for param in ('vigiconf_jid', 'hls_prefix'):
-            if param not in settings[__name__]:
+            if param not in settings[self.name]:
                 message = _('The rule "%(rule)s" requires a parameter '
                             'called "%(param)s" under the section '
                             '[%(section)s]. Skipping this rule until '
@@ -88,7 +85,7 @@ class HighAvailabilityRule(Rule):
                                     __name__,
                                     self.__class__.__name__
                                 ),
-                                'section': __name__,
+                                'section': self.name,
                                 'param': param,
                             }
                 raise MissingConfig(message)
@@ -103,7 +100,7 @@ class HighAvailabilityRule(Rule):
         ctx = Context(xmpp_id)
         if ctx.hostname is not None:
             return # On ne traite que les services de haut niveau
-        prefix = settings[__name__]["hls_prefix"]
+        prefix = settings[self.name]["hls_prefix"]
         if not ctx.servicename.startswith(prefix):
             return # rien à faire
         server = ctx.servicename[len(prefix):]
@@ -119,7 +116,7 @@ class HighAvailabilityRule(Rule):
         if ctx.statename == u"OK":
             # On récupère la durée de l'interruption de service.
             previous_state_duration = self._get_previous_state_duration(ctx.servicename)
-            threshold = int(settings[__name__].get("max_auto_recovery", 0))
+            threshold = int(settings[self.name].get("max_auto_recovery", 0))
             # Si elle est inférieure à la durée autorisée, on
             # envoie un message à VigiConf pour réactiver le serveur.
             if threshold == 0:
@@ -153,7 +150,7 @@ class HighAvailabilityRule(Rule):
         link.callRemote(rule_dispatcher.SendToBus, item=message)
 
     def _get_server_name(self, server):
-        server_template = settings[__name__].get("server_template", None)
+        server_template = settings[self.name].get("server_template", None)
         if server_template is None:
             return server
         else:
@@ -183,7 +180,7 @@ class HighAvailabilityRule(Rule):
             </%(onetoone)s>
         """ % {
             "onetoone": MESSAGEONETOONE,
-            "vigiconf": settings[__name__]["vigiconf_jid"],
+            "vigiconf": settings[self.name]["vigiconf_jid"],
             "ns": NS_COMMAND,
             "action": action,
             "server": server,
@@ -200,8 +197,8 @@ class HighAvailabilityRule(Rule):
         """ % {
             "ns": NS_COMMAND,
             "timestamp": time.time(),
-            "service": settings[__name__]["deployment_service"],
-            "host": settings[__name__]["deployment_host"],
+            "service": settings[self.name]["deployment_service"],
+            "host": settings[self.name]["deployment_host"],
             "return_code": 2,
             "output": _("Manual deployment necessary."),
             }

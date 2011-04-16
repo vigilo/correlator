@@ -52,13 +52,14 @@ class RegistryDict(object):
             raise TypeError
 
         if item.name in self.__dict:
-            LOGGER.info(_(u'Rule %r has already been registered, '
-                        'ignoring attempt to re-register it.'), item.name)
+            LOGGER.info(_(u'Rule %(name)s (%(class)s) has already been '
+                           'registered, ignoring attempt to re-register it.'),
+                        {"name": item.confkey, "class": item.__class__})
             return
 
         self.__graph.add_node(item.name)
 
-        for dep in item.dependancies:
+        for dep in item.depends:
             if dep not in self.__dict:
                 raise RuntimeError(_(u'The rule %(depended)r must be loaded '
                                     'before %(dependent)r.') % {
@@ -114,6 +115,13 @@ class RegistryDict(object):
         """
         return '<%s>' % self.__dict
 
+    def __len__(self):
+        """
+        @return: le nombre de règles enregistrées.
+        @rtype: C{int}
+        """
+        return len(self.__dict)
+
     @property
     def rules_graph(self):
         return self.__graph
@@ -152,20 +160,26 @@ class Registry(object):
     def __init__(self):
         """Initialise le registre."""
         self.__rules = RegistryDict(Rule)
-        for plugin_name in settings['rules'].itervalues():
+        self._load_from_settings()
+
+    def _load_from_settings(self):
+        """Charge le registre depuis le fichier de settings"""
+        for rule_name, rule_class in settings.get('rules', {}).iteritems():
             try:
-                ep = pkg_resources.EntryPoint.parse('rule = %s' % plugin_name)
+                ep = pkg_resources.EntryPoint.parse('%s = %s'
+                                            % (rule_name, rule_class))
             except ValueError:
-                LOGGER.error(_('Not a valid rule name "%s"'), plugin_name)
+                LOGGER.error(_('Not a valid rule name "%s"'), rule_name)
                 continue
 
             try:
                 rule = ep.load(False)
             except ImportError:
-                LOGGER.error(_('Unable to load rule "%s"'), plugin_name)
+                LOGGER.error(_('Unable to load rule "%(name)s" (%(class)s)'),
+                             {"name": rule_name, "class": rule_class})
                 continue
 
-            self.rules.register(rule())
+            self.rules.register(rule(confkey=rule_name))
 
     @property
     def rules(self):

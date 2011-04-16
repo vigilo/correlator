@@ -41,7 +41,7 @@ class TestDbInsertion(unittest.TestCase):
         DBSession.flush()
         teardown_db()
 
-    def make_dependancies(self):
+    def make_dependencies(self):
         """Création de quelques dépendances dans la BDD."""
         host = Host(
             name=u'server.example.com',
@@ -72,7 +72,7 @@ class TestDbInsertion(unittest.TestCase):
     def test_insert_lls_event(self):
         """Insertion d'un évènement brut concernant un SBN"""
 
-        self.make_dependancies()
+        self.make_dependencies()
 
         # Création d'un message d'événement portant sur un SBN.
         xml = """
@@ -126,7 +126,7 @@ class TestDbInsertion(unittest.TestCase):
     def test_insert_hls_event(self):
         """Insertion d'un évènement brut concernant un SHN"""
 
-        self.make_dependancies()
+        self.make_dependencies()
 
         # Création d'un message d'événement portant sur un SHN.
         xml = """
@@ -151,7 +151,7 @@ class TestDbInsertion(unittest.TestCase):
     def test_insert_host_event(self):
         """Insertion d'un évènement brut concernant un hôte"""
 
-        self.make_dependancies()
+        self.make_dependencies()
 
         # Création d'un message d'événement portant sur un hôte.
         xml = """
