@@ -2,7 +2,8 @@
 """Règles de corrélation"""
 from __future__ import absolute_import
 
-from .datatypes import Named
+from vigilo.correlator.context import Context
+from vigilo.correlator.datatypes import Named
 
 class Rule(Named):
     """
@@ -16,6 +17,7 @@ class Rule(Named):
     """
 
     depends = []
+    _context_factory = Context
 
     def __init__(self, depends=None, confkey=None):
         """
@@ -31,4 +33,7 @@ class Rule(Named):
         if not isinstance(self.depends, (list, set, tuple)):
             raise TypeError("Rule dependencies must be iterable")
         self.confkey = confkey
+
+    def _get_context(self, xmpp_id, timeout=None):
+        return self._context_factory(xmpp_id, timeout)
 

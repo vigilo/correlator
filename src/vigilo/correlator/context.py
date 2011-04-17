@@ -53,11 +53,11 @@ class Context(object):
             reçue par le corrélateur.
         @type idxmpp: C{basestring}.
         """
-        self.__connection = MemcachedConnection()
-        self.__id = str(idxmpp)
+        self._connection = MemcachedConnection()
+        self._id = str(idxmpp)
         if timeout is None:
             timeout = settings['correlator'].as_float('context_timeout')
-        self.__timeout = timeout
+        self._timeout = timeout
 
     @property
     def topology(self):
@@ -65,11 +65,11 @@ class Context(object):
         Récupère la topologie associée à ce contexte.
         @rtype: L{vigilo.correlator.topology.Topology}.
         """
-        topology = self.__connection.get('vigilo:topology')
+        topology = self._connection.get('vigilo:topology')
         if not topology:
             topology = Topology()
-            self.__connection.set('vigilo:topology', topology)
-            self.__connection.set('vigilo:last_topology_update', datetime.now())
+            self._connection.set('vigilo:topology', topology)
+            self._connection.set('vigilo:last_topology_update', datetime.now())
         #LOGGER.debug(_(
         #    'Topology retrieved:'
         #    '\n\t- Nodes: %(nodes)s'
@@ -85,7 +85,7 @@ class Context(object):
         Récupère la date de la dernière mise à jour de l'arbre topologique.
         @rtype: L{datetime}.
         """
-        return self.__connection.get('vigilo:last_topology_update')
+        return self._connection.get('vigilo:last_topology_update')
 
     def __getattr__(self, prop):
         """
@@ -99,8 +99,8 @@ class Context(object):
         """
         if prop.startswith('_'):
             return object.__getattribute__(self, prop)
-        return self.__connection.get(
-            'vigilo:%s:%s' % (prop, self.__id))
+        return self._connection.get(
+            'vigilo:%s:%s' % (prop, self._id))
 
     def __setattr__(self, prop, value):
         """
@@ -115,9 +115,9 @@ class Context(object):
         """
         if prop.startswith('_'):
             return object.__setattr__(self, prop, value)
-        return self.__connection.set(
-            'vigilo:%s:%s' % (prop, self.__id), value,
-            time=self.__timeout)
+        return self._connection.set(
+            'vigilo:%s:%s' % (prop, self._id), value,
+            time=self._timeout)
 
     def __delattr__(self, prop):
         """
@@ -129,6 +129,6 @@ class Context(object):
         """
         if prop.startswith('_'):
             return object.__delattr__(self, prop)
-        return self.__connection.delete(
-            'vigilo:%s:%s' % (prop, self.__id))
+        return self._connection.delete(
+            'vigilo:%s:%s' % (prop, self._id))
 

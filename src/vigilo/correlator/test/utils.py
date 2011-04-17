@@ -69,7 +69,8 @@ def teardown_mc():
         # Tue le serveur memcached lancé en arrière-plan.
         os.kill(mc_pid, signal.SIGTERM)
         os.wait() # Avoid zombies. Bad zombies.
-    except OSError:
+    except OSError, e:
+        print e
         pass # Ignore errors, maybe we should
              # do something more useful here.
 

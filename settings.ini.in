@@ -119,10 +119,10 @@ queue_delay = 0.1
 
 [rules]
 # Règles de corrélation actives.
-hls_deps=vigilo.correlator.rules.hls_deps:HighLevelServiceDepsRule
-lls_deps=vigilo.correlator.rules.lls_deps:LowLevelServiceDepsRule
-occ_count=vigilo.correlator.rules.update_occurrences_count:UpdateOccurrencesCountRule
-priority=vigilo.correlator.rules.priority:PriorityRule
+hls_deps=vigilo.correlator_enterprise.rules.hls_deps:HighLevelServiceDepsRule
+lls_deps=vigilo.correlator_enterprise.rules.lls_deps:LowLevelServiceDepsRule
+occ_count=vigilo.correlator_enterprise.rules.update_occurrences_count:UpdateOccurrencesCountRule
+priority=vigilo.correlator_enterprise.rules.priority:PriorityRule
 
 [publications]
 # Indique le nœud cible du message en fonction du type.

@@ -22,6 +22,8 @@ from twisted.internet.error import ProcessTerminated
 from ampoule.test.test_process import FakeAMP, _FakeT
 from ampoule import main, pool
 
+from utils import settings
+
 from vigilo.correlator.rule import Rule
 
 from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
