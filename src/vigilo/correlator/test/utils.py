@@ -7,7 +7,6 @@ import os
 import signal
 import time
 import socket
-import sys
 import nose
 
 from vigilo.common.conf import settings
@@ -16,10 +15,9 @@ settings.load_file('settings_tests.ini')
 from vigilo.models.configure import configure_db
 configure_db(settings['database'], 'sqlalchemy_')
 
-from vigilo.models.session import metadata, DBSession
+from vigilo.models.session import metadata
 
 from vigilo.correlator.memcached_connection import MemcachedConnection
-from twisted.internet import reactor
 
 MemcachedConnection.CONTEXT_TIMER = 0
 mc_pid = None

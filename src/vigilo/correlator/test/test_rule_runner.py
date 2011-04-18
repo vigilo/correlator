@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
+# pylint: disable-msg=C0111,W0212,R0904
 """
 Test du rule_runner.
 """
 
 import os
 import sys
-from time import sleep
-from cStringIO import StringIO
 
 # ATTENTION: contrairement aux autres modules, ici il faut utiliser
 # twisted.trial, sinon ça ne marche pas (ça dérange AMPoule). Attention à bien
@@ -19,15 +18,9 @@ from twisted.internet import reactor
 from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.internet.error import ProcessTerminated
 # On réutilise les mécanismes d'ampoule.
-from ampoule.test.test_process import FakeAMP, _FakeT
 from ampoule import main, pool
 
-from utils import settings
-
-from vigilo.correlator.rule import Rule
-
-from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
-from vigilo.correlator.registry import get_registry
+from utils import settings # pylint: disable-msg=W0611
 
 from vigilo.common.logging import get_logger
 

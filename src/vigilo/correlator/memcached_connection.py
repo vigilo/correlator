@@ -25,15 +25,13 @@ __all__ = (
 )
 
 from sqlalchemy.engine import engine_from_config
-from vigilo.models import configure
 from vigilo.models.session import PrefixedTables
 from sqlalchemy.ext.declarative import declarative_base
-from vigilo.models.session import DeclarativeBase, ForeignKey
+from vigilo.models.session import DeclarativeBase
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from sqlalchemy import Column
 from sqlalchemy.types import Text, String, DateTime
-from sqlalchemy.orm import relation
 
 # Création de la seconde session pour la connexion
 # à la base de données qui gère les contextes de corrélation.

@@ -55,7 +55,7 @@ class Topology(nx.DiGraph):
 
         @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
         @type item_id: C{int}
-        @return: Liste de L{vigilo.models.CorrEvent}.
+        @return: Liste de L{CorrEvent}.
         @rtype: List
         """
 
@@ -93,7 +93,7 @@ class Topology(nx.DiGraph):
 
         @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
         @type item_id: C{int}
-        @return: Liste de L{vigilo.models.CorrEvent}.
+        @return: Liste de L{CorrEvent}.
         @rtype: List
         """
 
@@ -120,7 +120,7 @@ def get_last_event(item_id, *args):
     @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
     @type item_id: C{int}
     @return: Un événement.
-    @rtype: L{vigilo.models.Event}
+    @rtype: L{Event}
     """
 
     return DBSession.query(
@@ -143,7 +143,7 @@ def get_open_aggregate(item_id, *args):
     @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
     @type  item_id: C{int}
     @return: Un agrégat.
-    @rtype: L{vigilo.models.CorrEvent}
+    @rtype: L{CorrEvent}
     """
 
     aggregate = DBSession.query(

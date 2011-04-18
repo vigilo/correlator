@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
+# pylint: disable-msg=C0111,W0212,R0904
 """Suite de tests des logs du corrélateur"""
 
 import unittest
 from datetime import datetime
-from twisted.words.xish import domish
 from lxml import etree
 
 from utils import settings
 from utils import setup_mc, teardown_mc, setup_db, teardown_db
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
-                            Dependency, Event, CorrEvent, Change
+                            Event, Change
 
 from vigilo.pubsub.xml import NS_EVENT
 from vigilo.correlator.context import Context

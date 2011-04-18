@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable-msg=C0111,W0212,R0904
 """Suite de tests pour la classe 'Topology'"""
 from datetime import datetime
 import unittest

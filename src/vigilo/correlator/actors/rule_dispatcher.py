@@ -8,21 +8,17 @@ Il met également à disposition un moyen pour les règles de corrélation
 d'émettre de nouveaux messages XML à destination du bus (par exemple,
 des commandes pour Nagios).
 """
+
 import sys
-import os.path
-import pkg_resources
-import transaction
-from sqlalchemy.exc import OperationalError
 from datetime import datetime
 
-from twisted.internet import task, defer, reactor, error
+import transaction
+from sqlalchemy.exc import OperationalError
+
+from twisted.internet import defer, reactor
 from twisted.internet.error import ProcessTerminated
-from twisted.words.xish import domish
 from twisted.protocols import amp
-from twisted.python import reflect, log
-from twisted.python.failure import Failure
-from ampoule import pool, main, child
-from wokkel.pubsub import PubSubClient, Item
+from ampoule import pool, main
 from wokkel.generic import parseXml
 from lxml import etree
 
@@ -31,8 +27,7 @@ from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
-from vigilo.connector.store import DbRetry
-from vigilo.connector.forwarder import PubSubSender, XMPPNotConnectedError
+from vigilo.connector.forwarder import PubSubSender
 from vigilo.connector import MESSAGEONETOONE
 
 from vigilo.models.tables import Change

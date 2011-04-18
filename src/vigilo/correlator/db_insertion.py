@@ -215,7 +215,7 @@ def add_to_aggregate(idevent, aggregate):
     @param idevent: Identifiant de l'événement brut à ajouter.
     @type idevent: C{int}
     @param aggregate: Agrégat vers lequel se fait l'ajout.
-    @type aggregate: L{vigilo.models.CorrEvent}
+    @type aggregate: L{CorrEvent}
     """
     event = DBSession.query(Event).filter(Event.idevent == idevent).one()
     try:

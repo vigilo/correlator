@@ -28,7 +28,7 @@ class Context(object):
 
     Les attributs prédéfinis sont :
         -   last_topology_update : date de dernière mise à jour
-            de l'arbre topologique (L{datetime.datetime}).
+            de l'arbre topologique (L{datetime}).
         -   raw_event_id : identifiant de l'événement brut (C{int}).
         -   successors_aggregates : liste des identifiants des agrégats
             qui doivent être fusionnés avec celui de l'événement courant
@@ -76,7 +76,7 @@ class Context(object):
         #    '\n\t- Dependencies: %(edges)s'), {
         #        'nodes': topology.nodes(),
         #        'edges': topology.edges(),
-        #})
+        #    })
         return topology
 
     @property
