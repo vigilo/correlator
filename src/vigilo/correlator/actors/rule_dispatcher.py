@@ -46,7 +46,7 @@ from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                             insert_hls_history
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
-from vigilo.correlator.compute_hls_states import compute_hls_states
+from vigilo.correlator.amp import SendToBus, RegisterCallback
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -124,12 +124,6 @@ def check_topology(last_topology_update):
         conn.delete('vigilo:topology')
         LOGGER.info(_(u"Topology has been reloaded."))
 
-class SendToBus(amp.Command):
-    arguments = [
-        ('item', amp.Unicode()),
-    ]
-    requiresAnswer = False
-
 class ProcessStarter(main.ProcessStarter):
     def __init__(self, rule_dispatcher, *args, **kwargs):
         self.rule_dispatcher = rule_dispatcher
@@ -149,6 +143,17 @@ class Correlator(amp.AMP):
         self.rule_dispatcher.sendItem(item)
         return {}
 
+    @RegisterCallback.responder
+    def register_callback(self, fn, idnt):
+        LOGGER.debug(_('Registering post-correlation callback function '
+                        '"%(fn)s" for alert with ID %(id)s'), {
+                            'fn': fn,
+                            'id': idnt,
+                        })
+        self.rule_dispatcher.tree_end.addCallback(
+            fn, self.rule_dispatcher, idnt)
+        return {}
+
 class RuleDispatcher(PubSubSender):
     """
     Cette classe corrèle les messages reçus depuis le bus XMPP
@@ -158,6 +163,7 @@ class RuleDispatcher(PubSubSender):
     def __init__(self):
         super(RuleDispatcher, self).__init__()
         self.max_send_simult = 1
+        self.tree_end = None
 
         # Préparation du pool d'exécuteurs de règles.
         timeout = settings['correlator'].as_int('rules_timeout')
@@ -332,18 +338,8 @@ class RuleDispatcher(PubSubSender):
             @param info_dictionary: Informations extraites du message XML.
             @param info_dictionary: C{dict}
             """
-            # On publie sur le bus XMPP l'état de l'hôte
-            # ou du service concerné par l'alerte courante.
-            publish_state(self, info_dictionary)
-
             dom = etree.fromstring(xml)
             idnt = dom.get('id')
-            dom = dom[0]
-
-            # On détermine le nouvel état de chacun des HLS
-            # impactés par l'alerte, avant de l'enregistrer dans
-            # la BDD et de le transmettre à Nagios via le bus XMPP.
-            compute_hls_states(self, idnt)
 
             # Pour les services de haut niveau, on s'arrête ici,
             # on NE DOIT PAS générer d'événement corrélé.
@@ -353,7 +349,7 @@ class RuleDispatcher(PubSubSender):
                 transaction.begin()
                 return
 
-
+            dom = dom[0]
             make_correvent(self, dom, idnt)
             transaction.commit()
             transaction.begin()
@@ -450,7 +446,7 @@ class RuleDispatcher(PubSubSender):
         # du traitement (code à exécuter en sortie) et on déclenche
         # l'exécution des règles de corrélation.
         payload = etree.tostring(dom[0])
-        tree_start, tree_end = self.__build_execution_tree()
+        tree_start, self.tree_end = self.__build_execution_tree()
 
         def correlation_eb(failure, idxmpp, payload):
             LOGGER.error(_('Correlation failed for '
@@ -467,18 +463,29 @@ class RuleDispatcher(PubSubSender):
                 'payload': payload,
             })
 
+        def prepareToSendResult(result, xml, info_dictionary):
+            """
+            Permet de ne réaliser le traitement du résultat
+            que lorsque toutes les règles de corrélation ont
+            été exécutées, ainsi que les callbacks post-corrélation.
+            """
+            # On publie sur le bus XMPP l'état de l'hôte
+            # ou du service concerné par l'alerte courante.
+            publish_state(self, info_dictionary)
+            self.tree_end.addCallback(sendResult, xml, info_dictionary)
+
         # Gère les erreurs détectées à la fin du processus de corrélation,
         # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
-        tree_end.addCallbacks(
-            sendResult, correlation_eb,
+        self.tree_end.addCallbacks(
+            prepareToSendResult, correlation_eb,
             callbackArgs=[xml, info_dictionary],
             errbackArgs=[idxmpp, payload],
         )
-        tree_end.addErrback(send_result_eb, idxmpp, payload)
+        self.tree_end.addErrback(send_result_eb, idxmpp, payload)
 
         # On lance le processus de corrélation.
         tree_start.callback((idxmpp, payload))
-        return tree_end
+        return self.tree_end
 
     def connectionInitialized(self):
         """
@@ -518,4 +525,3 @@ class RuleDispatcher(PubSubSender):
         else:
             result = self.publishXml(item)
             return result
-
