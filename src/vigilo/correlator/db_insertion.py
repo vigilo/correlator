@@ -56,7 +56,6 @@ def insert_event(info_dictionary):
                         })
         return None
 
-    history = EventHistory()
     try:
         # On recherche un éventuel évènement concernant
         # l'item faisant partie d'agrégats ouverts.
@@ -95,33 +94,51 @@ def insert_event(info_dictionary):
         # Sinon, il s'agit d'un nouvel incident, on le prépare.
         event = Event()
         event.idsupitem = item_id
-        history.type_action = u'New occurrence'
         LOGGER.debug(_(u'Creating new event'))
     except MultipleResultsFound:
         # Si plusieurs événements ont été trouvés
         LOGGER.error(_(u'Multiple matching events found, skipping.'))
         return None
-    else:
-        # Il s'agit d'une mise à jour.
-        history.type_action = u'Nagios update state'
 
-    # Mise à jour de l'évènement et préparation de l'historique.
+    # Nouvel état.
+    new_state_value = StateName.statename_to_value(info_dictionary['state'])
+    is_new_event = event.idevent is None
+
+    # Détermine si on doit ajouter une entrée dans l'historique.
+    # On ajoute une entrée s'il s'agit d'un nouvel événement
+    # ou si un champ autre que le timestamp a changé.
+    add_history = is_new_event or \
+                    event.current_state != new_state_value or \
+                    event.message != info_dictionary['message']
+
+    # Mise à jour de l'évènement.
     event.timestamp = info_dictionary['timestamp']
-    event.current_state = StateName.statename_to_value(
-                                                    info_dictionary['state'])
-    history.value = info_dictionary['state']
-    event.message = history.text = info_dictionary['message']
-    history.timestamp = info_dictionary['timestamp']
-    history.username = None
+    event.current_state = new_state_value
+    event.message = info_dictionary['message']
+
+    # Vaudra None pour un nouvel événement tant qu'on
+    # a pas fait un DBSession.add() + DBSession.flush().
+    event_id = event.idevent
 
     try:
         # Sauvegarde de l'évènement.
         DBSession.add(event)
         DBSession.flush()
 
-        history.idevent = event.idevent
-        DBSession.add(history)
-        DBSession.flush()
+        if add_history:
+            history = EventHistory()
+
+            history.type_action = is_new_event and \
+                                    u'New occurrence' or \
+                                    u'Nagios update state'
+
+            history.value = info_dictionary['state']
+            history.text = info_dictionary['message']
+            history.timestamp = info_dictionary['timestamp']
+            history.username = None
+            history.idevent = event.idevent
+            DBSession.add(history)
+            DBSession.flush()
 
     # On capture les erreurs qui sont permanentes.
     except (IntegrityError, InvalidRequestError), e:
