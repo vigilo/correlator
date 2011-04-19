@@ -1,4 +1,7 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
+# Copyright (C) 2006-2011 CS-SI
+# License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
+
 """
 Un module permettant de gérer les règles de corrélation
 ainsi que les dépendances entre ces règles.

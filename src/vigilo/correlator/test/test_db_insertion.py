@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable-msg=C0111,W0212,R0904
+# Copyright (C) 2006-2011 CS-SI
+# License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
+
 """Suite de tests des fonctions réalisant des insertions dans la BDD."""
 from datetime import datetime
 import unittest
