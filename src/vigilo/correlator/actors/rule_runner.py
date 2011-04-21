@@ -9,8 +9,10 @@ avec une limite sur la durée maximale d'exécution.
 """
 import sys
 import os
+
 from twisted.protocols import amp
 from ampoule import child
+import transaction
 
 from vigilo.common.conf import settings
 settings.load_module(__name__)
@@ -74,6 +76,7 @@ class RuleRunner(child.AMPChild):
                         })
 
         try:
+            transaction.begin()
             rule.process(self, idxmpp, xml)
         except:
             logger.exception(_('Got an exception while running rule %(rule)s. '
@@ -83,6 +86,12 @@ class RuleRunner(child.AMPChild):
                                     'prog': sys.argv[0],
                                 })
             raise
+        finally:
+            # Les règles de corrélation ne sont pas censées écrire
+            # dans la base de données. On fait un ROLLBACK systématique
+            # pour annuler les éventuels changements réalisés et qui
+            # peuvent générer des incohérences (concurrence entre règles).
+            transaction.abort()
 
         logger.debug(u'Rule runner: process ends for rule "%s"', rule_name)
         return {}

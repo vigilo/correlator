@@ -16,7 +16,7 @@ import sys
 from datetime import datetime
 
 import transaction
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError
 
 from twisted.internet import defer, reactor
 from twisted.internet.error import ProcessTerminated
@@ -153,8 +153,17 @@ class Correlator(amp.AMP):
                             'fn': fn,
                             'id': idnt,
                         })
-        self.rule_dispatcher.tree_end.addCallback(
-            fn, self.rule_dispatcher, idnt)
+
+        def callback_wrapper(result):
+            try:
+                transaction.begin()
+                res = fn(result, self.rule_dispatcher, idnt)
+            except:
+                transaction.abort()
+            else:
+                transaction.commit()
+
+        self.rule_dispatcher.tree_end.addCallback(callback_wrapper)
         return {}
 
 class RuleDispatcher(PubSubSender):
@@ -315,6 +324,7 @@ class RuleDispatcher(PubSubSender):
                 continue
             self.forwardMessage(xml)
 
+    @defer.inlineCallbacks
     def processMessage(self, xml):
         """
         Transfère un message XML sérialisé vers la file.
@@ -326,6 +336,7 @@ class RuleDispatcher(PubSubSender):
             le message n'a pas pu être traité (ex: message invalide).
         @rtype: C{twisted.internet.defer.Deferred} ou C{None}
         """
+
 
         def sendResult(result, xml, info_dictionary):
             """
@@ -346,16 +357,21 @@ class RuleDispatcher(PubSubSender):
 
             # Pour les services de haut niveau, on s'arrête ici,
             # on NE DOIT PAS générer d'événement corrélé.
-            if info_dictionary["host"] == \
-                settings['correlator']['nagios_hls_host']:
-                transaction.commit()
-                transaction.begin()
+            if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
                 return
 
             dom = dom[0]
-            make_correvent(self, dom, idnt)
-            transaction.commit()
             transaction.begin()
+            try:
+                make_correvent(self, dom, idnt)
+            except SQLAlchemyError:
+                LOGGER.info(_("Error while saving the correlated event. "
+                                "The message will be handled once more."))
+                transaction.abort()
+                self.queue.append(xml)
+            else:
+                transaction.commit()
+
 
         #LOGGER.debug(_(u'Spawning for payload: %s'), xml)
         dom = etree.fromstring(xml)
@@ -392,9 +408,9 @@ class RuleDispatcher(PubSubSender):
         # S'il s'agit d'un message concernant un ticket d'incident :
         if dom[0].tag == namespaced_tag(NS_TICKET, 'ticket'):
             # On insère les informations la concernant dans la BDD ;
+            transaction.begin()
             handle_ticket(info_dictionary)
             transaction.commit()
-            transaction.begin()
             # Et on passe au message suivant.
             return
 
@@ -416,27 +432,59 @@ class RuleDispatcher(PubSubSender):
         ctx.statename = info_dictionary["state"]
 
         # On met à jour l'arbre topologique si nécessaire.
+        transaction.begin()
         try:
             check_topology(ctx.last_topology_update)
-        except OperationalError:
-            LOGGER.error(_(u"Could not connect to the "
-                "database server, make sure it is running"))
-            reactor.stop()
-            return
+        except:
+            LOGGER.info(_("Error while retrieving the network's topology. "
+                            "The message will be handled once more."))
+            transaction.abort()
+            try:
+                return self.queue.append(xml)
+            except Exception, e:
+                print "@@ %r @@" % e
+        else:
+            transaction.commit()
 
         # On insère le message dans la BDD, sauf s'il concerne un HLS.
         if not info_dictionary["host"]:
             raw_event_id = None
-            insert_hls_history(info_dictionary)
-        else:
-            raw_event_id = insert_event(info_dictionary)
-            transaction.commit()
             transaction.begin()
+            try:
+                insert_hls_history(info_dictionary)
+            except SQLAlchemyError:
+                LOGGER.info(_("Error while adding an entry in the HLS history. "
+                                "The message will be handled once more."))
+                transaction.abort()
+                self.queue.append(xml)
+                return
+            else:
+                transaction.commit()
+        else:
+            transaction.begin()
+            try:
+                raw_event_id = insert_event(info_dictionary)
+            except SQLAlchemyError:
+                LOGGER.info(_("Error while adding an entry in the history. "
+                                "The message will be handled once more."))
+                transaction.abort()
+                self.queue.append(xml)
+                return
+            else:
+                transaction.commit()
 
         # On insère l'état dans la BDD
-        previous_state = insert_state(info_dictionary)
-        transaction.commit()
         transaction.begin()
+        try:
+            previous_state = insert_state(info_dictionary)
+        except SQLAlchemyError:
+            LOGGER.info(_("Error while saving state. "
+                        "The message will be handled once more."))
+            transaction.abort()
+            self.queue.append(xml)
+            return
+        else:
+            transaction.commit()
 
         ctx.previous_state = previous_state
 

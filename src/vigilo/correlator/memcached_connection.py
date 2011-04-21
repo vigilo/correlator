@@ -32,6 +32,7 @@ from vigilo.models.session import PrefixedTables
 from sqlalchemy.ext.declarative import declarative_base
 from vigilo.models.session import DeclarativeBase
 from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.exc import OperationalError
 
 from sqlalchemy import Column
 from sqlalchemy.types import Text, String, DateTime
@@ -225,11 +226,19 @@ class MemcachedConnection(object):
 
         # On associe la valeur 'value' à la clé 'key'.
         exp_time = self.__convert_to_datetime(kwargs.pop('time', None))
-        instance = CorrelationContext(key=key)
-        instance = self.__connection_db_session.merge(instance)
-        instance.value = value
-        instance.expiration_date = exp_time
-        self.__connection_db_session.flush()
+        # @FIXME: la limite (5) devrait être rendue configurable.
+        for i in xrange(5):
+            try:
+                instance = CorrelationContext(key=key)
+                instance = self.__connection_db_session.merge(instance)
+                instance.value = value
+                instance.expiration_date = exp_time
+                self.__connection_db_session.flush()
+            except OperationalError, e:
+                if not e.connection_invalidated:
+                    raise e
+            else:
+                break
 
         # memcached utilise 0 pour indiquer l'absence d'expiration.
         if exp_time is None:
@@ -270,10 +279,17 @@ class MemcachedConnection(object):
         # Pas de résultat ? On récupère l'information depuis
         # la base de données et on met à jour le cache.
         if not result:
-            instance = self.__connection_db_session.query(
-                            CorrelationContext).get(key)
-            if not instance:
-                return None
+            for i in xrange(5):
+                try:
+                    instance = self.__connection_db_session.query(
+                                    CorrelationContext).get(key)
+                    if not instance:
+                        return None
+                except OperationalError, e:
+                    if not e.connection_invalidated:
+                        raise e
+                else:
+                    break
 
             exp_time = instance.expiration_date
             if exp_time is not None:
@@ -315,8 +331,16 @@ class MemcachedConnection(object):
 
         # On supprime la clé 'key' et la valeur qui lui est associée.
         self.__connection_cache.delete(key)
-        nb_deleted = self.__connection_db_session.query(CorrelationContext
-            ).filter(CorrelationContext.key == key).delete()
-        self.__connection_db_session.flush()
-        return nb_deleted
 
+        for i in xrange(5):
+            try:
+                nb_deleted = self.__connection_db_session.query(CorrelationContext
+                    ).filter(CorrelationContext.key == key).delete()
+                self.__connection_db_session.flush()
+            except OperationalError, e:
+                if not e.connection_invalidated:
+                    raise e
+            else:
+                break
+
+        return nb_deleted
