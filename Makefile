@@ -1,5 +1,4 @@
 NAME := correlator
-CODEPATH := src/vigilo/corr
 USER := vigilo-correlator
 EPYDOC_PARSE := vigilo\.correlator
 
