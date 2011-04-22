@@ -1,6 +1,6 @@
 NAME := correlator
 CODEPATH := src/vigilo/corr
-USER := vigilo-metro
+USER := vigilo-correlator
 EPYDOC_PARSE := vigilo\.correlator
 
 all: build settings.ini
