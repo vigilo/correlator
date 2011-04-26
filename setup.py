@@ -40,6 +40,7 @@ setup(name='vigilo-correlator',
         long_description="The Vigilo correlation engine aggregates alerts "
                          "to reduce information overload and help point "
                          "out the cause of a problem.",
+        zip_safe=False, # pour pouvoir écrire le dropin.cache de twisted
         install_requires=[
             'setuptools',
             'lxml',
