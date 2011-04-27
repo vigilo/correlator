@@ -324,7 +324,6 @@ class RuleDispatcher(PubSubSender):
                 continue
             self.forwardMessage(xml)
 
-    @defer.inlineCallbacks
     def processMessage(self, xml):
         """
         Transfère un message XML sérialisé vers la file.
