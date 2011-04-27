@@ -506,7 +506,7 @@ class RuleDispatcher(PubSubSender):
             })
             return failure
 
-        def send_result_eb(failure):
+        def send_result_eb(failure, idxmpp, payload):
             LOGGER.error(_('Unable to store correlated alert for '
                             'message #%(id)s (%(payload)s)'), {
                 'id': idxmpp,
@@ -522,7 +522,7 @@ class RuleDispatcher(PubSubSender):
             # On publie sur le bus XMPP l'état de l'hôte
             # ou du service concerné par l'alerte courante.
             publish_state(self, info_dictionary)
-            self.tree_end.addCallback(sendResult, xml, info_dictionary)
+            return sendResult(result, xml, info_dictionary)
 
         # Gère les erreurs détectées à la fin du processus de corrélation,
         # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
