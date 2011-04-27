@@ -81,13 +81,19 @@ sed -i -e 's/^Twisted$/Twisted_Words/' $RPM_BUILD_ROOT%{_prefix}/lib*/python*/si
 
 %post
 %_post_service %{name}
-%{_libdir}/twisted-dropin-cache >/dev/null 2>&1 || :
+# Regenerer le dropin.cache
+twistd --help > /dev/null 2>&1
+chmod 644 %{python_sitelib}/twisted/plugins/dropin.cache 2>/dev/null
+exit 0
 
 %preun
 %_preun_service %{name}
 
 %postun
-%{_libdir}/twisted-dropin-cache >/dev/null 2>&1 || :
+# Regenerer le dropin.cache
+twistd --help > /dev/null 2>&1
+chmod 644 %{python_sitelib}/twisted/plugins/dropin.cache 2>/dev/null
+exit 0
 
 %clean
 rm -rf $RPM_BUILD_ROOT
