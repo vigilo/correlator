@@ -12,20 +12,12 @@ from twisted.application import service
 # ATTENTION: interdit d'importer le reactor ici, sinon les sous-process ampoule
 # quittent en erreur avec "reactor already installed"
 
-from vigilo.common.conf import settings
-settings.load_module('vigilo.correlator')
-
 from vigilo.common.logging import get_logger
 LOGGER = get_logger('vigilo.correlator')
 
 from vigilo.common.gettext import translate
 _ = translate('vigilo.correlator')
 
-# Configuration de l'accès à la base de données.
-from vigilo.models.configure import configure_db
-configure_db(settings['database'], 'sqlalchemy_')
-
-from vigilo.common.conf import setup_plugins_path
 from vigilo.connector import options
 
 
@@ -71,6 +63,14 @@ class CorrelatorServiceMaker(object):
 
         from twisted.internet import reactor
         from twisted.words.protocols.jabber.jid import JID
+
+        from vigilo.common.conf import settings
+        settings.load_module('vigilo.correlator')
+        # Configuration de l'accès à la base de données.
+        from vigilo.models.configure import configure_db
+        configure_db(settings['database'], 'sqlalchemy_')
+
+        from vigilo.common.conf import setup_plugins_path
         from vigilo.connector import client
         from vigilo.pubsub.checknode import VerificationNode
         from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
