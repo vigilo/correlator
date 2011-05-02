@@ -58,7 +58,7 @@ backup_table_to_bus = tobus
 [correlator]
 # URL de la base de données contenant
 # les contextes de corrélation.
-context_db_url = sqlite:///:memory:
+context_db_url = sqlite:///@LOCALSTATEDIR@/lib/vigilo/correlator/context.sqlite
 
 # Délai d'expiration par défaut des contextes.
 context_timeout = 60.
