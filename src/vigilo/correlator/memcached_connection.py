@@ -67,7 +67,8 @@ class CorrelationContext(DeclarativeBase):
 
 class MemcachedConnectionError(Exception):
     """Exception levée lorsque le serveur MemcacheD est inaccessible."""
-    pass
+    LOGGER.error(_('Unable to establish connection to '
+        'MemcacheD server. Using a SQLite database instead.'))
 
 class MemcachedConnection(object):
     """
