@@ -15,9 +15,14 @@ from datetime import datetime
 import time
 from twisted.internet import task
 
+from sqlalchemy.exc import OperationalError
+
 from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
+
+from vigilo.models.tables import CorrelationContext
+from vigilo.models.session import DBSession
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -26,44 +31,6 @@ __all__ = (
     'MemcachedConnectionError',
     'MemcachedConnection',
 )
-
-from sqlalchemy.engine import engine_from_config
-from vigilo.models.session import PrefixedTables
-from sqlalchemy.ext.declarative import declarative_base
-from vigilo.models.session import DeclarativeBase
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.exc import OperationalError
-
-from sqlalchemy import Column
-from sqlalchemy.types import Text, String, DateTime
-
-# Création de la seconde session pour la connexion
-# à la base de données qui gère les contextes de corrélation.
-DeclarativeBase = declarative_base(metaclass=PrefixedTables)
-metadata = DeclarativeBase.metadata
-DBSession = scoped_session(sessionmaker(autoflush=True, autocommit=True))
-engine = engine_from_config(settings['correlator'], prefix='context_db_')
-DBSession.configure(bind=engine)
-metadata.bind = DBSession.bind
-
-class CorrelationContext(DeclarativeBase):
-    __tablename__ = 'correlation_context'
-
-    key = Column(
-            String(256),
-            primary_key=True,
-            index=True,
-        )
-
-    value = Column(
-            Text,
-            nullable=False,
-        )
-
-    expiration_date = Column(
-            DateTime(timezone=False),
-            nullable=True,
-        )
 
 class MemcachedConnectionError(Exception):
     """Exception levée lorsque le serveur MemcacheD est inaccessible."""
@@ -99,9 +66,7 @@ class MemcachedConnection(object):
             # Construction de l'objet..
             cls.instance = object.__new__(cls)
             cls.instance.__connection_cache = None
-            cls.instance.__connection_db_metadata = metadata
             cls.instance.__connection_db_session = DBSession
-            metadata.create_all()
             cls.instance.__expiration = task.LoopingCall(
                 cls.instance.__remove_expired_contexts)
 
@@ -128,9 +93,6 @@ class MemcachedConnection(object):
         """
         if self.__connection_cache:
             self.__connection_cache.disconnect_all()
-        # @TODO: rendre ceci paramétrable ? on veut peut-être une persistance.
-        if self.__connection_db_metadata:
-            self.__connection_db_metadata.drop_all()
         self.__expiration.stop()
         self.__expiration_defer.cancel()
 
@@ -159,10 +121,6 @@ class MemcachedConnection(object):
             Cette méthode n'existe que pour faciliter le travail des
             tests unitaires de cette classe.
         """
-        # TODO: Comprendre pourquoi la méthode __del__ n'est pas appelée.
-        # En attendant on détruit explicitement les données de la BDD.
-        if cls.instance.__connection_db_metadata:
-            cls.instance.__connection_db_metadata.drop_all()
         del cls.instance
         cls.instance = None
 

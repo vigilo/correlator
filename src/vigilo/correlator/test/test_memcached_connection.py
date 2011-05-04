@@ -18,23 +18,27 @@ except ImportError:
     import pickle
 
 import memcache as mc
-from vigilo.correlator.memcached_connection import MemcachedConnection
+from utils import settings
 from utils import setup_mc, teardown_mc
+from utils import setup_db, teardown_db
+from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context
-
-from vigilo.common.conf import settings
 
 class TestMemcachedConnection(unittest.TestCase):
     """Test des méthodes de la classe 'MemcachedConnection'"""
 
+    def setUp(self):
+        super(TestMemcachedConnection, self).setUp()
+        setup_db()
+
     def tearDown(self):
         """Arrêt du serveur Memcached à la fin de chaque test."""
+        super(TestMemcachedConnection, self).tearDown()
         teardown_mc()
+        teardown_db()
 
     def test_singleton(self):
         """Unicité de la connexion au serveur MemcacheD."""
-
-        # On initialise le serveur Memcached.
         setup_mc()
 
         # On instancie deux fois la classe MemcachedConnection.
@@ -48,7 +52,6 @@ class TestMemcachedConnection(unittest.TestCase):
 
     def test_set(self):
         """Association d'une valeur à une clé"""
-
         # On initialise le nom de la clé et de la valeur associée
         key = "vigilo_test_set"
         value = "test_set"
@@ -125,10 +128,17 @@ class TestMemcachedConnection(unittest.TestCase):
         # On s'assure que la clé a bien été supprimée
         self.assertFalse(connection.get(key))
 
+class TestMemcachedWithoutAnyConnection(unittest.TestCase):
+    def tearDown(self):
+        super(TestMemcachedWithoutAnyConnection, self).tearDown()
+        teardown_db()
+
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_no_memcache(self):
         """Teste les contextes de corrélation en l'absence de memcached."""
+        setup_db()
+
         key = "vigilo_test_no_memcache"
         value = "test_no_memcache"
 
