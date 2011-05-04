@@ -5,7 +5,13 @@
 
 """Suite de tests des logs du corrélateur"""
 
-import unittest
+# ATTENTION: contrairement aux autres modules, ici il faut utiliser
+# twisted.trial, sinon les tests ne passent pas (pas trouvé pourquoi)
+from twisted.trial import unittest
+#import unittest
+#from nose.twistedtools import reactor, deferred
+from twisted.internet import defer
+
 from datetime import datetime
 from lxml import etree
 
@@ -82,6 +88,8 @@ class TestLogging(unittest.TestCase):
     Valide la satisfaction de l'exigence VIGILO_EXIG_VIGILO_COR_0040.
     """
 
+#    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def simulate_message_reception(self,
         new_state, host_name, service_name=None):
         """
@@ -122,9 +130,9 @@ class TestLogging(unittest.TestCase):
 
         # On ajoute les données nécessaires dans le contexte.
         ctx = Context(self.XMPP_id)
-        ctx.hostname = host_name
-        ctx.servicename = service_name
-        ctx.statename = new_state
+        yield ctx.set('hostname', host_name)
+        yield ctx.set('servicename', service_name)
+        yield ctx.set('statename', new_state)
 
         # On insère les données nécessaires dans la BDD:
         info_dictionary = {
@@ -136,7 +144,7 @@ class TestLogging(unittest.TestCase):
         }
 
         # - D'abord l'évènement ;
-        ctx.raw_event_id = insert_event(info_dictionary)
+        yield ctx.set('raw_event_id', insert_event(info_dictionary))
         # - Et ensuite l'état.
         insert_state(info_dictionary)
         DBSession.flush()
@@ -232,6 +240,8 @@ class TestLogging(unittest.TestCase):
         teardown_db()
         teardown_mc()
 
+#    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_syslog_and_correvent(self):
         """
         Syslog : création et mise à jour d'un événement corrélé.
@@ -278,7 +288,7 @@ class TestLogging(unittest.TestCase):
         # On recoit un message "CRITICAL" concernant lls1.
         LOGGER.debug(_("Received 'CRITICAL' message on lls1"))
         ctx = Context(self.XMPP_id + 1)
-        ctx.update_id = event_id
+        yield ctx.set('update_id', event_id)
         self.simulate_message_reception(u"CRITICAL", host_name, lls_name)
 
         event = DBSession.query(Event.idevent).one()

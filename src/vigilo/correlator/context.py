@@ -9,8 +9,9 @@ __all__ = ( 'Context', )
 
 from datetime import datetime
 
-from vigilo.common.conf import settings
+from twisted.internet import defer
 
+from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
@@ -63,24 +64,34 @@ class Context(object):
         self._timeout = timeout
 
     @property
+    @defer.inlineCallbacks
     def topology(self):
         """
         Récupère la topologie associée à ce contexte.
-        @rtype: L{vigilo.correlator.topology.Topology}.
+        @rtype: L{defer.Deferred}.
         """
-        topology = self._connection.get('vigilo:topology')
-        if not topology:
+        topology = yield defer.maybeDeferred(
+            self._connection.get,
+            'vigilo:topology'
+        )
+
+        if topology is None:
             topology = Topology()
-            self._connection.set('vigilo:topology', topology)
-            self._connection.set('vigilo:last_topology_update', datetime.now())
-        #LOGGER.debug(_(
-        #    'Topology retrieved:'
-        #    '\n\t- Nodes: %(nodes)s'
-        #    '\n\t- Dependencies: %(edges)s'), {
-        #        'nodes': topology.nodes(),
-        #        'edges': topology.edges(),
-        #    })
-        return topology
+            dl = defer.DeferredList([
+                defer.maybeDeferred(
+                    self._connection.set,
+                    'vigilo:topology',
+                    topology
+                ),
+                defer.maybeDeferred(
+                    self._connection.set,
+                    'vigilo:last_topology_update',
+                    datetime.now()
+                )
+            ])
+            cache = yield dl
+
+        yield defer.returnValue(topology)
 
     @property
     def last_topology_update(self):
@@ -88,9 +99,12 @@ class Context(object):
         Récupère la date de la dernière mise à jour de l'arbre topologique.
         @rtype: L{datetime}.
         """
-        return self._connection.get('vigilo:last_topology_update')
+        return defer.maybeDeferred(
+            self._connection.get,
+            'vigilo:last_topology_update'
+        )
 
-    def __getattr__(self, prop):
+    def get(self, prop):
         """
         Récupération de la valeur d'un des attributs du contexte.
 
@@ -100,12 +114,17 @@ class Context(object):
         @return: Valeur de l'attribut demandé.
         @rtype: C{mixed}
         """
-        if prop.startswith('_'):
+        # Les attributs pour lesquels il y a un getter
+        # sont retournés en utilisant le getter.
+        if prop in ('topology', 'last_topology_update'):
             return object.__getattribute__(self, prop)
-        return self._connection.get(
-            'vigilo:%s:%s' % (prop, self._id))
 
-    def __setattr__(self, prop, value):
+        return defer.maybeDeferred(
+            self._connection.get,
+            'vigilo:%s:%s' % (prop, self._id),
+        )
+
+    def set(self, prop, value):
         """
         Modification dynamique d'un des attributs du contexte.
 
@@ -116,13 +135,14 @@ class Context(object):
             être sérialisée à l'aide du module C{pickle} de Python.
         @type value: C{mixed}
         """
-        if prop.startswith('_'):
-            return object.__setattr__(self, prop, value)
-        return self._connection.set(
-            'vigilo:%s:%s' % (prop, self._id), value,
-            time=self._timeout)
+        return defer.maybeDeferred(
+            self._connection.set,
+            'vigilo:%s:%s' % (prop, self._id),
+            value,
+            time=self._timeout
+        )
 
-    def __delattr__(self, prop):
+    def delete(self, prop):
         """
         Suppression dynamique d'un attribut du contexte.
 
@@ -130,8 +150,7 @@ class Context(object):
             est autorisé, sauf ceux dont le nom commence par '_'.
         @type prop: C{str}
         """
-        if prop.startswith('_'):
-            return object.__delattr__(self, prop)
-        return self._connection.delete(
-            'vigilo:%s:%s' % (prop, self._id))
-
+        return defer.maybeDeferred(
+            self._connection.delete,
+            'vigilo:%s:%s' % (prop, self._id),
+        )

@@ -324,6 +324,7 @@ class RuleDispatcher(PubSubSender):
                 continue
             self.forwardMessage(xml)
 
+    @defer.inlineCallbacks
     def processMessage(self, xml):
         """
         Transfère un message XML sérialisé vers la file.
@@ -335,7 +336,6 @@ class RuleDispatcher(PubSubSender):
             le message n'a pas pu être traité (ex: message invalide).
         @rtype: C{twisted.internet.defer.Deferred} ou C{None}
         """
-
 
         def sendResult(result, xml, info_dictionary):
             """
@@ -426,22 +426,22 @@ class RuleDispatcher(PubSubSender):
             LOGGER.error(_("Error connecting to MemcacheD! Check its log "
                            "for more information"))
             return
-        ctx.hostname = info_dictionary["host"]
-        ctx.servicename = info_dictionary["service"]
-        ctx.statename = info_dictionary["state"]
+
+        yield ctx.set('hostname', info_dictionary["host"])
+        yield ctx.set('servicename', info_dictionary["service"])
+        yield ctx.set('statename', info_dictionary["state"])
 
         # On met à jour l'arbre topologique si nécessaire.
         transaction.begin()
         try:
-            check_topology(ctx.last_topology_update)
+            last_topology_update = yield ctx.last_topology_update
+            check_topology(last_topology_update)
         except:
             LOGGER.info(_("Error while retrieving the network's topology. "
                             "The message will be handled once more."))
             transaction.abort()
-            try:
-                return self.queue.append(xml)
-            except Exception, e:
-                print "@@ %r @@" % e
+            self.queue.append(xml)
+            return
         else:
             transaction.commit()
 
@@ -485,10 +485,10 @@ class RuleDispatcher(PubSubSender):
         else:
             transaction.commit()
 
-        ctx.previous_state = previous_state
+        yield ctx.set('previous_state', previous_state)
 
         if raw_event_id:
-            ctx.raw_event_id = raw_event_id
+            yield ctx.set('raw_event_id', raw_event_id)
 
         self._messages_sent += 1
 
@@ -535,7 +535,7 @@ class RuleDispatcher(PubSubSender):
 
         # On lance le processus de corrélation.
         tree_start.callback((idxmpp, payload))
-        return self.tree_end
+        yield defer.returnValue(self.tree_end)
 
     def connectionInitialized(self):
         """

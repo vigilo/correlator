@@ -5,21 +5,25 @@
 
 """Suite de tests pour la classe 'Api"""
 
-import unittest
+# ATTENTION: contrairement aux autres modules, ici il faut utiliser
+# twisted.trial, sinon les tests ne passent pas (pas trouvé pourquoi)
+from twisted.trial import unittest
+#import unittest
+#from nose.twistedtools import reactor, deferred
+from twisted.internet import defer
 
 import random
 import threading
 
 from datetime import datetime
 
+from utils import setup_mc, teardown_mc
+from utils import setup_db, teardown_db
+
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, LowLevelService, StateName, \
                                     Dependency, DependencyGroup
 from vigilo.correlator.topology import Topology
-
-from utils import setup_mc, teardown_mc
-from utils import setup_db, teardown_db
-
 from vigilo.correlator.context import Context
 
 class TestApiFunctions(unittest.TestCase):
@@ -41,6 +45,8 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(name)
         assert ctx
 
+#    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_context_topology(self):
         """Récupération de l'arbre topologique dans le contexte"""
 
@@ -108,7 +114,8 @@ class TestApiFunctions(unittest.TestCase):
 
         # On s'assure que la date de dernière mise à jour
         # de l'arbre topologique est bien nulle au départ.
-        self.assertEquals(ctx.last_topology_update, None)
+        last_update = yield ctx.get('last_topology_update')
+        self.assertEquals(last_update, None)
 
         # Instanciation de la topologie
         topology = Topology()
@@ -118,10 +125,12 @@ class TestApiFunctions(unittest.TestCase):
 
         # On vérifie que l'attribut 'topology' du
         # contexte renvoie bien une topologie similaire.
-        self.assertEquals(ctx.topology.nodes(), topology.nodes())
-        self.assertEquals(ctx.topology.edges(), topology.edges())
+        ctx_topology = yield ctx.topology
+        self.assertEquals(ctx_topology.nodes(), topology.nodes())
+        self.assertEquals(ctx_topology.edges(), topology.edges())
 
         # On s'assure que la date de la mise à jour de l'arbre
         # topologique renseignée dans le contexte est bien
         # postérieure à la date calculée précédemment.
-        self.assertTrue(ctx.last_topology_update > date)
+        last_update = yield ctx.last_topology_update
+        self.assertTrue(last_update > date)

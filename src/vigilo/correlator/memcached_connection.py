@@ -75,6 +75,7 @@ class MemcachedConnection(object):
     Classe gérant la connexion et les échanges avec
     le serveur MemcacheD. Hérite de la classe mc.
     """
+    # @TODO: utiliser t.p.m.MemCacheProtocol à la place de cette classe.
 
      # Attribut statique de classe
     instance = None
@@ -191,7 +192,7 @@ class MemcachedConnection(object):
             debug = False
 
         # Établissement de la connexion.
-        LOGGER.info(_(u"Establishing connection to MemcacheD server (%s)..."),
+        LOGGER.info(_("Establishing connection to MemcacheD server (%s)..."),
                     conn_str)
         self.__connection_cache = mc.Client([conn_str])
         self.__connection_cache.debug = debug
@@ -213,7 +214,7 @@ class MemcachedConnection(object):
         @rtype: C{int}
         """
 
-        LOGGER.debug(_(u"Trying to set value '%(value)s' for key '%(key)s'."), {
+        LOGGER.debug(_("Trying to set value '%(value)s' for key '%(key)s'."), {
                         'key': key,
                         'value': value,
                     })
@@ -266,7 +267,7 @@ class MemcachedConnection(object):
         @rtype: C{str} || None
         """
 
-        LOGGER.debug(_(u"Trying to get the value of the key '%(key)s'."), {
+        LOGGER.debug(_("Trying to get the value of the key '%(key)s'."), {
                             'key': key,
                         })
 
@@ -322,7 +323,7 @@ class MemcachedConnection(object):
         @rtype: C{int}
         """
 
-        LOGGER.debug(_(u"Trying to delete the key '%(key)s'."), {
+        LOGGER.debug(_("Trying to delete the key '%(key)s'."), {
                             'key': key,
                         })
 

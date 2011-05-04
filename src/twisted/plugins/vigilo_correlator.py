@@ -11,29 +11,34 @@ from twisted.application import service
 
 # ATTENTION: interdit d'importer le reactor ici, sinon les sous-process ampoule
 # quittent en erreur avec "reactor already installed"
-
-from vigilo.common.logging import get_logger
-LOGGER = get_logger('vigilo.correlator')
-
 from vigilo.common.gettext import translate
 _ = translate('vigilo.correlator')
 
-from vigilo.connector import options
+from vigilo.connector import options as base_options
 
 
 def log_debug_info(*args):
-    LOGGER.debug('pid: %d', os.getpid())
-    LOGGER.debug('threads: %s', threading.enumerate())
+    from vigilo.common.logging import get_logger
+    logger = get_logger('vigilo.correlator')
+    logger.debug('pid: %d', os.getpid())
+    logger.debug('threads: %s', threading.enumerate())
 
 # Definit une routine pour le traitement
 # du signal SIGHUP (rechargement).
 def sighup_handler(*args):
     """Delete the topology associated with this context."""
+    from vigilo.correlator.memcached_connection import MemcachedConnection
+    from vigilo.common.logging import get_logger
+    logger = get_logger('vigilo.correlator')
+
     conn = MemcachedConnection()
     conn.delete('vigilo:topology')
-    LOGGER.info(_(u"The topology has been reloaded."))
+    logger.info(_(u"The topology has been reloaded."))
 
 def set_signal_handlers():
+    from vigilo.common.logging import get_logger
+    logger = get_logger('vigilo.correlator')
+
     # Mise en place des routines de traitement des signaux.
     try:
         # Affiche des informations pour chaque processus
@@ -45,7 +50,7 @@ def set_signal_handlers():
         # (utilisé par les scripts d'ini lors d'un reload).
         signal.signal(signal.SIGHUP, sighup_handler)
     except ValueError:
-        LOGGER.error(_(u'Could not set signal handlers. The correlator '
+        logger.error(_(u'Could not set signal handlers. The correlator '
                         'may not be able to shutdown cleanly'))
 
 
@@ -56,19 +61,25 @@ class CorrelatorServiceMaker(object):
     implements(service.IServiceMaker, IPlugin)
     tapname = "vigilo-correlator"
     description = "Vigilo correlator"
-    options = options.Options
+    options = base_options.Options
 
     def makeService(self, options):
         """Crée un service client du bus XMPP"""
-
         from twisted.internet import reactor
         from twisted.words.protocols.jabber.jid import JID
-
         from vigilo.common.conf import settings
-        settings.load_module('vigilo.correlator')
+
+        if options["config"] is not None:
+            settings.load_file(options["config"])
+        else:
+            settings.load_module('vigilo.correlator')
+
         # Configuration de l'accès à la base de données.
         from vigilo.models.configure import configure_db
         configure_db(settings['database'], 'sqlalchemy_')
+
+        from vigilo.common.logging import get_logger
+        LOGGER = get_logger('vigilo.correlator')
 
         from vigilo.common.conf import setup_plugins_path
         from vigilo.connector import client

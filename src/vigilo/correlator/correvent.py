@@ -13,6 +13,7 @@ import logging
 
 from sqlalchemy.orm.exc import NoResultFound
 from lxml import etree
+from twisted.internet import defer
 
 from vigilo.pubsub.xml import namespaced_tag, NS_EVENT
 from vigilo.correlator.context import Context
@@ -42,6 +43,7 @@ DATA_LOG_IMPACTED_HLS = 5
 DATA_LOG_PRIORITY = 6
 DATA_LOG_MESSAGE = 7
 
+@defer.inlineCallbacks
 def make_correvent(forwarder, dom, idnt):
     """
     Récupère dans le contexte les informations transmises par
@@ -55,7 +57,7 @@ def make_correvent(forwarder, dom, idnt):
     DBSession.flush()
 
     ctx = Context(idnt)
-    raw_event_id = ctx.raw_event_id
+    raw_event_id = yield ctx.get('raw_event_id')
 
     # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :
     # - l'alerte brute portait sur un HLS; dans ce cas il ne s'agit pas
@@ -70,9 +72,9 @@ def make_correvent(forwarder, dom, idnt):
     if raw_event_id is None:
         return
 
-    state = ctx.statename
-    hostname = ctx.hostname
-    servicename = ctx.servicename
+    state = yield ctx.get('statename')
+    hostname = yield ctx.get('hostname')
+    servicename = yield ctx.get('servicename')
     item_id = SupItem.get_supitem(hostname, servicename)
 
     update_id = DBSession.query(
@@ -135,9 +137,9 @@ def make_correvent(forwarder, dom, idnt):
         # spécifiés dans le contexte par la règle de corrélation
         # topologique des services de bas niveau (lls_dep), alors
         # on rattachera également les alertes correspondant à ces agrégats.
-        predecessing_aggregates_id = ctx.predecessors_aggregates
+        predecessing_aggregates_id = yield ctx.get('predecessors_aggregates')
         if predecessing_aggregates_id:
-            succeeding_aggregates_id = ctx.successors_aggregates
+            succeeding_aggregates_id = yield ctx.get('successors_aggregates')
             dependant_event_list = []
             is_built_dependant_event_list = False
 
@@ -199,7 +201,7 @@ def make_correvent(forwarder, dom, idnt):
         correvent.idcause = raw_event_id
 
     # Priorité de l'incident.
-    priority = ctx.priority
+    priority = yield ctx.get('priority')
     if priority is None:
         priority = settings['correlator'].as_int('unknown_priority_value')
 
@@ -216,14 +218,14 @@ def make_correvent(forwarder, dom, idnt):
     correvent.priority = priority
 
     # Nombre d'occurrences du problème.
-    occurrences = ctx.occurrences_count
+    occurrences = yield ctx.get('occurrences_count')
     if not occurrences is None:
         occurrence_tag = etree.SubElement(dom, "occurrence")
         occurrence_tag.text = str(occurrences)
         correvent.occurrence = occurrences
 
     # Stockage des services de haut niveau impactés.
-    impacted_hls = ctx.impacted_hls
+    impacted_hls = yield ctx.get('impacted_hls')
     highlevel_tag = etree.SubElement(dom, "highlevel")
     if impacted_hls:
         # On crée une liste de balises <service> sous la balise
@@ -292,7 +294,7 @@ def make_correvent(forwarder, dom, idnt):
     # On génère le message à envoyer à syslog.
     # Ceci permet de satisfaire l'exigence VIGILO_EXIG_VIGILO_COR_0040.
     data_log[DATA_LOG_ID] = idcorrevent
-    data_log[DATA_LOG_STATE] = ctx.statename
+    data_log[DATA_LOG_STATE] = yield ctx.get('statename')
     data_log[DATA_LOG_PRIORITY] = priority
     data_log[DATA_LOG_HOST] = hostname
     data_log[DATA_LOG_SERVICE] = servicename
@@ -328,7 +330,7 @@ def make_correvent(forwarder, dom, idnt):
     # spécifiés dans le contexte par la règle de corrélation
     # topologique des services de bas niveau (lls_dep), alors
     # on rattache ces agrégats à l'aggrégat nouvellement créé.
-    aggregates_id = ctx.successors_aggregates
+    aggregates_id = yield ctx.get('successors_aggregates')
     if aggregates_id:
         event_id_list = []
         for aggregate_id in aggregates_id:
