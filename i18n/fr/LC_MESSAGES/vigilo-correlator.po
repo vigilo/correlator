@@ -197,7 +197,7 @@ msgstr "%(nb_deleted)d contextes de corrélation obsolètes ont été supprimés
 #: src/vigilo/correlator/memcached_connection.py:194
 #, python-format
 msgid "Establishing connection to MemcacheD server (%s)..."
-msgstr "Connection en cours au serveur MemcacheD (%s) ..."
+msgstr "Connexion en cours au serveur MemcacheD (%s) ..."
 
 #: src/vigilo/correlator/memcached_connection.py:216
 #, python-format
