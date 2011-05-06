@@ -40,8 +40,7 @@ from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, \
                                     NS_TICKET#, NS_DOWNTIME
 from vigilo.correlator.actors import rule_runner
 from vigilo.correlator.registry import get_registry
-from vigilo.correlator.memcached_connection import MemcachedConnection, \
-                                                    MemcachedConnectionError
+from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context
 #from vigilo.correlator.handle_downtime import handle_downtime
 from vigilo.correlator.handle_ticket import handle_ticket
@@ -420,13 +419,7 @@ class RuleDispatcher(PubSubSender):
 
         # On initialise le contexte et on y insère
         # les informations de l'alerte traitée.
-        try:
-            ctx = Context(idxmpp)
-        except MemcachedConnectionError:
-            LOGGER.error(_("Error connecting to MemcacheD! Check its log "
-                           "for more information"))
-            return
-
+        ctx = Context(idxmpp)
         yield ctx.set('hostname', info_dictionary["host"])
         yield ctx.set('servicename', info_dictionary["service"])
         yield ctx.set('statename', info_dictionary["state"])

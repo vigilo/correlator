@@ -28,14 +28,9 @@ LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
 __all__ = (
-    'MemcachedConnectionError',
     'MemcachedConnection',
 )
 
-class MemcachedConnectionError(Exception):
-    """Exception levée lorsque le serveur MemcacheD est inaccessible."""
-    LOGGER.error(_('Unable to establish connection to '
-        'MemcacheD server. Using a SQLite database instead.').decode('utf-8'))
 
 class MemcachedConnection(object):
     """
@@ -165,9 +160,6 @@ class MemcachedConnection(object):
         @param value: La valeur à enregistrer.
         @type value: C{str}
 
-        @raise MemcachedConnectionError: Exception levée
-        lorsque la connexion au serveur MemcacheD est inopérante.
-
         @return: Un entier non nul si l'enregistrement a réussi.
         @rtype: C{int}
         """
@@ -217,9 +209,6 @@ class MemcachedConnection(object):
 
         @param key: La clé dans laquelle enregistrer la valeur.
         @type key: C{str}
-
-        @raise MemcachedConnectionError: Exception levée
-        lorsque la connexion au serveur MemcacheD est inopérante.
 
         @return: La valeur associée à la clé 'key', ou None.
         @rtype: C{str} || None
@@ -273,9 +262,6 @@ class MemcachedConnection(object):
 
         @param key: La clé à supprimer.
         @type key: C{str}
-
-        @raise MemcachedConnectionError: Exception levée
-        lorsque la connexion au serveur MemcacheD est inopérante.
 
         @return: Un entier non nul si la suppression a réussi.
         @rtype: C{int}
