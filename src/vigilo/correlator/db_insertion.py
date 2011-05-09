@@ -11,6 +11,8 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.exc import InvalidRequestError, IntegrityError
 
+from datetime import datetime
+
 from vigilo.common.logging import get_logger
 from vigilo.models.session import DBSession
 from vigilo.models.tables import StateName, State, HLSHistory, SupItem
@@ -173,7 +175,9 @@ def insert_hls_history(info_dictionary):
 
     history = HLSHistory()
     history.idhls = item_id
-    history.timestamp = info_dictionary['timestamp']
+    # On enregistre l'heure à laquelle le message a
+    # été traité plutôt que le timestamp du message.
+    history.timestamp = datetime.now()
     history.idstatename = StateName.statename_to_value(
                             info_dictionary['state'])
     try:
