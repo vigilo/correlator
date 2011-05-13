@@ -86,7 +86,7 @@ class CorrelatorServiceMaker(object):
         from vigilo.pubsub.checknode import VerificationNode
         from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
         from vigilo.correlator.memcached_connection import \
-                MemcachedConnection, MemcachedConnectionError
+                MemcachedConnection
 
         # Enregistre les règles de corrélation dans le registre.
         # À LAISSER ABSOLUMENT.
