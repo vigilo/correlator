@@ -82,7 +82,12 @@ nagios_hls_host = High-Level-Services
 
 # Délai maximum d'exécution pour
 # chaque règle de corrélation.
-rules_timeout = 2
+#
+# BUG: l'utilisation d'un timeout pose des problèmes
+#      pour le moment. Il est donc conseillé de laisser
+#      la valeur 0 (qui a pour effet de désactiver le
+#      timeout) [#51].
+rules_timeout = 0
 
 # Niveau de débogage pour l'envoi des événements
 # corrélés aux journaux système.
