@@ -23,9 +23,7 @@ _ = translate(__name__)
 
 class Context(object):
     """
-    Un contexte de corrélation pouvant recevoir des attributs plus ou moins
-    arbitraires. Les attributs dont le nom commencent par '_' sont réservés
-    à un usage strictement interne.
+    Un contexte de corrélation pouvant recevoir des attributs arbitraires.
 
     Un certain nombre d'attributs sont prédéfinis et utilisés par le corrélateur
     pour alimenter la base de données.
@@ -47,6 +45,7 @@ class Context(object):
             niveau impactés par l'événement (C{list} of C{int}).
         -   occurrences_count : nombre d'occurrences de l'alerte (C{int}).
         -   priority : priorité de l'événement corrélé (C{int}).
+        -   no_alert : empêche la génération d'une alerte corrélée.
     """
 
     def __init__(self, idxmpp, timeout=None):

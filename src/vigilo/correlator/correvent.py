@@ -75,6 +75,20 @@ def make_correvent(forwarder, dom, idnt):
     state = yield ctx.get('statename')
     hostname = yield ctx.get('hostname')
     servicename = yield ctx.get('servicename')
+
+    # Si une règle ou un callback demande explicitement qu'aucune
+    # alerte ne soit générée pour cet événement, on lui obéit ici.
+    stop = yield ctx.get('no_alert')
+    if stop:
+        LOGGER.info(_(
+            'Ignoring event #%(idevent)d on (%(host)r, %(service)r) '
+            'as requested by the correlation rules') % {
+                'idevent': idnt,
+                'host': hostname,
+                'service': servicename,
+        })
+        return
+
     item_id = SupItem.get_supitem(hostname, servicename)
 
     update_id = DBSession.query(
@@ -242,6 +256,7 @@ def make_correvent(forwarder, dom, idnt):
                 service_tag = etree.SubElement(highlevel_tag, "service")
                 service_tag.text = service.servicename
                 data_log[DATA_LOG_IMPACTED_HLS].append(service.servicename)
+
     # Détermine le timestamp de l'événement.
     timestamp = dom.findtext(namespaced_tag(NS_EVENT, "timestamp"))
     try:

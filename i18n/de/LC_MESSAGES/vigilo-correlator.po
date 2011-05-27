@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-11-19 12:29+0100\n"
-"PO-Revision-Date: 2011-05-06 15:43+0200\n"
+"PO-Revision-Date: 2011-05-27 14:40+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -30,24 +30,31 @@ msgstr ""
 "Signalhandler konnte nicht eingestellt werden. Es kann sein, dass der "
 "Korrelator nicht sauber herunterfahren kann"
 
-#: src/vigilo/correlator/correvent.py:116
+#: src/vigilo/correlator/correvent.py:83
+#, python-format
+msgid ""
+"Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
+"the correlation rules"
+msgstr ""
+
+#: src/vigilo/correlator/correvent.py:130
 #, python-format
 msgid "Updating existing correlated event (%r)"
 msgstr "Bestehendes korreliertes Ereignis (%r) aktualisieren"
 
-#: src/vigilo/correlator/correvent.py:119
+#: src/vigilo/correlator/correvent.py:133
 #, python-format
 msgid "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr ""
 "Verweis auf ein nicht vorhandenes korreliertes Ereignis (%r), wird als "
 "neu hinzugefügt"
 
-#: src/vigilo/correlator/correvent.py:129
+#: src/vigilo/correlator/correvent.py:143
 #, python-format
 msgid "Raw event ignored. Reason: status = %r"
 msgstr "Rohereignis ignoriert. Ursache: Status = %r"
 
-#: src/vigilo/correlator/correvent.py:155
+#: src/vigilo/correlator/correvent.py:169
 #, python-format
 msgid ""
 "Got a reference to a nonexistent correlated event (%r), skipping this "
@@ -56,20 +63,20 @@ msgstr ""
 "Verweis auf ein nicht vorhandenes korreliertes Ereignis (%r), Aggregat "
 "wird übersprungen"
 
-#: src/vigilo/correlator/correvent.py:198
+#: src/vigilo/correlator/correvent.py:212
 msgid "Creating new correlated event"
 msgstr "Neues korreliertes Ereignis wird erstellt"
 
-#: src/vigilo/correlator/correvent.py:313
+#: src/vigilo/correlator/correvent.py:328
 msgid "Sending correlated event to syslog"
 msgstr "Korreliertes Ereignis wird an Syslog gesendet"
 
-#: src/vigilo/correlator/db_insertion.py:47
+#: src/vigilo/correlator/db_insertion.py:49
 #, python-format
 msgid "Received request to add an event on HLS \"%s\""
 msgstr "Anforderung zur Hinzufügung eines Ereignisses auf HLS \"%s\" erhalten"
 
-#: src/vigilo/correlator/db_insertion.py:55
+#: src/vigilo/correlator/db_insertion.py:57
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -78,12 +85,12 @@ msgstr ""
 "Verweis auf ein nicht konfiguriertes Element (%(host)r, %(service)r) "
 "erhalten, Ereignis übersprungen"
 
-#: src/vigilo/correlator/db_insertion.py:87
+#: src/vigilo/correlator/db_insertion.py:89
 #, python-format
 msgid "Updating event %r"
 msgstr "Ereignis %r wird aktualisiert"
 
-#: src/vigilo/correlator/db_insertion.py:93
+#: src/vigilo/correlator/db_insertion.py:95
 #, python-format
 msgid ""
 "Ignoring request to create a new event with state \"%s\" (nothing "
@@ -92,29 +99,29 @@ msgstr ""
 "Anforderung zur Erstellung eines neuen Ereignisse mit Status \"%s\" wird "
 "ignoriert (hier nicht bedenklich)"
 
-#: src/vigilo/correlator/db_insertion.py:100
+#: src/vigilo/correlator/db_insertion.py:102
 msgid "Creating new event"
 msgstr "Neues Ereignis wird erstellt"
 
-#: src/vigilo/correlator/db_insertion.py:103
+#: src/vigilo/correlator/db_insertion.py:105
 msgid "Multiple matching events found, skipping."
 msgstr "Mehrere entsprechende Ereignisse gefunden, überspringen."
 
-#: src/vigilo/correlator/db_insertion.py:148
-#: src/vigilo/correlator/db_insertion.py:183
-#: src/vigilo/correlator/db_insertion.py:227
-#: src/vigilo/correlator/db_insertion.py:247
+#: src/vigilo/correlator/db_insertion.py:150
+#: src/vigilo/correlator/db_insertion.py:187
+#: src/vigilo/correlator/db_insertion.py:231
+#: src/vigilo/correlator/db_insertion.py:251
 msgid "Got exception"
 msgstr "Ausnahme vorhanden"
 
-#: src/vigilo/correlator/db_insertion.py:168
+#: src/vigilo/correlator/db_insertion.py:170
 #, python-format
 msgid "Got a reference to a non configured high-level service (%(service)r)"
 msgstr ""
 "Verweis auf einen nicht konfigurierten High-level-Service (%(service)r) "
 "vorhanden"
 
-#: src/vigilo/correlator/db_insertion.py:201
+#: src/vigilo/correlator/db_insertion.py:205
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -123,12 +130,12 @@ msgstr ""
 "Verweis auf ein nicht konfiguriertes Element (%(host)r, %(service)r) "
 "vorhanden, Status überspringen"
 
-#: src/vigilo/correlator/db_insertion.py:264
+#: src/vigilo/correlator/db_insertion.py:268
 #, python-format
 msgid "Merging aggregate #%(src)d with aggregate #%(dest)d"
 msgstr "Aggregat #%(src)d und Aggregat #%(dest)d werden zusammengeführt"
 
-#: src/vigilo/correlator/db_insertion.py:275
+#: src/vigilo/correlator/db_insertion.py:279
 msgid ""
 "merge_aggregates: Got a reference to a nonexistent source aggregate, "
 "aborting"
@@ -136,7 +143,7 @@ msgstr ""
 "merge_aggregates: Verweis auf ein nicht existierendes Quell-Aggregat "
 "vorhanden, abbrechen"
 
-#: src/vigilo/correlator/db_insertion.py:285
+#: src/vigilo/correlator/db_insertion.py:289
 #, python-format
 msgid ""
 "merge_aggregates: Got a reference to a nonexistent destination aggregate "
@@ -144,6 +151,10 @@ msgid ""
 msgstr ""
 "merge_aggregates: Verweis auf ein nicht existierendes Ziel-Aggregat %r "
 "vorhanden, abbrechen"
+
+#: src/vigilo/correlator/db_wrapper.py:58
+msgid "The connection with the database was invalidated. Reconnecting..."
+msgstr ""
 
 #: src/vigilo/correlator/handle_ticket.py:35
 #, python-format
