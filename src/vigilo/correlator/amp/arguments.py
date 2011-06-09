@@ -10,15 +10,3 @@ class Function(amp.Argument):
     def toString(self, inObject):
         return "%s:%s" % (inObject.__module__, inObject.__name__)
 
-class SendToBus(amp.Command):
-    arguments = [
-        ('item', amp.Unicode()),
-    ]
-    requiresAnswer = False
-
-class RegisterCallback(amp.Command):
-    arguments = [
-        ('fn', Function()),
-        ('idnt', amp.Unicode()),
-    ]
-    requiresAnswer = False

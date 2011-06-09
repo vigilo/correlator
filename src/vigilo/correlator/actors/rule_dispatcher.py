@@ -21,7 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError
 from twisted.internet import defer, reactor
 from twisted.internet.error import ProcessTerminated
 from twisted.protocols import amp
-from ampoule import pool, main
+from ampoule import pool
 from wokkel.generic import parseXml
 from lxml import etree
 
@@ -37,18 +37,17 @@ from vigilo.models.tables import Change
 from vigilo.models.session import DBSession
 
 from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, \
-                                    NS_TICKET#, NS_DOWNTIME
-from vigilo.correlator.actors import rule_runner
-from vigilo.correlator.registry import get_registry
+                                    NS_TICKET
+from vigilo.correlator.actors import rule_runner, executor
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context
-#from vigilo.correlator.handle_downtime import handle_downtime
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                             insert_hls_history
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
-from vigilo.correlator.amp import SendToBus, RegisterCallback
+from vigilo.correlator.amp.correlator import Correlator
+from vigilo.correlator.amp.starter import ProcessStarter
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -64,9 +63,6 @@ def extract_information(payload):
                        "state": None,
                        "timestamp": None,
                        "message": None,
-#                       "type": None,
-#                       "author": None,
-#                       "comment": None,
                        "impacted_HLS": None,
                        "ticket_id": None,
                        "acknowledgement_status": None,}
@@ -126,45 +122,6 @@ def check_topology(last_topology_update):
         conn.delete('vigilo:topology')
         LOGGER.info(_(u"Topology has been reloaded."))
 
-class ProcessStarter(main.ProcessStarter):
-    def __init__(self, rule_dispatcher, *args, **kwargs):
-        self.rule_dispatcher = rule_dispatcher
-        super(ProcessStarter, self).__init__(*args, **kwargs)
-
-    def startPythonProcess(self, prot, *args):
-        prot.amp.rule_dispatcher = self.rule_dispatcher
-        return super(ProcessStarter, self).startPythonProcess(prot, *args)
-
-class Correlator(amp.AMP):
-    def __init__(self):
-        super(Correlator, self).__init__()
-
-    @SendToBus.responder
-    def send_to_bus(self, item):
-        LOGGER.debug(_('Sending this payload to the XMPP bus: %r'), item)
-        self.rule_dispatcher.sendItem(item)
-        return {}
-
-    @RegisterCallback.responder
-    def register_callback(self, fn, idnt):
-        LOGGER.debug(_('Registering post-correlation callback function '
-                        '"%(fn)s" for alert with ID %(id)s'), {
-                            'fn': fn,
-                            'id': idnt,
-                        })
-
-        def callback_wrapper(result):
-            try:
-                transaction.begin()
-                res = fn(result, self.rule_dispatcher, idnt)
-            except:
-                transaction.abort()
-            else:
-                transaction.commit()
-
-        self.rule_dispatcher.tree_end.addCallback(callback_wrapper)
-        return {}
-
 class RuleDispatcher(PubSubSender):
     """
     Cette classe corrèle les messages reçus depuis le bus XMPP
@@ -200,102 +157,13 @@ class RuleDispatcher(PubSubSender):
             ampChildArgs=(sys.argv[0], ),
             starter=ProcessStarter(self),
         )
+        self.__executor = executor.Executor(self)
 
-        ## Prépare les schémas de validation XSD.
-        #self.schema = {}
-        #try:
-        #    validate = settings['correlator'].as_bool('validate_messages')
-        #except KeyError:
-        #    validate = False
-
-        #if validate:
-        #    catalog_fname = pkg_resources.resource_filename(
-        #            'vigilo.pubsub', 'data/catalog.xml')
-        #    # We override whatever this was set to.
-        #    os.environ['XML_CATALOG_FILES'] = catalog_fname
-
-        #    file_mapping = {
-        #        namespaced_tag(NS_EVENT, 'events'): 'data/schemas/event1.xsd',
-        #    }
-
-        #    for tag, filename in file_mapping:
-        #        schema_file = pkg_resources.resource_stream(
-        #                'vigilo.pubsub', filename)
-        #        self.schema[tag] = etree.XMLSchema(file=schema_file)
-
-    def __build_execution_tree(self):
-        d = defer.Deferred()
-        cache = {}
-
-        rules_graph = get_registry().rules.rules_graph
-        subdeferreds = [
-            self.__build_sub_execution_tree(cache, d, rules_graph, r)
-            for r in rules_graph.nodes_iter()
-            if not rules_graph.in_degree(r)
-        ]
-        # La corrélation sur l'alerte n'échoue que si TOUTES les règles
-        # de corrélation ont échoué. Elle réussit lorsque TOUTES les règles
-        # ont été exécutées.
-        end = defer.DeferredList(
-            subdeferreds,
-            fireOnOneCallback=0,
-            fireOnOneErrback=0,
-        )
-        return (d, end)
-
-    def __build_sub_execution_tree(self, cache, trigger, rules_graph, rule):
-        if cache.has_key(rule):
-            return cache[rule]
-
-        dependencies = [
-            self.__build_sub_execution_tree(cache, trigger, rules_graph, r[1])
-            for r in rules_graph.out_edges_iter(rule)
-        ]
-
-        if not dependencies:
-            dependencies = [trigger]
-
-        def rule_failure(failure, rule_name):
-            if failure.check(ProcessTerminated):
-                LOGGER.warning(_('Rule %(rule_name)s timed out'), {
-                    'rule_name': rule_name
-                })
-            return failure
-
-        # L'exécution de la règle échoue si au moins une de ses dépendances
-        # n'a pas pu être exécutée. À l'inverse, elle n'est exécutée que
-        # lorsque TOUTES ses dépendances ont été exécutées.
-        dl = defer.DeferredList(
-            dependencies,
-            fireOnOneCallback=0,
-            fireOnOneErrback=1,
-        )
-        dl.addCallback(self.__do_work, rule)
-        dl.addErrback(rule_failure, rule)
-        cache[rule] = dl
-        return dl
-
-    def __do_work(self, result, rule_name):
-        # result est une liste de tuples (1) de tuples (2) :
-        # - le tuple (1) est composé d'un booléen indiquant
-        #   si le deferred s'est exécuté (toujours True ici
-        #   car fireOnOneCallback vaut 0).
-        # - le tuple (2) contient l'identifiant XMPP et le XML.
-        idxmpp, xml = result[0][1]
-
-        d = defer.Deferred()
-
-        def cb(result, idxmpp, xml):
-            d.callback((idxmpp, xml))
-
-        def eb(failure, rule_name, *args):
-            d.errback(failure)
-
-        work = self.rrp.doWork(rule_runner.RuleCommand,
-            rule_name=rule_name, idxmpp=idxmpp, xml=xml)
-        work.addCallback(cb, idxmpp, xml)
-        work.addErrback(eb, rule_name)
-        return d
+    def doWork(self, *args, **kwargs):
+        """
+        Délègue le travail aux processus dédiés à la corrélation.
+        """
+        return self.rrp.doWork(*args, **kwargs)
 
     def itemsReceived(self, event):
         """
@@ -336,42 +204,6 @@ class RuleDispatcher(PubSubSender):
         @rtype: C{twisted.internet.defer.Deferred} ou C{None}
         """
 
-        def sendResult(result, xml, info_dictionary):
-            """
-            Traite le résultat de l'exécution de TOUTES les règles
-            de corrélation.
-
-            @param result: Résultat de la corrélation (transmis
-                automatiquement par Twisted, vaut toujours None
-                chez nous).
-            @type result: C{None}
-            @param xml: Message XML sérialisé traité par la corrélation.
-            @type xml: C{unicode}
-            @param info_dictionary: Informations extraites du message XML.
-            @param info_dictionary: C{dict}
-            """
-            dom = etree.fromstring(xml)
-            idnt = dom.get('id')
-
-            # Pour les services de haut niveau, on s'arrête ici,
-            # on NE DOIT PAS générer d'événement corrélé.
-            if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
-                return
-
-            dom = dom[0]
-            transaction.begin()
-            try:
-                make_correvent(self, dom, idnt)
-            except SQLAlchemyError:
-                LOGGER.info(_("Error while saving the correlated event. "
-                                "The message will be handled once more."))
-                transaction.abort()
-                self.queue.append(xml)
-            else:
-                transaction.commit()
-
-
-        #LOGGER.debug(_(u'Spawning for payload: %s'), xml)
         dom = etree.fromstring(xml)
 
         # Extraction de l'id XMPP.
@@ -381,27 +213,8 @@ class RuleDispatcher(PubSubSender):
             LOGGER.error(_(u"Received invalid XMPP item ID (None)"))
             return
 
-        #-#if self.schema.get(dom[0].tag) is not None:
-        #-#    # Validation before dispatching.
-        #-#    # This breaks the policy of not doing computing
-        #-#    # in the main process, but this must be computed once.
-        #-#    try:
-        #-#        self.schema[dom[0].tag].assertValid(dom[0])
-        #-#    except etree.DocumentInvalid, e:
-        #-#        LOGGER.error(_(u"Validation failure: %s"), e.message)
-        #-#        return
-
         # Extraction des informations du message
         info_dictionary = extract_information(dom[0])
-
-#        # S'il s'agit d'un message concernant une mise en silence :
-#        if dom[0].tag == namespaced_tag(NS_DOWNTIME, 'downtime'):
-#            # On insère les informations la concernant dans la BDD ;
-#            handle_downtime(info_dictionary)
-#            transaction.commit()
-#            transaction.begin()
-#            # Et on passe au message suivant.
-#            return
 
         # S'il s'agit d'un message concernant un ticket d'incident :
         if dom[0].tag == namespaced_tag(NS_TICKET, 'ticket'):
@@ -425,58 +238,37 @@ class RuleDispatcher(PubSubSender):
         yield ctx.set('statename', info_dictionary["state"])
 
         # On met à jour l'arbre topologique si nécessaire.
-        transaction.begin()
-        try:
+        def handle_topology(ctx):
             last_topology_update = yield ctx.last_topology_update
             check_topology(last_topology_update)
-        except:
-            LOGGER.info(_("Error while retrieving the network's topology. "
-                            "The message will be handled once more."))
-            transaction.abort()
-            self.queue.append(xml)
-            return
-        else:
-            transaction.commit()
+
+        self.__do_in_transaction(
+            _("Error while retrieving the network's topology"),
+            xml, Exception,
+            handle_topology, ctx,
+        )
 
         # On insère le message dans la BDD, sauf s'il concerne un HLS.
         if not info_dictionary["host"]:
             raw_event_id = None
-            transaction.begin()
-            try:
-                insert_hls_history(info_dictionary)
-            except SQLAlchemyError:
-                LOGGER.info(_("Error while adding an entry in the HLS history. "
-                                "The message will be handled once more."))
-                transaction.abort()
-                self.queue.append(xml)
-                return
-            else:
-                transaction.commit()
+            self.__do_in_transaction(
+                _("Error while adding an entry in the HLS history"),
+                xml, SQLAlchemyError,
+                insert_hls_history, info_dictionary
+            )
         else:
-            transaction.begin()
-            try:
-                raw_event_id = insert_event(info_dictionary)
-            except SQLAlchemyError:
-                LOGGER.info(_("Error while adding an entry in the history. "
-                                "The message will be handled once more."))
-                transaction.abort()
-                self.queue.append(xml)
-                return
-            else:
-                transaction.commit()
+            raw_event_id = self.__do_in_transaction(
+                _("Error while adding an entry in the history"),
+                xml, SQLAlchemyError,
+                insert_event, info_dictionary
+            )
 
         # On insère l'état dans la BDD
-        transaction.begin()
-        try:
-            previous_state = insert_state(info_dictionary)
-        except SQLAlchemyError:
-            LOGGER.info(_("Error while saving state. "
-                        "The message will be handled once more."))
-            transaction.abort()
-            self.queue.append(xml)
-            return
-        else:
-            transaction.commit()
+        previous_state = self.__do_in_transaction(
+            _("Error while saving state"),
+            xml, SQLAlchemyError,
+            insert_state, info_dictionary
+        )
 
         yield ctx.set('previous_state', previous_state)
 
@@ -489,42 +281,16 @@ class RuleDispatcher(PubSubSender):
         # du traitement (code à exécuter en sortie) et on déclenche
         # l'exécution des règles de corrélation.
         payload = etree.tostring(dom[0])
-        tree_start, self.tree_end = self.__build_execution_tree()
-
-        def correlation_eb(failure, idxmpp, payload):
-            LOGGER.error(_('Correlation failed for '
-                            'message #%(id)s (%(payload)s)'), {
-                'id': idxmpp,
-                'payload': payload,
-            })
-            return failure
-
-        def send_result_eb(failure, idxmpp, payload):
-            LOGGER.error(_('Unable to store correlated alert for '
-                            'message #%(id)s (%(payload)s)'), {
-                'id': idxmpp,
-                'payload': payload,
-            })
-
-        def prepareToSendResult(result, xml, info_dictionary):
-            """
-            Permet de ne réaliser le traitement du résultat
-            que lorsque toutes les règles de corrélation ont
-            été exécutées, ainsi que les callbacks post-corrélation.
-            """
-            # On publie sur le bus XMPP l'état de l'hôte
-            # ou du service concerné par l'alerte courante.
-            publish_state(self, info_dictionary)
-            return sendResult(result, xml, info_dictionary)
+        tree_start, self.tree_end = self.__executor.build_execution_tree()
 
         # Gère les erreurs détectées à la fin du processus de corrélation,
         # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
         self.tree_end.addCallbacks(
-            prepareToSendResult, correlation_eb,
+            self.__prepare_result, self.__correlation_eb,
             callbackArgs=[xml, info_dictionary],
             errbackArgs=[idxmpp, payload],
         )
-        self.tree_end.addErrback(send_result_eb, idxmpp, payload)
+        self.tree_end.addErrback(self.__send_result_eb, idxmpp, payload)
 
         # On lance le processus de corrélation.
         tree_start.callback((idxmpp, payload))
@@ -568,3 +334,73 @@ class RuleDispatcher(PubSubSender):
         else:
             result = self.publishXml(item)
             return result
+
+    def __send_result(self, result, xml, info_dictionary):
+        """
+        Traite le résultat de l'exécution de TOUTES les règles
+        de corrélation.
+
+        @param result: Résultat de la corrélation (transmis
+            automatiquement par Twisted, vaut toujours None
+            chez nous).
+        @type result: C{None}
+        @param xml: Message XML sérialisé traité par la corrélation.
+        @type xml: C{unicode}
+        @param info_dictionary: Informations extraites du message XML.
+        @param info_dictionary: C{dict}
+        """
+        dom = etree.fromstring(xml)
+        idnt = dom.get('id')
+
+        # Pour les services de haut niveau, on s'arrête ici,
+        # on NE DOIT PAS générer d'événement corrélé.
+        if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
+            return
+
+        dom = dom[0]
+        self.__do_in_transaction(
+            _("Error while saving the correlated event"),
+            xml, SQLAlchemyError,
+            make_correvent, self, dom, idnt
+        )
+
+    def __prepare_result(self, result, xml, info_dictionary):
+        """
+        Permet de ne réaliser le traitement du résultat
+        que lorsque toutes les règles de corrélation ont
+        été exécutées, ainsi que les callbacks post-corrélation.
+        """
+        # On publie sur le bus XMPP l'état de l'hôte
+        # ou du service concerné par l'alerte courante.
+        publish_state(self, info_dictionary)
+        return self.__send_result(result, xml, info_dictionary)
+
+    def __correlation_eb(self, failure, idxmpp, payload):
+        LOGGER.error(_('Correlation failed for '
+                        'message #%(id)s (%(payload)s)'), {
+            'id': idxmpp,
+            'payload': payload,
+        })
+        return failure
+
+    def __send_result_eb(self, failure, idxmpp, payload):
+        LOGGER.error(_('Unable to store correlated alert for '
+                        'message #%(id)s (%(payload)s)'), {
+            'id': idxmpp,
+            'payload': payload,
+        })
+
+    def __do_in_transaction(self, error_desc, xml, _ex, func, *args, **kwargs):
+        transaction.begin()
+        try:
+            LOGGER.debug(_("Executing %s with %r, %r"), func.__name__, args, kwargs)
+            res = func(*args, **kwargs)
+        except _ex:
+            LOGGER.info(_("%s. The message will be handled once more.") %
+                        error_desc)
+            transaction.abort()
+            self.queue.append(xml)
+        else:
+            transaction.commit()
+        return res
+
