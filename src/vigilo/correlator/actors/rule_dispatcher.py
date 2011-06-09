@@ -19,7 +19,6 @@ import transaction
 from sqlalchemy.exc import SQLAlchemyError, InvalidRequestError
 
 from twisted.internet import defer, reactor
-from twisted.internet.error import ProcessTerminated
 from twisted.protocols import amp
 from ampoule import pool
 from wokkel.generic import parseXml
@@ -376,6 +375,19 @@ class RuleDispatcher(PubSubSender):
         return self.__send_result(result, xml, info_dictionary)
 
     def __correlation_eb(self, failure, idxmpp, payload):
+        """
+        Cette méthode est appelée lorsque la corrélation échoue.
+        Elle se contente d'afficher un message d'erreur.
+
+        @param failure: L'erreur responsable de l'échec.
+        @type failure: C{Failure}
+        @param idxmpp: Identifiant du message XMPP.
+        @type idxmpp: C{str}
+        @param payload: Le message reçu à corréler.
+        @type payload: C{Element}
+        @return: L'erreur reponsable de l'échec.
+        @rtype: C{Failure}
+        """
         LOGGER.error(_('Correlation failed for '
                         'message #%(id)s (%(payload)s)'), {
             'id': idxmpp,
@@ -384,18 +396,52 @@ class RuleDispatcher(PubSubSender):
         return failure
 
     def __send_result_eb(self, failure, idxmpp, payload):
+        """
+        Cette méthode est appelée lorsque la corrélation
+        s'est bien déroulée mais que le traitement des résultats
+        a échoué.
+        Elle se contente d'afficher un message d'erreur.
+
+        @param failure: L'erreur responsable de l'échec.
+        @type failure: C{Failure}
+        @param idxmpp: Identifiant du message XMPP.
+        @type idxmpp: C{str}
+        @param payload: Le message reçu à corréler.
+        @type payload: C{Element}
+        """
         LOGGER.error(_('Unable to store correlated alert for '
                         'message #%(id)s (%(payload)s)'), {
             'id': idxmpp,
             'payload': payload,
         })
 
-    def __do_in_transaction(self, error_desc, xml, _ex, func, *args, **kwargs):
+    def __do_in_transaction(self, error_desc, xml, exc, func, *args, **kwargs):
+        """
+        Encapsule une opération nécessitant d'accéder à la base de données
+        dans une transaction.
+
+        @param error_desc: Un message d'erreur décrivant la nature de
+            l'opération et qui sera affiché si l'opération échoue.
+        @type error_desc: C{unicode}
+        @param xml: Le message XML sérialisé en cours de traitement.
+        @type xml: C{unicode}
+        @param exc: Le type d'exceptions à capturer. En général, il s'agit
+            de C{SQLAlchemyError}.
+        @type exc: C{Exception}
+        @param func: La fonction à appeler pour exécuter l'opération.
+        @type func: C{callable}
+        @note: Des paramètres additionnels (nommés ou non) peuvent être
+            passés à cette fonction. Ils seront transmis tel quel à C{func}
+            lors de son appel.
+        @post: En cas d'erreur, le message XML est réinséré dans la file
+            d'attente du corrélateur pour pouvoir être à nouveau traité
+            ultérieurement.
+        """
         transaction.begin()
         try:
             LOGGER.debug(_("Executing %s with %r, %r"), func.__name__, args, kwargs)
             res = func(*args, **kwargs)
-        except _ex:
+        except exc:
             LOGGER.info(_("%s. The message will be handled once more.") %
                         error_desc)
             transaction.abort()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from twisted.internet import defer
+from twisted.internet.error import ProcessTerminated
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
