@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-11-19 12:29+0100\n"
-"PO-Revision-Date: 2011-05-27 14:40+0200\n"
+"PO-Revision-Date: 2011-06-10 17:03+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -152,10 +152,6 @@ msgstr ""
 "merge_aggregates: Verweis auf ein nicht existierendes Ziel-Aggregat %r "
 "vorhanden, abbrechen"
 
-#: src/vigilo/correlator/db_wrapper.py:58
-msgid "The connection with the database was invalidated. Reconnecting..."
-msgstr ""
-
 #: src/vigilo/correlator/handle_ticket.py:35
 #, python-format
 msgid ""
@@ -262,7 +258,12 @@ msgstr "Nicht ein gültiger Regelname \"%s\""
 msgid "Unable to load rule \"%(name)s\" (%(class)s)"
 msgstr "Unfähig, die Regel \"%(name)s\" (%(class)s) zu laden"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:115
+#: src/vigilo/correlator/actors/executor.py:58
+#, python-format
+msgid "Rule %(rule_name)s timed out"
+msgstr "Regel %(rule_name)s abgelaufen"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:110
 msgid ""
 "No information from Vigiconf concerning the topology's last modification "
 "date. Therefore the topology has NOT been rebuilt."
@@ -270,77 +271,63 @@ msgstr ""
 "Keine Information von Vigiconf über das letzte Änderungsdatum der "
 "Topologie. Deshalb wurde die Topologie NICHT erneut erstellt."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:127
+#: src/vigilo/correlator/actors/rule_dispatcher.py:122
 msgid "Topology has been reloaded."
 msgstr "Topologie wurde erneut geladen."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:144
-#, python-format
-msgid "Sending this payload to the XMPP bus: %r"
-msgstr "Senden dieser Nutzlast auf den XMPP Bus: %r"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:150
-#, python-format
-msgid ""
-"Registering post-correlation callback function \"%(fn)s\" for alert with "
-"ID %(id)s"
-msgstr ""
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:260
-#, python-format
-msgid "Rule %(rule_name)s timed out"
-msgstr "Regel %(rule_name)s abgelaufen"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:322
+#: src/vigilo/correlator/actors/rule_dispatcher.py:189
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr "Unbekanntes Element (%s) wird übersprungen"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:366
-msgid ""
-"Error while saving the correlated event. The message will be handled once"
-" more."
-msgstr ""
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:381
+#: src/vigilo/correlator/actors/rule_dispatcher.py:212
 msgid "Received invalid XMPP item ID (None)"
 msgstr "Ungültige XMPP Element ID (None) erhalten"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:433
-msgid ""
-"Error while retrieving the network's topology. The message will be "
-"handled once more."
+#: src/vigilo/correlator/actors/rule_dispatcher.py:246
+msgid "Error while retrieving the network's topology"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:448
-msgid ""
-"Error while adding an entry in the HLS history. The message will be "
-"handled once more."
+#: src/vigilo/correlator/actors/rule_dispatcher.py:255
+msgid "Error while adding an entry in the HLS history"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:460
-msgid ""
-"Error while adding an entry in the history. The message will be handled "
-"once more."
+#: src/vigilo/correlator/actors/rule_dispatcher.py:261
+msgid "Error while adding an entry in the history"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:473
-msgid "Error while saving state. The message will be handled once more."
+#: src/vigilo/correlator/actors/rule_dispatcher.py:268
+msgid "Error while saving state"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:495
+#: src/vigilo/correlator/actors/rule_dispatcher.py:316
+msgid "Connection lost"
+msgstr "Verbindung verloren"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:362
+#, fuzzy
+msgid "Error while saving the correlated event"
+msgstr "Neues korreliertes Ereignis wird erstellt"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:392
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:503
+#: src/vigilo/correlator/actors/rule_dispatcher.py:413
 #, python-format
 msgid "Unable to store correlated alert for message #%(id)s (%(payload)s)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:550
-msgid "Connection lost"
-msgstr "Verbindung verloren"
+#: src/vigilo/correlator/actors/rule_dispatcher.py:443
+#, python-format
+msgid "Executing %s with %r, %r"
+msgstr ""
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:446
+#, python-format
+msgid "%s. The message will be handled once more."
+msgstr ""
 
 #: src/vigilo/correlator/actors/rule_runner.py:82
 #, python-format
@@ -351,16 +338,32 @@ msgstr ""
 "Ausnahme während der Ausführung der Regel %(rule)s. Ausführen der "
 "Korrelator im Vordergrund (%(prog)s -n) kann Problemlösungen helfen"
 
+#: src/vigilo/correlator/amp/correlator.py:20
+#, python-format
+msgid "Sending this payload to the XMPP bus: %r"
+msgstr "Senden dieser Nutzlast auf den XMPP Bus: %r"
+
+#: src/vigilo/correlator/amp/correlator.py:26
+#, python-format
+msgid ""
+"Registering post-correlation callback function \"%(fn)s\" for alert with "
+"ID %(id)s"
+msgstr ""
+
 #: src/vigilo/correlator/rules/example.py:36
 #, python-format
 msgid "id %(id)s payload %(payload)s"
 msgstr "id %(id)s Nutzlast %(payload)s"
 
-#: src/vigilo/correlator/test/test_logging.py:268
+#: src/vigilo/correlator/rules/svc_on_host_down.py:110
+msgid "Host is down"
+msgstr ""
+
+#: src/vigilo/correlator/test/test_logging.py:271
 msgid "Received 'WARNING' message on lls1"
 msgstr ""
 
-#: src/vigilo/correlator/test/test_logging.py:289
+#: src/vigilo/correlator/test/test_logging.py:292
 msgid "Received 'CRITICAL' message on lls1"
 msgstr ""
 
