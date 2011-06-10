@@ -17,6 +17,7 @@ import sys
 #from twisted.internet import reactor
 import unittest
 from nose.twistedtools import reactor, deferred
+from nose.plugins.skip import SkipTest
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.internet.error import ProcessTerminated
@@ -76,6 +77,9 @@ class TestRuleException(unittest.TestCase):
     @inlineCallbacks
     def test_rule_exception(self):
         """Test d'une règle qui lève une exception."""
+        import twisted
+        if twisted.__version__.split(".") < ("8", "2", "0"):
+            raise SkipTest()
         pp = pool.ProcessPool(
             ampChild=ExceptionAMPChild,
             timeout=10,
@@ -111,6 +115,9 @@ class TestRuleException(unittest.TestCase):
     @inlineCallbacks
     def test_rule_timeout(self):
         """Test d'une règle qui dépasse le délai maximum autorisé."""
+        import twisted
+        if twisted.__version__.split(".") < ("8", "2", "0"):
+            raise SkipTest()
         pp = pool.ProcessPool(
             ampChild=TimeoutAMPChild,
             timeout=2,
