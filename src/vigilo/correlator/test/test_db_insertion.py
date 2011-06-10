@@ -13,7 +13,7 @@ from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                         add_to_aggregate
 from vigilo.pubsub.xml import NS_EVENT
-from utils import setup_db, teardown_db
+from helpers import setup_db, teardown_db
 
 from vigilo.models.tables import State, StateName, Event, \
                             LowLevelService, HighLevelService, Host, \

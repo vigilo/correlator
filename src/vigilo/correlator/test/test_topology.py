@@ -14,7 +14,7 @@ from vigilo.models.tables import Host, LowLevelService, \
 from vigilo.models.tables import Event, CorrEvent, StateName
 
 from vigilo.correlator.topology import Topology
-from utils import setup_db, teardown_db
+from helpers import setup_db, teardown_db
 
 class TestTopologyFunctions(unittest.TestCase):
     """Test des méthodes de la classe 'Topology'"""

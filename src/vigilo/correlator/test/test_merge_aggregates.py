@@ -11,7 +11,7 @@ from datetime import datetime
 import unittest
 
 from vigilo.correlator.db_insertion import merge_aggregates
-from utils import setup_db, teardown_db
+from helpers import setup_db, teardown_db
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Event, CorrEvent

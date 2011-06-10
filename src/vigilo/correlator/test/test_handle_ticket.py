@@ -11,7 +11,7 @@ from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, Event, EventHistory, CorrEvent, StateName
 
 from vigilo.correlator.handle_ticket import handle_ticket 
-from utils import setup_db, teardown_db
+from helpers import setup_db, teardown_db
     
 class TestHandleTicket(unittest.TestCase):
     """Test des méthodes du module 'handle_ticket'"""

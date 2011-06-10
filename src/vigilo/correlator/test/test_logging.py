@@ -15,8 +15,8 @@ from twisted.internet import defer
 from datetime import datetime
 from lxml import etree
 
-from utils import settings
-from utils import setup_mc, teardown_mc, setup_db, teardown_db
+from helpers import settings
+from helpers import setup_mc, teardown_mc, setup_db, teardown_db
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
                             Event, Change

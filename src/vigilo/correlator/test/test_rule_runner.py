@@ -23,7 +23,7 @@ from twisted.internet.error import ProcessTerminated
 # On réutilise les mécanismes d'ampoule.
 from ampoule import main, pool
 
-from utils import settings # pylint: disable-msg=W0611
+from helpers import settings # pylint: disable-msg=W0611
 
 from vigilo.common.logging import get_logger
 

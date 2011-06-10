@@ -12,7 +12,7 @@ import unittest
 from vigilo.correlator.publish_messages import publish_aggregate, \
                                             delete_published_aggregates, \
                                             publish_state
-from utils import setup_db, teardown_db
+from helpers import setup_db, teardown_db
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, HighLevelService, LowLevelService

@@ -17,8 +17,8 @@ import threading
 
 from datetime import datetime
 
-from utils import setup_mc, teardown_mc
-from utils import setup_db, teardown_db
+from helpers import setup_mc, teardown_mc
+from helpers import setup_db, teardown_db
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, LowLevelService, StateName, \

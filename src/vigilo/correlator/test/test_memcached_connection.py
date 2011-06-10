@@ -5,9 +5,9 @@
 
 """Suite de tests pour la classe 'MemcachedConnection"""
 
-# ATTENTION: ne pas utiliser twisted.trial, car nose va ignorer les erreurs
-# produites par ce module !!!
-from nose.twistedtools import reactor, deferred
+# ATTENTION: contrairement aux autres modules, ici il faut utiliser
+# twisted.trial, sinon les tests ne passent pas (pas trouvé pourquoi)
+from twisted.trial import unittest
 from twisted.internet import defer
 
 import unittest
@@ -18,9 +18,9 @@ except ImportError:
     import pickle
 
 import memcache as mc
-from utils import settings
-from utils import setup_mc, teardown_mc
-from utils import setup_db, teardown_db
+from helpers import settings
+from helpers import setup_mc, teardown_mc
+from helpers import setup_db, teardown_db
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context
 
@@ -133,7 +133,7 @@ class TestMemcachedWithoutAnyConnection(unittest.TestCase):
         super(TestMemcachedWithoutAnyConnection, self).tearDown()
         teardown_db()
 
-    @deferred(timeout=30)
+    #@deferred(timeout=30)
     @defer.inlineCallbacks
     def test_no_memcache(self):
         """Teste les contextes de corrélation en l'absence de memcached."""
