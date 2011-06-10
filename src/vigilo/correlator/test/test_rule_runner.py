@@ -13,10 +13,10 @@ import sys
 # ATTENTION: contrairement aux autres modules, ici il faut utiliser
 # twisted.trial, sinon ça ne marche pas (ça dérange AMPoule). Attention à bien
 # vérifier que les échecs ne sont pas interceptés par nose.
-from twisted.trial import unittest
-from twisted.internet import reactor
-#import unittest
-#from nose.twistedtools import reactor, deferred
+#from twisted.trial import unittest
+#from twisted.internet import reactor
+import unittest
+from nose.twistedtools import reactor, deferred
 
 from twisted.internet.defer import inlineCallbacks, Deferred
 from twisted.internet.error import ProcessTerminated
@@ -56,6 +56,7 @@ class TimeoutAMPChild(RuleRunner):
 class TestRuleException(unittest.TestCase):
     """ Classe de test du comportement du rule dispatcher en cas d'erreurs."""
 
+    @deferred(timeout=30)
     def setUp(self):
         super(TestRuleException, self).setUp()
 
@@ -71,6 +72,7 @@ class TestRuleException(unittest.TestCase):
         reactor.callLater(0, d.callback, None)
         return d
 
+    @deferred(timeout=30)
     @inlineCallbacks
     def test_rule_exception(self):
         """Test d'une règle qui lève une exception."""
@@ -105,6 +107,7 @@ class TestRuleException(unittest.TestCase):
         yield work
         yield pp.stop()
 
+    @deferred(timeout=30)
     @inlineCallbacks
     def test_rule_timeout(self):
         """Test d'une règle qui dépasse le délai maximum autorisé."""

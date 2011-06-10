@@ -5,9 +5,8 @@
 
 """Suite de tests pour la classe 'MemcachedConnection"""
 
-# ATTENTION: contrairement aux autres modules, ici il faut utiliser
-# twisted.trial, sinon les tests ne passent pas (pas trouvé pourquoi)
-from twisted.trial import unittest
+import unittest
+from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
 import unittest
@@ -128,17 +127,28 @@ class TestMemcachedConnection(unittest.TestCase):
         # On s'assure que la clé a bien été supprimée
         self.assertFalse(connection.get(key))
 
+
 class TestMemcachedWithoutAnyConnection(unittest.TestCase):
+    """
+    Le setUp et le tearDown sont décorés par @deferred() pour que la création
+    de la base soit réalisée dans le même threads que les accès dans les tests.
+    """
+
+    @deferred(timeout=30)
+    def setUp(self):
+        setup_db()
+        return defer.succeed(None)
+
+    @deferred(timeout=30)
     def tearDown(self):
         super(TestMemcachedWithoutAnyConnection, self).tearDown()
         teardown_db()
+        return defer.succeed(None)
 
-    #@deferred(timeout=30)
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_no_memcache(self):
         """Teste les contextes de corrélation en l'absence de memcached."""
-        setup_db()
-
         key = "vigilo_test_no_memcache"
         value = "test_no_memcache"
 

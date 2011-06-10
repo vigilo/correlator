@@ -9,13 +9,11 @@ Teste la règle de gestion des services sur un hôte DOWN
 
 from datetime import datetime
 import time
-#import unittest
+import unittest
 
-#from nose.twistedtools import reactor, deferred
-from twisted.trial import unittest
+from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 from mock import Mock
-
 from lxml import etree
 
 from vigilo.models import tables
@@ -32,7 +30,12 @@ from helpers import setup_db, teardown_db, setup_context, populate_statename, \
 
 
 class TestSvcHostDownRule(unittest.TestCase):
+    """
+    Le setUp et le tearDown sont décorés par @deferred() pour que la création
+    de la base soit réalisée dans le même threads que les accès dans les tests.
+    """
 
+    @deferred(timeout=30)
     def setUp(self):
         super(TestSvcHostDownRule, self).setUp()
 
@@ -46,12 +49,15 @@ class TestSvcHostDownRule(unittest.TestCase):
         self.rule = SvcHostDown()
         self.rule._context_factory = ContextStubFactory()
         self.message_id = 42
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def tearDown(self):
         super(TestSvcHostDownRule, self).tearDown()
         DBSession.flush()
         DBSession.expunge_all()
         teardown_db()
+        return defer.succeed(None)
 
     def populate_db(self):
         populate_statename()
@@ -73,6 +79,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         DBSession.add(self.lls)
         DBSession.flush()
 
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_host_down(self):
         """Marquer UNKNOWN les services d'un hôte DOWN"""
@@ -91,6 +98,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         # résultat
         assert self.lls.state.name.statename == u"UNKNOWN"
 
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_host_up(self):
         """Demander les états des services d'un hôte qui passe UP"""
@@ -115,6 +123,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         result.find("{%s}timestamp" % NS_COMMAND).text = "42"
         assert etree.tostring(result) == etree.tostring(expected)
 
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_host_up_many_services(self):
         """Demander les états de tous les services d'un hôte qui passe UP"""

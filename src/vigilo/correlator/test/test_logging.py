@@ -5,11 +5,8 @@
 
 """Suite de tests des logs du corrélateur"""
 
-# ATTENTION: contrairement aux autres modules, ici il faut utiliser
-# twisted.trial, sinon les tests ne passent pas (pas trouvé pourquoi)
-from twisted.trial import unittest
-#import unittest
-#from nose.twistedtools import reactor, deferred
+import unittest
+from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
 from datetime import datetime
@@ -86,9 +83,11 @@ class TestLogging(unittest.TestCase):
     Test de l'écriture des logs dans le corrélateur.
 
     Valide la satisfaction de l'exigence VIGILO_EXIG_VIGILO_COR_0040.
+
+    Le setUp et le tearDown sont décorés par @deferred() pour que la création
+    de la base soit réalisée dans le même threads que les accès dans les tests.
     """
 
-#    @deferred(timeout=30)
     @defer.inlineCallbacks
     def simulate_message_reception(self,
         new_state, host_name, service_name=None):
@@ -201,6 +200,7 @@ class TestLogging(unittest.TestCase):
         )
         DBSession.flush()
 
+    @deferred(timeout=30)
     def setUp(self):
         """Initialisation des tests"""
 
@@ -228,7 +228,9 @@ class TestLogging(unittest.TestCase):
 
         # Initialisation de l'identifiant des messages XML.
         self.XMPP_id = 0
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
         # On dissocie le handler du logger.
@@ -239,8 +241,9 @@ class TestLogging(unittest.TestCase):
         DBSession.expunge_all()
         teardown_db()
         teardown_mc()
+        return defer.succeed(None)
 
-#    @deferred(timeout=30)
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_syslog_and_correvent(self):
         """

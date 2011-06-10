@@ -5,17 +5,12 @@
 
 """Suite de tests pour la classe 'Api"""
 
-# ATTENTION: contrairement aux autres modules, ici il faut utiliser
-# twisted.trial, sinon les tests ne passent pas (pas trouvé pourquoi)
-from twisted.trial import unittest
-#import unittest
-#from nose.twistedtools import reactor, deferred
-from twisted.internet import defer
-
 import random
 import threading
-
 from datetime import datetime
+import unittest
+from nose.twistedtools import reactor, deferred
+from twisted.internet import defer
 
 from helpers import setup_mc, teardown_mc
 from helpers import setup_db, teardown_db
@@ -27,17 +22,26 @@ from vigilo.correlator.topology import Topology
 from vigilo.correlator.context import Context
 
 class TestApiFunctions(unittest.TestCase):
-    """Tests portant sur le contexte et l'API des règles de corrélation."""
+    """
+    Tests portant sur le contexte et l'API des règles de corrélation.
 
+    Le setUp et le tearDown sont décorés par @deferred() pour que la création
+    de la base soit réalisée dans le même threads que les accès dans les tests.
+    """
+
+    @deferred(timeout=30)
     def setUp(self):
         """Initialisation d'un contexte préalable à chacun des tests."""
         setup_mc()
         setup_db()
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def tearDown(self):
         """Nettoyage du contexte à la fin de chaque test."""
         teardown_db()
         teardown_mc()
+        return defer.succeed(None)
 
     def test_contexts(self):
         """Création d'un contexte associé à un nom quelconque"""
@@ -45,7 +49,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(name)
         assert ctx
 
-#    @deferred(timeout=30)
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_context_topology(self):
         """Récupération de l'arbre topologique dans le contexte"""
