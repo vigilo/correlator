@@ -235,6 +235,7 @@ class RuleDispatcher(PubSubSender):
         yield ctx.set('hostname', info_dictionary["host"])
         yield ctx.set('servicename', info_dictionary["service"])
         yield ctx.set('statename', info_dictionary["state"])
+        yield ctx.set('timestamp', info_dictionary["timestamp"])
 
         # On met à jour l'arbre topologique si nécessaire.
         def handle_topology(ctx):
