@@ -78,7 +78,7 @@ class TestRuleException(unittest.TestCase):
     def test_rule_exception(self):
         """Test d'une règle qui lève une exception."""
         import twisted
-        if twisted.__version__.split(".") < ("8", "2", "0"):
+        if tuple(twisted.__version__.split(".")) < ("8", "2", "0"):
             raise SkipTest()
         pp = pool.ProcessPool(
             ampChild=ExceptionAMPChild,
@@ -116,7 +116,7 @@ class TestRuleException(unittest.TestCase):
     def test_rule_timeout(self):
         """Test d'une règle qui dépasse le délai maximum autorisé."""
         import twisted
-        if twisted.__version__.split(".") < ("8", "2", "0"):
+        if tuple(twisted.__version__.split(".")) < ("8", "2", "0"):
             raise SkipTest()
         pp = pool.ProcessPool(
             ampChild=TimeoutAMPChild,
