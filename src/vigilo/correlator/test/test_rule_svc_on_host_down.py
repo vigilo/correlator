@@ -24,6 +24,7 @@ from vigilo.correlator.context import Context
 from vigilo.correlator.amp.commands import SendToBus
 
 from vigilo.correlator.rules.svc_on_host_down import SvcHostDown, NAGIOS_MESSAGE
+from vigilo.correlator.rules.svc_on_host_down import on_host_down
 
 from helpers import setup_db, teardown_db, setup_context, populate_statename, \
     ContextStubFactory, RuleRunnerStub
@@ -79,38 +80,46 @@ class TestSvcHostDownRule(unittest.TestCase):
         DBSession.add(self.lls)
         DBSession.flush()
 
-    @deferred(timeout=30)
-    @defer.inlineCallbacks
-    def test_host_down(self):
-        """Marquer UNKNOWN les services d'un hôte DOWN"""
-        yield setup_context(
+    def setup_context(self, state_from, state_to):
+        return setup_context(
             self.rule._context_factory,
             self.message_id, {
-                'statename': u"DOWN",
-                'previous_state': tables.StateName.statename_to_value(u"UP"),
-                'timestamp': 42,
+                'previous_state':
+                    tables.StateName.statename_to_value(unicode(state_from)),
+                'statename': unicode(state_to),
+                'timestamp': datetime.now(),
                 'hostname': "testhost",
                 'servicename': None
         })
-        yield self.rule.process(None, self.message_id, None)
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_host_down(self):
+        """
+        Sur un hôte DOWN, on doit enregistrer un callback pour passer les services à UNKNOWN
+        """
+        yield self.setup_context("UP", "DOWN")
+        rule_runner = Mock()
+        yield self.rule.process(rule_runner, self.message_id, None)
+        print rule_runner.callRemote.call_count
+        self.assertEqual(rule_runner.callRemote.call_count, 1)
+        print rule_runner.callRemote.call_args
+        self.assertEqual(rule_runner.callRemote.call_args[1]["fn"], on_host_down)
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_on_host_down(self):
+        """Fonction de passage à UNKNOWN des services d'un hôte DOWN"""
+        yield self.setup_context("UP", "DOWN")
+        yield on_host_down(None, None, 42, self.rule._context_factory(42))
         print "state:", self.lls.state.name.statename
-        # Il ne faut pas utiliser self.assertEqual pour que nose intercepte le
-        # résultat
-        assert self.lls.state.name.statename == u"UNKNOWN"
+        self.assertEqual(self.lls.state.name.statename, u"UNKNOWN")
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_host_up(self):
         """Demander les états des services d'un hôte qui passe UP"""
-        yield setup_context(
-            self.rule._context_factory,
-            self.message_id, {
-                'statename': u"UP",
-                'previous_state': tables.StateName.statename_to_value(u"DOWN"),
-                'timestamp': 42,
-                'hostname': "testhost",
-                'servicename': None
-        })
+        yield self.setup_context("DOWN", "UP")
         yield self.rule.process(self.rule_runner, self.message_id, None)
         expected = NAGIOS_MESSAGE % {
             "ns": NS_COMMAND,
@@ -121,21 +130,13 @@ class TestSvcHostDownRule(unittest.TestCase):
         print "Received:", self.rule_runner.message
         result = etree.fromstring(self.rule_runner.message)
         result.find("{%s}timestamp" % NS_COMMAND).text = "42"
-        assert etree.tostring(result) == etree.tostring(expected)
+        self.assertEqual(etree.tostring(result), etree.tostring(expected))
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_host_up_many_services(self):
         """Demander les états de tous les services d'un hôte qui passe UP"""
-        yield setup_context(
-            self.rule._context_factory,
-            self.message_id, {
-                'statename': u"UP",
-                'previous_state': tables.StateName.statename_to_value(u"DOWN"),
-                'timestamp': 42,
-                'hostname': "testhost",
-                'servicename': None
-        })
+        yield self.setup_context("DOWN", "UP")
         servicenames = [ u'testservice-%d' % i for i in range(10) ]
         for servicename in servicenames:
             DBSession.add(tables.LowLevelService(
@@ -148,7 +149,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         yield self.rule.process(rule_runner, self.message_id, None)
         servicenames.insert(0, "testservice") # crée en setUp
         print rule_runner.callRemote.call_count
-        assert rule_runner.callRemote.call_count == len(servicenames)
+        self.assertEqual(rule_runner.callRemote.call_count, len(servicenames))
         for i, servicename in enumerate(servicenames):
             call = rule_runner.method_calls[i]
             print call

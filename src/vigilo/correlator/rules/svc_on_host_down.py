@@ -36,6 +36,7 @@ from vigilo.common.gettext import translate
 #from vigilo.connector import MESSAGEONETOONE
 from vigilo.pubsub.xml import NS_COMMAND
 from vigilo.correlator import amp
+from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import insert_state
 
 LOGGER = get_logger(__name__)
@@ -49,6 +50,32 @@ NAGIOS_MESSAGE = """
     <value>%(host)s;%%(svc)s;4;Vigilo;Host came up</value>
 </command>
 """
+
+
+@defer.inlineCallbacks
+def on_host_down(result, forwarder, idnt, ctx=None):
+    if ctx is None: # pour les tests unitaires
+        ctx = Context(idnt)
+    hostname = yield ctx.get("hostname")
+    timestamp = yield ctx.get('timestamp')
+    message = _("Host is down")
+    services = get_all_services(hostname)
+    LOGGER.info(_("Setting %d services to UNKNOWN"), len(services))
+    for svc in services:
+        insert_state({
+                "host": hostname,
+                "service": svc.servicename,
+                "message": message,
+                "timestamp": timestamp,
+                "state": "UNKNOWN",
+                })
+
+def get_all_services(hostname):
+    return DBSession.query(LowLevelService).join(
+                (Host, Host.idsupitem == LowLevelService.idhost)
+            ).filter(Host.name == unicode(hostname)
+            ).all()
+
 
 class SvcHostDown(Rule): # pylint: disable-msg=W0232
     """
@@ -90,35 +117,12 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
             return # Pas de changement
 
         if previous_statename == "UP" and statename == "DOWN":
-            yield self._on_host_down(hostname, ctx)
+            link.callRemote(amp.RegisterCallback, fn=on_host_down, idnt=xmpp_id)
         elif previous_statename == "DOWN" and statename == "UP":
             self._on_host_up(hostname, link)
         else:
-            LOGGER.debug("%s: unsupported transition: %s -> %s", __name__,
-                         previous_statename, statename)
-
-    def _get_all_services(self, hostname):
-        return DBSession.query(LowLevelService).join(
-                    (Host, Host.idsupitem == LowLevelService.idhost)
-                ).filter(Host.name == unicode(hostname)
-                ).all()
-
-    @defer.inlineCallbacks
-    def _on_host_down(self, hostname, ctx):
-        timestamp = yield ctx.get('timestamp')
-        timestamp = datetime.fromtimestamp(timestamp)
-        message = _("Host is down")
-        services = self._get_all_services(hostname)
-        LOGGER.debug("%s: setting %d services to UNKNOWN",
-                     __name__, len(services))
-        for svc in services:
-            insert_state({
-                    "host": hostname,
-                    "service": svc.servicename,
-                    "message": message,
-                    "timestamp": timestamp,
-                    "state": "UNKNOWN",
-                    })
+            LOGGER.info(_("Unsupported transition: %(from)s -> %(to)s"),
+                        {"from": previous_statename, "to": statename})
 
     def _on_host_up(self, hostname, link):
         message_tpl = NAGIOS_MESSAGE % {
@@ -126,9 +130,9 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
             "timestamp": int(time.mktime(datetime.now().timetuple())),
             "host": hostname,
         }
-        services = self._get_all_services(hostname)
-        LOGGER.debug("%s: asking Nagios for updates on %d services",
-                     __name__, len(services))
+        services = get_all_services(hostname)
+        LOGGER.info(_("Asking Nagios for updates on %d services"),
+                    len(services))
         for svc in services:
             link.callRemote(amp.SendToBus,
                             item=message_tpl % {"svc": svc.servicename})
