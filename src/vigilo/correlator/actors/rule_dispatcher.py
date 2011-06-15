@@ -294,7 +294,7 @@ class RuleDispatcher(PubSubSender):
 
         # On lance le processus de corrélation.
         tree_start.callback((idxmpp, payload))
-        yield defer.returnValue(self.tree_end)
+        defer.returnValue(self.tree_end)
 
     def connectionInitialized(self):
         """
