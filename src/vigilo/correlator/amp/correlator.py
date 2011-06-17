@@ -29,15 +29,6 @@ class Correlator(amp.AMP):
                             'id': idnt,
                         })
 
-        def callback_wrapper(result):
-            try:
-                transaction.begin()
-                res = fn(result, self.rule_dispatcher, idnt)
-            except:
-                transaction.abort()
-            else:
-                transaction.commit()
-
-        self.rule_dispatcher.tree_end.addCallback(callback_wrapper)
+        self.rule_dispatcher.tree_end.addCallback(fn, self.rule_dispatcher, self.database, idnt)
         return {}
 

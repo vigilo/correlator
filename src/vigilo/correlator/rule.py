@@ -38,5 +38,5 @@ class Rule(Named):
         self.confkey = confkey
 
     def _get_context(self, xmpp_id, timeout=None):
-        return self._context_factory(xmpp_id, timeout)
+        return self._context_factory(xmpp_id, timeout, transaction=False)
 

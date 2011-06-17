@@ -26,7 +26,7 @@ class Topology(nx.DiGraph):
     """
 
     def __init__(self):
-        nx.DiGraph.__init__(self)
+        super(Topology, self).__init__()
         self.generate()
 
     def generate(self):
@@ -118,7 +118,7 @@ class Topology(nx.DiGraph):
 
 def get_last_event(item_id, *args):
     """
-    Récupère dand la BDD le dernier événement associé à l'item donné.
+    Récupère dans la BDD le dernier événement associé à l'item donné.
 
     @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
     @type item_id: C{int}

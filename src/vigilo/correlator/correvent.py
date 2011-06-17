@@ -11,7 +11,6 @@ from sqlalchemy import not_ , and_
 from datetime import datetime
 import logging
 
-from sqlalchemy.orm.exc import NoResultFound
 from lxml import etree
 from twisted.internet import defer
 
@@ -44,7 +43,7 @@ DATA_LOG_PRIORITY = 6
 DATA_LOG_MESSAGE = 7
 
 @defer.inlineCallbacks
-def make_correvent(forwarder, dom, idnt):
+def make_correvent(forwarder, database, dom, idnt):
     """
     Récupère dans le contexte les informations transmises par
     les règles, crée les événements corrélés (agrégats
@@ -54,9 +53,7 @@ def make_correvent(forwarder, dom, idnt):
         - VIGILO_EXIG_VIGILO_COR_0040,
         - VIGILO_EXIG_VIGILO_COR_0060.
     """
-    DBSession.flush()
-
-    ctx = Context(idnt)
+    ctx = Context(idnt, database, transaction=False)
     raw_event_id = yield ctx.get('raw_event_id')
 
     # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :
@@ -70,7 +67,7 @@ def make_correvent(forwarder, dom, idnt):
     #   Un log est enregistré dans db_insertion.py et on peut ignorer le
     #   problème ici.
     if raw_event_id is None:
-        return
+        defer.returnValue(None)
 
     state = yield ctx.get('statename')
     hostname = yield ctx.get('hostname')
@@ -87,25 +84,40 @@ def make_correvent(forwarder, dom, idnt):
                 'host': hostname,
                 'service': servicename,
         })
-        return
+        defer.returnValue(None)
 
-    item_id = SupItem.get_supitem(hostname, servicename)
+    item_id = yield database.run(
+        SupItem.get_supitem,
+        hostname, servicename,
+        transaction=False
+    )
 
-    update_id = DBSession.query(
-                CorrEvent.idcorrevent
-            ).join(
-                (Event, CorrEvent.idcause == Event.idevent),
-                (SupItem, SupItem.idsupitem == Event.idsupitem),
-            ).filter(SupItem.idsupitem == item_id
-            ).filter(not_(and_(
-                Event.current_state.in_([
-                    StateName.statename_to_value(u'OK'),
-                    StateName.statename_to_value(u'UP')
-                ]),
-                CorrEvent.status == u'AAClosed'
-            ))
-            ).filter(CorrEvent.timestamp_active != None
-            ).scalar()
+    state_ok = yield database.run(
+        StateName.statename_to_value,
+        u'OK',
+        transaction=False
+    )
+    state_up = yield database.run(
+        StateName.statename_to_value,
+        u'UP',
+        transaction=False
+    )
+
+    update_id = yield database.run(
+        DBSession.query(
+            CorrEvent.idcorrevent
+        ).join(
+            (Event, CorrEvent.idcause == Event.idevent),
+            (SupItem, SupItem.idsupitem == Event.idsupitem),
+        ).filter(SupItem.idsupitem == item_id
+        ).filter(not_(and_(
+            Event.current_state.in_([state_ok, state_up]),
+            CorrEvent.status == u'AAClosed'
+        ))
+        ).filter(CorrEvent.timestamp_active != None
+        ).scalar,
+        transaction=False
+    )
 
     correvent = None
     data_log = [
@@ -119,17 +131,21 @@ def make_correvent(forwarder, dom, idnt):
         '',         # MESSAGE
     ]
 
-    # Si il s'agit d'une mise à jour, on récupère l'événement
+    # S'il s'agit d'une mise à jour, on récupère l'événement
     # corrélé auquel elle se rapporte.
     if update_id is not None:
-        try:
-            correvent = DBSession.query(
-                    CorrEvent
-                ).filter(CorrEvent.idcorrevent == update_id
-                ).one()
+        correvent = yield database.run(
+            DBSession.query(
+                CorrEvent
+            ).filter(CorrEvent.idcorrevent == update_id
+            ).one,
+            transaction=False
+        )
+
+        if correvent:
             LOGGER.debug(_(u'Updating existing correlated event (%r)'),
                 update_id)
-        except NoResultFound:
+        else:
             LOGGER.error(_(u'Got a reference to a non-existent '
                 'correlated event (%r), adding as new'), update_id)
 
@@ -141,7 +157,7 @@ def make_correvent(forwarder, dom, idnt):
         # Si l'état de l'alerte brute est 'OK' ou bien 'UP', on ne fait rien
         if state == "OK" or state == "UP":
             LOGGER.info(_(u'Raw event ignored. Reason: status = %r'), state)
-            return
+            defer.returnValue(None)
 
         # Si un ou plusieurs agrégats dont dépend l'alerte sont
         # spécifiés dans le contexte par la règle de corrélation
@@ -159,13 +175,15 @@ def make_correvent(forwarder, dom, idnt):
 
             # Pour chaque agrégat dont l'alerte dépend,
             for predecessing_aggregate_id in predecessing_aggregates_id:
-                try:
-                    predecessing_aggregate = DBSession.query(CorrEvent
-                        ).filter(CorrEvent.idcorrevent
-                                    == int(predecessing_aggregate_id)
-                        ).one()
+                predecessing_aggregate = yield database.run(
+                    DBSession.query(CorrEvent).filter(
+                        CorrEvent.idcorrevent ==
+                            int(predecessing_aggregate_id)
+                    ).one,
+                    transaction=False,
+                )
 
-                except NoResultFound:
+                if predecessing_aggregate is None:
                     LOGGER.error(_(u'Got a reference to a nonexistent '
                             'correlated event (%r), skipping this aggregate'),
                             int(predecessing_aggregate_id))
@@ -173,17 +191,18 @@ def make_correvent(forwarder, dom, idnt):
                 else:
                     # D'abord on rattache l'alerte
                     # courante à cet agrégat dans la BDD.
-                    add_to_aggregate(raw_event_id, predecessing_aggregate)
-                    DBSession.flush()
+                    add_to_aggregate(raw_event_id, predecessing_aggregate, database)
+                    yield database.run(DBSession.flush, transaction=False)
 
                     # Ensuite on fusionne les éventuels agrégats
                     # dépendant de l'alerte courante avec cet agrégat.
                     if succeeding_aggregates_id:
-                        for succeeding_aggregate_id in \
-                                succeeding_aggregates_id:
+                        for succeeding_aggregate_id in succeeding_aggregates_id:
                             events = merge_aggregates(
                                 int(succeeding_aggregate_id),
-                                int(predecessing_aggregate_id))
+                                int(predecessing_aggregate_id),
+                                database
+                            )
                             if not is_built_dependant_event_list:
                                 for event in events:
                                     if not event in dependant_event_list:
@@ -206,8 +225,8 @@ def make_correvent(forwarder, dom, idnt):
                 delete_published_aggregates(forwarder,
                                             succeeding_aggregates_id)
 
-            DBSession.flush()
-            return
+            yield database.run(DBSession.flush, transaction=False)
+            defer.returnValue(None)
 
         LOGGER.debug(_(u'Creating new correlated event'))
 
@@ -249,9 +268,12 @@ def make_correvent(forwarder, dom, idnt):
         # d'éléments. Elle peut être vide si l'alerte n'impacte
         # aucun SHN.
         for hls in impacted_hls:
-            service = DBSession.query(HighLevelService.servicename
-                                    ).filter(HighLevelService.idservice == hls
-                                    ).first()
+            service = yield database.run(
+                DBSession.query(HighLevelService.servicename
+                ).filter(HighLevelService.idservice == hls
+                ).first,
+                transaction=False
+            )
             if service:
                 service_tag = etree.SubElement(highlevel_tag, "service")
                 service_tag.text = service.servicename
@@ -283,15 +305,15 @@ def make_correvent(forwarder, dom, idnt):
             timestamp=timestamp,
             username=None,
         )
-        DBSession.add(history)
+        yield database.run(DBSession.add, history, transaction=False)
         correvent.status = u'None'
 
     # On sauvegarde l'événement corrélé dans la base de données.
-    DBSession.add(correvent)
-    DBSession.flush()
+    yield database.run(DBSession.add, correvent, transaction=False)
+    yield database.run(DBSession.flush, transaction=False)
 
     # Ajout de l'alerte brute dans l'agrégat.
-    add_to_aggregate(raw_event_id, correvent)
+    add_to_aggregate(raw_event_id, correvent, database)
 
     # Récupération de l'identifiant de l'agrégat pour plus tard.
     idcorrevent = correvent.idcorrevent
@@ -308,9 +330,11 @@ def make_correvent(forwarder, dom, idnt):
 
     # On génère le message à envoyer à syslog.
     # Ceci permet de satisfaire l'exigence VIGILO_EXIG_VIGILO_COR_0040.
+    statename = yield ctx.get('statename')
+    log_priority = statename in (u'UP', u'OK') and 0 or priority
     data_log[DATA_LOG_ID] = idcorrevent
-    data_log[DATA_LOG_STATE] = yield ctx.get('statename')
-    data_log[DATA_LOG_PRIORITY] = priority
+    data_log[DATA_LOG_STATE] = statename
+    data_log[DATA_LOG_PRIORITY] = log_priority
     data_log[DATA_LOG_HOST] = hostname
     data_log[DATA_LOG_SERVICE] = servicename
     data_log[DATA_LOG_MESSAGE] = dom.findtext(
@@ -349,11 +373,17 @@ def make_correvent(forwarder, dom, idnt):
     if aggregates_id:
         event_id_list = []
         for aggregate_id in aggregates_id:
-            events_id = merge_aggregates(int(aggregate_id), idcorrevent)
+            events_id = merge_aggregates(
+                int(aggregate_id),
+                idcorrevent,
+                database
+            )
             if events_id:
                 event_id_list.extend(events_id)
         # On publie sur le bus XMPP la liste des alertes brutes
         # à rattacher à l'événement corrélé nouvellement créé.
         publish_aggregate(forwarder, [idcorrevent], event_id_list)
         delete_published_aggregates(forwarder, aggregates_id)
-    DBSession.flush()
+
+    yield database.run(DBSession.flush, transaction=False)
+    defer.returnValue(correvent)

@@ -9,8 +9,6 @@ import unittest
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
-import unittest
-
 try:
     import cPickle as pickle
 except ImportError:
@@ -22,33 +20,41 @@ from helpers import setup_mc, teardown_mc
 from helpers import setup_db, teardown_db
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 class TestMemcachedConnection(unittest.TestCase):
     """Test des méthodes de la classe 'MemcachedConnection'"""
 
+    @deferred(timeout=30)
     def setUp(self):
         super(TestMemcachedConnection, self).setUp()
         setup_db()
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def tearDown(self):
         """Arrêt du serveur Memcached à la fin de chaque test."""
         super(TestMemcachedConnection, self).tearDown()
         teardown_mc()
         teardown_db()
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def test_singleton(self):
         """Unicité de la connexion au serveur MemcacheD."""
         setup_mc()
 
         # On instancie deux fois la classe MemcachedConnection.
-        conn1 = MemcachedConnection()
-        conn2 = MemcachedConnection()
+        conn1 = MemcachedConnection(DummyDatabaseWrapper(True))
+        conn2 = MemcachedConnection(DummyDatabaseWrapper(True))
 
         # On s'assure que les deux instances
         # représentent en fait le même objet.
         self.assertEqual(conn1, conn2)
+        return defer.succeed(None)
 
-
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_set(self):
         """Association d'une valeur à une clé"""
         # On initialise le nom de la clé et de la valeur associée
@@ -56,13 +62,13 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_set"
 
         # On instancie la classe MemcachedConnection.
-        conn = MemcachedConnection()
+        conn = MemcachedConnection(DummyDatabaseWrapper(True))
 
         # On initialise le serveur Memcached.
         setup_mc()
 
         # On tente à nouveau d'associer la valeur 'value' à la clé 'key'
-        conn.set(key, value)
+        yield conn.set(key, value)
 
         # On vérifie que la clé a bien été ajoutée
         # et qu'elle est bien associée à la valeur 'value'.
@@ -73,6 +79,8 @@ class TestMemcachedConnection(unittest.TestCase):
         connection.behaviors = {'support_cas': 1}
         self.assertEqual(pickle.loads(connection.get(key)), value)
 
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_get(self):
         """Récupération de la valeur associée à une clé"""
 
@@ -81,7 +89,7 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_get"
 
         # On instancie la classe MemcachedConnection.
-        conn = MemcachedConnection()
+        conn = MemcachedConnection(DummyDatabaseWrapper(True))
 
         # On initialise le serveur Memcached.
         setup_mc()
@@ -95,11 +103,13 @@ class TestMemcachedConnection(unittest.TestCase):
         connection.set(key, pickle.dumps(value))
 
         # On tente à nouveau de récupérer la valeur associée à la clé 'key'
-        result = conn.get(key)
+        result = yield conn.get(key)
 
         # On vérifie que la méthode get retourne bien 'value'.
         self.assertEqual(result, value)
 
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_delete(self):
         """Suppression d'une clé"""
 
@@ -108,7 +118,7 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_delete"
 
         # On instancie la classe MemcachedConnection.
-        conn = MemcachedConnection()
+        conn = MemcachedConnection(DummyDatabaseWrapper(True))
 
         # On initialise le serveur Memcached.
         setup_mc()
@@ -119,13 +129,14 @@ class TestMemcachedConnection(unittest.TestCase):
         conn_str = '%s:%d' % (host, port)
         connection = mc.Client([conn_str])
         connection.behaviors = {'support_cas': 1}
-        conn.set(key, value)
+        yield conn.set(key, value)
 
         # On tente à nouveau de supprimer la clé 'key'
         self.assertTrue(conn.delete(key))
 
         # On s'assure que la clé a bien été supprimée
-        self.assertFalse(connection.get(key))
+        value = yield connection.get(key)
+        self.assertFalse(value)
 
 
 class TestMemcachedWithoutAnyConnection(unittest.TestCase):
@@ -152,7 +163,7 @@ class TestMemcachedWithoutAnyConnection(unittest.TestCase):
         key = "vigilo_test_no_memcache"
         value = "test_no_memcache"
 
-        ctx = Context('test_no_memcache')
+        ctx = Context('test_no_memcache', database=DummyDatabaseWrapper(True))
         yield ctx.set('occurrences_count', 42)
 
         # On tente à nouveau de supprimer la clé 'key'

@@ -11,6 +11,7 @@ from sqlalchemy.orm import aliased
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.exc import InvalidRequestError, IntegrityError
 
+from twisted.internet import defer
 from datetime import datetime
 
 from vigilo.common.logging import get_logger
@@ -232,7 +233,7 @@ def insert_state(info_dictionary):
     return previous_state
 
 
-def add_to_aggregate(idevent, aggregate):
+def add_to_aggregate(idevent, aggregate, database):
     """
     Ajoute un événement brut à un événement corrélé.
 
@@ -241,17 +242,25 @@ def add_to_aggregate(idevent, aggregate):
     @param aggregate: Agrégat vers lequel se fait l'ajout.
     @type aggregate: L{CorrEvent}
     """
-    event = DBSession.query(Event).filter(Event.idevent == idevent).one()
-    try:
+    d = database.run(
+        DBSession.query(Event).get, idevent,
+        transaction=False
+    )
+
+    def add_event(event):
+        if not event:
+            raise ValueError, idevent
+
         if not event in aggregate.events:
-            aggregate.events.append(event)
-            DBSession.flush()
+            d = database.run(aggregate.events.append, event, transaction=False)
+            d.addCallback(lambda res: database.run(
+                DBSession.flush, transaction=False))
+            return d
+    d.addCallback(add_event)
+    return d
 
-    except (IntegrityError, InvalidRequestError):
-        LOGGER.exception(_(u'Got exception'))
 
-
-def merge_aggregates(sourceaggregateid, destinationaggregateid):
+def merge_aggregates(sourceaggregateid, destinationaggregateid, database):
     """
     Fusionne deux agrégats. Renvoie la liste des identifiants
     des alertes brutes de l'agrégat source ainsi déplacées.
@@ -270,38 +279,68 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid):
                     'dest': destinationaggregateid,
                 })
 
-    # Récupère l'agrégat source depuis la BDD.
-    try:
-        source_aggregate = DBSession.query(CorrEvent
-                    ).filter(CorrEvent.idcorrevent == sourceaggregateid
-                    ).one()
-    except NoResultFound:
-        LOGGER.exception(_(u'merge_aggregates: Got a reference to a nonexistent '
-                       'source aggregate, aborting'))
-        return
+    d = defer.DeferredList(
+        [
+            database.run(
+                DBSession.query(CorrEvent).filter(
+                    CorrEvent.idcorrevent == sourceaggregateid).one,
+                transaction=False
+            ),
+            database.run(
+                DBSession.query(CorrEvent).filter(
+                    CorrEvent.idcorrevent == destinationaggregateid).one,
+                transaction=False
+            ),
+        ],
+        consumeErrors=True,
+    )
 
-    # Récupère l'agrégat destination depuis la BDD.
-    try:
-        destination_aggregate = DBSession.query(CorrEvent
-                ).filter(CorrEvent.idcorrevent == destinationaggregateid
-                ).one()
-    except NoResultFound:
-        LOGGER.exception(_(u'merge_aggregates: Got a reference to a nonexistent '
-                       'destination aggregate %r, aborting'),
-                       destinationaggregateid)
-        return
+    def eb(failure):
+        if failure.check(NoResultFound):
+            LOGGER.exception(_('Got a reference to a nonexistent aggregate, '
+                                'aborting'))
+            return
+        return failure
 
-    # Déplace les événements depuis l'agrégat source
-    # vers l'agrégat destination.
-    event_id_list = []
-    for event in source_aggregate.events:
-        if not event in destination_aggregate.events:
-            destination_aggregate.events.append(event)
-            event_id_list.append(event.idevent)
-            DBSession.flush()
+    def delete(result, source_aggregate):
+        # Supprime l'agrégat source de la BDD.
+        return database.run(DBSession.delete, source_aggregate,
+            transaction=False)
 
-    # Supprime l'agrégat source de la BDD.
-    DBSession.delete(source_aggregate)
+    def flush(result):
+        return database.run(DBSession.flush, transaction=False)
 
-    DBSession.flush()
-    return event_id_list
+    def merge(result):
+        source, dest = result
+
+        # Si l'aggrégat source n'a pas pu être trouvé.
+        if not source[0]:
+            return source[1]
+        # Idem pour l'agrégat de destination.
+        if not dest[0]:
+            return dest[1]
+
+        source_aggregate = source[1]
+        destination_aggregate = dest[1]
+
+        # Déplace les événements depuis l'agrégat source
+        # vers l'agrégat destination.
+        event_id_list = []
+        defs = []
+
+        for event in source_aggregate.events:
+            if not event in destination_aggregate.events:
+                defs.append(database.run(
+                    destination_aggregate.events.append, event,
+                    transaction=False,
+                ))
+                event_id_list.append(event.idevent)
+        d = defer.DeferredList(defs)
+        d.addCallback(flush)
+        d.addCallback(delete, source_aggregate)
+        d.addCallback(flush)
+        d.addCallback(lambda res: event_id_list)
+        return d
+
+    d.addCallbacks(merge, eb)
+    return d

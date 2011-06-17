@@ -11,6 +11,7 @@ from datetime import datetime
 import unittest
 
 from vigilo.correlator.db_insertion import merge_aggregates
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from helpers import setup_db, teardown_db
 
 from vigilo.models.session import DBSession
@@ -165,7 +166,11 @@ class TestMergeAggregateFunction(unittest.TestCase):
         (events_id, aggregates_id) = create_topology_and_events()
 
         # On fusionne les 2 agrégats.
-        res = merge_aggregates(aggregates_id[0], aggregates_id [1])
+        res = yield merge_aggregates(
+            aggregates_id[0],
+            aggregates_id[1],
+            DummyDatabaseWrapper(True)
+        )
 
         aggregate1 = DBSession.query(CorrEvent
                     ).filter(CorrEvent.idcorrevent == aggregates_id[0]

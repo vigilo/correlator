@@ -12,6 +12,7 @@ from lxml import etree
 from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                         add_to_aggregate
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.pubsub.xml import NS_EVENT
 from helpers import setup_db, teardown_db
 
@@ -347,7 +348,11 @@ class TestDbInsertion(unittest.TestCase):
         DBSession.flush()
 
         # On ajoute ce nouvel événement à l'agrégat existant.
-        add_to_aggregate(event1.idevent, events_aggregate1)
+        add_to_aggregate(
+            event1.idevent,
+            events_aggregate1,
+            DummyDatabaseWrapper(True)
+        )
 
         # On vérifie que l'événement a bien été ajouté à l'agrégat.
         self.assertTrue(event1 in events_aggregate1.events )

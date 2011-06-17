@@ -25,6 +25,7 @@ from vigilo.correlator.amp.commands import SendToBus
 
 from vigilo.correlator.rules.svc_on_host_down import SvcHostDown, NAGIOS_MESSAGE
 from vigilo.correlator.rules.svc_on_host_down import on_host_down
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 from helpers import setup_db, teardown_db, setup_context, populate_statename, \
     ContextStubFactory, RuleRunnerStub
@@ -89,7 +90,7 @@ class TestSvcHostDownRule(unittest.TestCase):
                 'statename': unicode(state_to),
                 'timestamp': datetime.now(),
                 'hostname': "testhost",
-                'servicename': None
+                'servicename': None,
         })
 
     @deferred(timeout=30)
@@ -111,7 +112,13 @@ class TestSvcHostDownRule(unittest.TestCase):
     def test_on_host_down(self):
         """Fonction de passage à UNKNOWN des services d'un hôte DOWN"""
         yield self.setup_context("UP", "DOWN")
-        yield on_host_down(None, None, 42, self.rule._context_factory(42))
+        yield on_host_down(
+            None,
+            None,
+            DummyDatabaseWrapper(True),
+            42,
+            self.rule._context_factory(42)
+        )
         print "state:", self.lls.state.name.statename
         self.assertEqual(self.lls.state.name.statename, u"UNKNOWN")
 
@@ -148,7 +155,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         rule_runner = Mock()
         yield self.rule.process(rule_runner, self.message_id, None)
         servicenames.insert(0, "testservice") # crée en setUp
-        print rule_runner.callRemote.call_count
+        print "Count:", rule_runner.callRemote.call_count
         self.assertEqual(rule_runner.callRemote.call_count, len(servicenames))
         for i, servicename in enumerate(servicenames):
             call = rule_runner.method_calls[i]

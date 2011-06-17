@@ -38,6 +38,7 @@ from vigilo.pubsub.xml import NS_COMMAND
 from vigilo.correlator import amp
 from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import insert_state
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -53,28 +54,34 @@ NAGIOS_MESSAGE = """
 
 
 @defer.inlineCallbacks
-def on_host_down(result, forwarder, idnt, ctx=None):
+def on_host_down(result, forwarder, database, idnt, ctx=None):
     if ctx is None: # pour les tests unitaires
-        ctx = Context(idnt)
+        ctx = Context(idnt, database=database)
     hostname = yield ctx.get("hostname")
     timestamp = yield ctx.get('timestamp')
     message = _("Host is down")
-    services = get_all_services(hostname)
+    services = yield get_all_services(hostname, database)
     LOGGER.info(_("Setting %d services to UNKNOWN"), len(services))
     for svc in services:
-        insert_state({
+        yield database.run(
+            insert_state, {
                 "host": hostname,
                 "service": svc.servicename,
                 "message": message,
                 "timestamp": timestamp,
                 "state": "UNKNOWN",
-                })
+            }
+        )
 
-def get_all_services(hostname):
-    return DBSession.query(LowLevelService).join(
-                (Host, Host.idsupitem == LowLevelService.idhost)
-            ).filter(Host.name == unicode(hostname)
-            ).all()
+def get_all_services(hostname, database=None):
+    if database is None:
+        database = DummyDatabaseWrapper(True)
+    return database.run(
+        DBSession.query(LowLevelService).join(
+            (Host, Host.idsupitem == LowLevelService.idhost)
+        ).filter(Host.name == unicode(hostname)
+        ).all
+    )
 
 
 class SvcHostDown(Rule): # pylint: disable-msg=W0232
@@ -124,13 +131,14 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
             LOGGER.info(_("Unsupported transition: %(from)s -> %(to)s"),
                         {"from": previous_statename, "to": statename})
 
+    @defer.inlineCallbacks
     def _on_host_up(self, hostname, link):
         message_tpl = NAGIOS_MESSAGE % {
             "ns": NS_COMMAND,
             "timestamp": int(time.mktime(datetime.now().timetuple())),
             "host": hostname,
         }
-        services = get_all_services(hostname)
+        services = yield get_all_services(hostname)
         LOGGER.info(_("Asking Nagios for updates on %d services"),
                     len(services))
         for svc in services:

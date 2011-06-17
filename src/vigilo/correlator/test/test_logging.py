@@ -11,6 +11,7 @@ from twisted.internet import defer
 
 from datetime import datetime
 from lxml import etree
+import logging
 
 from helpers import settings
 from helpers import setup_mc, teardown_mc, setup_db, teardown_db
@@ -22,13 +23,10 @@ from vigilo.pubsub.xml import NS_EVENT
 from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import insert_event, insert_state
 from vigilo.correlator.correvent import make_correvent
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
-import logging
 from vigilo.common.logging import get_logger
-from vigilo.common.gettext import translate
 LOGGER = get_logger(__name__)
-_ = translate(__name__)
-
 
 class RuleDispatcherStub():
     """Classe simulant le fonctionnement du RuleDispatcher."""
@@ -128,7 +126,7 @@ class TestLogging(unittest.TestCase):
         item = etree.fromstring(payload)
 
         # On ajoute les données nécessaires dans le contexte.
-        ctx = Context(self.XMPP_id)
+        ctx = Context(self.XMPP_id, database=DummyDatabaseWrapper(True))
         yield ctx.set('hostname', host_name)
         yield ctx.set('servicename', service_name)
         yield ctx.set('statename', new_state)
@@ -152,8 +150,8 @@ class TestLogging(unittest.TestCase):
         # comme s'il avait été traité au préalable par le rule_dispatcher.
         rd = RuleDispatcherStub()
 
-        make_correvent(rd, item, self.XMPP_id)
-        DBSession.flush()
+        LOGGER.error('Creating new correlated event')
+        yield make_correvent(rd, DummyDatabaseWrapper(True), item, self.XMPP_id)
 
     def add_data(self):
         """
@@ -268,7 +266,8 @@ class TestLogging(unittest.TestCase):
         # Partie 1 : test le syslog sur la création d'un événement corrélé.
 
         # On recoit un message "WARNING" concernant lls1.
-        LOGGER.debug(_("Received 'WARNING' message on lls1"))
+        LOGGER.debug("Received 'WARNING' message on lls1")
+        ctx = Context(self.XMPP_id, database=DummyDatabaseWrapper(True))
         self.simulate_message_reception(u"WARNING", host_name, lls_name)
 
         event = DBSession.query(Event.idevent).one()
@@ -289,8 +288,8 @@ class TestLogging(unittest.TestCase):
         # Partie 2 : test le syslog sur la mise à jour d'un événement corrélé.
 
         # On recoit un message "CRITICAL" concernant lls1.
-        LOGGER.debug(_("Received 'CRITICAL' message on lls1"))
-        ctx = Context(self.XMPP_id + 1)
+        LOGGER.debug("Received 'CRITICAL' message on lls1")
+        ctx = Context(self.XMPP_id + 1, database=DummyDatabaseWrapper(True))
         yield ctx.set('update_id', event_id)
         self.simulate_message_reception(u"CRITICAL", host_name, lls_name)
 

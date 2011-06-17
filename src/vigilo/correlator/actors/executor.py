@@ -60,6 +60,14 @@ class Executor(object):
                 })
             return failure
 
+        def before_work(result, rule):
+            LOGGER.debug(_('Executing correlation rule "%s"'), rule)
+            return result
+
+        def after_work(result, rule):
+            LOGGER.debug(_('Done executing correlation rule "%s"'), rule)
+            return result
+
         # L'exécution de la règle échoue si au moins une de ses dépendances
         # n'a pas pu être exécutée. À l'inverse, elle n'est exécutée que
         # lorsque TOUTES ses dépendances ont été exécutées.
@@ -68,8 +76,10 @@ class Executor(object):
             fireOnOneCallback=0,
             fireOnOneErrback=1,
         )
+        dl.addCallback(before_work, rule)
         dl.addCallback(self.__do_work, rule)
         dl.addErrback(rule_failure, rule)
+        dl.addCallback(after_work, rule)
         cache[rule] = dl
         return dl
 

@@ -15,7 +15,7 @@ from vigilo.common.gettext import translate
 _ = translate('vigilo.correlator')
 
 from vigilo.connector import options as base_options
-
+from vigilo.correlator.db_thread import DatabaseWrapper
 
 def log_debug_info(*args):
     from vigilo.common.logging import get_logger
@@ -75,8 +75,7 @@ class CorrelatorServiceMaker(object):
             settings.load_module('vigilo.correlator')
 
         # Configuration de l'accès à la base de données.
-        from vigilo.models.configure import configure_db
-        configure_db(settings['database'], 'sqlalchemy_')
+        database = DatabaseWrapper(settings['database'])
 
         from vigilo.common.logging import get_logger
         LOGGER = get_logger('vigilo.correlator')
@@ -85,8 +84,7 @@ class CorrelatorServiceMaker(object):
         from vigilo.connector import client
         from vigilo.pubsub.checknode import VerificationNode
         from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
-        from vigilo.correlator.memcached_connection import \
-                MemcachedConnection
+        from vigilo.correlator.memcached_connection import MemcachedConnection
 
         # Enregistre les règles de corrélation dans le registre.
         # À LAISSER ABSOLUMENT.
@@ -97,13 +95,14 @@ class CorrelatorServiceMaker(object):
                            "/etc/vigilo/correlator/plugins"))
 
         reactor.addSystemEventTrigger('during', 'startup', set_signal_handlers)
+        reactor.addSystemEventTrigger('before', 'shutdown', database.shutdown)
 
         xmpp_client = client.client_factory(settings)
 
         _service = JID(settings['bus']['service'])
         nodetopublish = settings.get('publications', {})
 
-        msg_handler = RuleDispatcher()
+        msg_handler = RuleDispatcher(database)
         msg_handler.setHandlerParent(xmpp_client)
 
         # Présence

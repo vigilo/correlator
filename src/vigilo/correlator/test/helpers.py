@@ -26,6 +26,7 @@ from vigilo.models.tables import StateName
 
 from vigilo.correlator.context import Context
 from vigilo.correlator.memcached_connection import MemcachedConnection
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 MemcachedConnection.CONTEXT_TIMER = 0
 
@@ -66,7 +67,7 @@ def setup_mc():
     # while loop. Oh well...
     time.sleep(1)
     # On s'assure qu'une connexion vers memcached est ouverte.
-    MemcachedConnection()
+    MemcachedConnection(DummyDatabaseWrapper(True))
 
 def teardown_mc():
     """Détruit le serveur memcached créé pour le passage d'un test."""
@@ -102,12 +103,15 @@ class ConnectionStub(object):
     def __init__(self):
         self.data = {}
 
-    def get(self, key):
+    def get(self, key, transaction=True):
         print "GETTING: %r = %r" % (key, self.data.get(key))
         return self.data.get(key)
 
-    def set(self, key, value, time=None):
+    def set(self, key, value, transaction=True, **kwargs):
         self.data[key] = value
+
+    def delete(self, key, transaction=True):
+        del self.data[key]
 
 
 # Mocks
@@ -118,12 +122,14 @@ class ContextStub(Context):
         if timeout is None:
             timeout = 60.0
         self._timeout = timeout
+        self._transaction = False
+        self._database = DummyDatabaseWrapper(True)
 
 class ContextStubFactory(object):
     def __init__(self):
         self.contexts = {}
 
-    def __call__(self, idxmpp, timeout=None):
+    def __call__(self, idxmpp, timeout=None, *args, **kwargs):
         if idxmpp not in self.contexts:
             print "CREATING CONTEXT FOR", idxmpp
             self.contexts[idxmpp] = ContextStub(idxmpp, timeout)

@@ -48,7 +48,7 @@ class Context(object):
         -   no_alert : empêche la génération d'une alerte corrélée.
     """
 
-    def __init__(self, idxmpp, timeout=None):
+    def __init__(self, idxmpp, database=None, transaction=True, timeout=None):
         """
         Initialisation d'un contexte de corrélation (au moyen de MemcacheD).
 
@@ -56,7 +56,8 @@ class Context(object):
             reçue par le corrélateur.
         @type idxmpp: C{basestring}.
         """
-        self._connection = MemcachedConnection()
+        self._connection = MemcachedConnection(database)
+        self._transaction = transaction
         self._id = str(idxmpp)
         if timeout is None:
             timeout = settings['correlator'].as_float('context_timeout')
@@ -69,28 +70,28 @@ class Context(object):
         Récupère la topologie associée à ce contexte.
         @rtype: L{defer.Deferred}.
         """
-        topology = yield defer.maybeDeferred(
-            self._connection.get,
-            'vigilo:topology'
+        topology = yield self._connection.get(
+            'vigilo:topology',
+            self._transaction,
         )
 
         if topology is None:
             topology = Topology()
             dl = defer.DeferredList([
-                defer.maybeDeferred(
-                    self._connection.set,
+                self._connection.set(
                     'vigilo:topology',
-                    topology
+                    topology,
+                    transaction=self._transaction,
                 ),
-                defer.maybeDeferred(
-                    self._connection.set,
+                self._connection.set(
                     'vigilo:last_topology_update',
-                    datetime.now()
-                )
+                    datetime.now(),
+                    transaction=self._transaction,
+                ),
             ])
-            cache = yield dl
+            yield dl
 
-        yield defer.returnValue(topology)
+        defer.returnValue(topology)
 
     @property
     def last_topology_update(self):
@@ -98,9 +99,9 @@ class Context(object):
         Récupère la date de la dernière mise à jour de l'arbre topologique.
         @rtype: L{datetime}.
         """
-        return defer.maybeDeferred(
-            self._connection.get,
-            'vigilo:last_topology_update'
+        return self._connection.get(
+            'vigilo:last_topology_update',
+            self._transaction,
         )
 
     def get(self, prop):
@@ -118,9 +119,9 @@ class Context(object):
         if prop in ('topology', 'last_topology_update'):
             return object.__getattribute__(self, prop)
 
-        return defer.maybeDeferred(
-            self._connection.get,
+        return self._connection.get(
             'vigilo:%s:%s' % (prop, self._id),
+            self._transaction,
         )
 
     def set(self, prop, value):
@@ -134,11 +135,11 @@ class Context(object):
             être sérialisée à l'aide du module C{pickle} de Python.
         @type value: C{mixed}
         """
-        return defer.maybeDeferred(
-            self._connection.set,
+        return self._connection.set(
             'vigilo:%s:%s' % (prop, self._id),
             value,
-            time=self._timeout
+            self._transaction,
+            time=self._timeout,
         )
 
     def delete(self, prop):
@@ -152,4 +153,5 @@ class Context(object):
         return defer.maybeDeferred(
             self._connection.delete,
             'vigilo:%s:%s' % (prop, self._id),
+            self._transaction,
         )

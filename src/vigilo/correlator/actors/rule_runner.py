@@ -17,9 +17,6 @@ import transaction
 from vigilo.common.conf import settings
 settings.load_module(__name__)
 
-from vigilo.models.configure import configure_db
-configure_db(settings['database'], 'sqlalchemy_')
-
 from vigilo.common.conf import setup_plugins_path
 
 from vigilo.common.logging import get_logger
@@ -61,23 +58,30 @@ class RuleRunner(child.AMPChild):
 
     @RuleCommand.responder
     def rule_runner(self, rule_name, idxmpp, xml):
+        from vigilo.models.configure import configure_db
+        configure_db(settings['database'], 'sqlalchemy_')
+
         from vigilo.correlator.registry import get_registry
 
         logger = get_logger(__name__)
         reg = get_registry()
         rule = reg.rules.lookup(rule_name)
 
-        logger.debug(u'Rule runner: process begins for rule "%s"', rule_name)
-        logger.debug(u'Process id: %(pid)r | Parent id: %(ppid)r | '
-                      'Rule name: %(name)s', {
+        logger.debug('Rule runner: process begins for rule "%s"', rule_name)
+        logger.debug('Process id: %(pid)r | Parent id: %(ppid)r | '
+                    'Message id: %(idxmpp)r | Rule name: %(name)s', {
                             'pid': os.getpid(),
                             'ppid': os.getppid(),
                             'name': rule_name,
+                            'idxmpp': idxmpp,
                         })
 
         try:
             transaction.begin()
             rule.process(self, idxmpp, xml)
+            transaction.commit()
+        except KeyboardInterrupt:
+            raise
         except:
             logger.exception(_('Got an exception while running rule %(rule)s. '
                                 'Running the correlator in the foreground '
