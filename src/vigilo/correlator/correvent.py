@@ -238,14 +238,6 @@ def make_correvent(forwarder, database, dom, idnt):
     if priority is None:
         priority = settings['correlator'].as_int('unknown_priority_value')
 
-    # Si l'événement avait déjà reçu une priorité,
-    # on ne garde que la plus importante/critique.
-    if correvent.priority is not None:
-        if settings['correlator']['priority_order'] == 'asc':
-            priority = min(priority, correvent.priority)
-        else:
-            priority = max(priority, correvent.priority)
-
     priority_tag = etree.SubElement(dom, "priority")
     priority_tag.text = str(priority)
     correvent.priority = priority
@@ -328,10 +320,18 @@ def make_correvent(forwarder, database, dom, idnt):
     payload = etree.tostring(dom)
     forwarder.sendItem(payload)
 
+    statename = yield ctx.get('statename')
+
+    # @XXX: Ce code est spécifique à un client particulier,
+    #       il vaudrait mieux utiliser un point d'entrée
+    #       à la place pour obtenir un effet similaire.
+    if statename in (u'UP', u'OK'):
+        log_priority = 0
+    else:
+        log_priority = priority
+
     # On génère le message à envoyer à syslog.
     # Ceci permet de satisfaire l'exigence VIGILO_EXIG_VIGILO_COR_0040.
-    statename = yield ctx.get('statename')
-    log_priority = statename in (u'UP', u'OK') and 0 or priority
     data_log[DATA_LOG_ID] = idcorrevent
     data_log[DATA_LOG_STATE] = statename
     data_log[DATA_LOG_PRIORITY] = log_priority
