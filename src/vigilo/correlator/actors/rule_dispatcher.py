@@ -423,9 +423,11 @@ class RuleDispatcher(PubSubSender):
                         'The message will be handled once more.'), failure)
             self.queue.append(xml)
             return None
-        d.addCallback(lambda res: self.__database.run(transaction.begin, transaction=False))
+        d.addCallback(lambda res: self.__database.run(
+            transaction.begin, transaction=False))
         d.addCallback(cb, dom, idnt)
-        d.addCallback(lambda res: self.__database.run(transaction.commit, transaction=False))
+        d.addCallback(lambda res: self.__database.run(
+            transaction.commit, transaction=False))
         d.addErrback(eb, xml)
 
         d.callback(None)

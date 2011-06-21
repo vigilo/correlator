@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """
 Ce module permet d'encapsuler les échanges avec la base de données
-de Vigilo dans un thread séparé.
+de Vigilo dans un processus léger (thread) séparé.
 
-Voir http://markmail.org/message/22wlumhabfuh2plj#query:+page:1+mid:22wlumhabfuh2plj+state:results
+L'idée vient de http://markmail.org/message/22wlumhabfuh2plj#query:+page:1+mid:22wlumhabfuh2plj+state:results
+mais a été adaptée pour utiliser les outils spécifiques fournis par Twisted
+pour la gestion des processus léger.
 """
 
 import Queue
@@ -11,34 +13,29 @@ import threading
 
 from twisted.internet import reactor
 from twisted.internet import defer
+from twisted.internet import threads
 from twisted.python.failure import Failure
 
 import transaction
 
 class DatabaseWrapper(object):
-    def __init__(self, db_settings):
-        self.queue = Queue.Queue()
-        self.started = threading.Event()
-        self.dbthread = threading.Thread(
-            target=self._dbThread,
-            args=(db_settings, ),
-        )
-        self.dbthread.setDaemon(True)
-        self.dbthread.start()
-        self.started.wait()
-        self.engine = None
+    """
+    Cette classe permet de gérer tous les accès à la base de données
+    au travers d'un processus léger (thread) dédié.
+    """
 
-    def __del__(self):
-        self.shutdown()
-        super(DatabaseWrapper, self).__del__()
+    def __init__(self, settings):
+        """
+        Crée un thread dédié à la gestion de la base de données.
+        Cette méthode configure également la session d'accès à
+        la base de données pour qu'elle soit partagée entre les
+        threads.
 
-    def _dbThread(self, settings):
-        from vigilo.common.logging import get_logger
-        from vigilo.common.gettext import translate
-
-        logger = get_logger(__name__)
-        _ = translate(__name__)
-
+        @param settings: Options de configuration du corrélateur,
+            contenant en particulier les options relatives à la
+            base de données (préfixées par "sqlalchemy_").
+        @type settings: C{dict}
+        """
         from vigilo.models.configure import configure_db
         self.engine = configure_db(settings, 'sqlalchemy_')
 
@@ -48,17 +45,45 @@ class DatabaseWrapper(object):
 
         # On remplace l'objet DBSession par une session partagée
         # entre les threads. L'idée est que tous les threads peuvent
-        # s'en servir pour générer des Query, mais seul ce thread-ci
-        # peut s'en servir pour exécuter la requête générée.
+        # s'en servir pour générer des Query, mais seul le thread
+        # géré par cette classe peut s'en servir pour exécuter le SQL.
         session.DBSession = sessionmaker(
             autoflush=True,
             autocommit=False,
             extension=ZopeTransactionExtension()
         )()
-        self.started.set()
+
+        self.queue = Queue.Queue()
+        self.defer = threads.deferToThread(self._db_thread)
+
+    def __del__(self):
+        """
+        Cette méthode se contente d'appeler L{DatabaseWrapper.shutdown}
+        lorsque l'objet est détruit afin de s'assurer que le thread créé
+        dans le constructeur est bien arrêté.
+        """
+        self.shutdown()
+
+    def _db_thread(self):
+        """
+        Cette méthode est exécutée dans un thread séparé.
+        C'est elle qui traite les demandes d'opérations sur la base de données
+        et retourne les résultats sous la forme d'un objet C{Deferred}.
+        
+        @note: Cette méthode ne retourne pas tant que la méthode
+            L{DatabaseWrapper.shutdown} n'a pas été appelée.
+        """
+        from vigilo.common.logging import get_logger
+        from vigilo.common.gettext import translate
+
+        logger = get_logger(__name__)
+        _ = translate(__name__)
 
         while True:
             op = self.queue.get()
+            #if isinstance(op, basestring):
+            #    logger.error("Got %s", op)
+            #    continue
             if op is None:
                 return
             else:
@@ -76,21 +101,67 @@ class DatabaseWrapper(object):
             else:
                 if txn:
                     transaction.commit()
+            self.queue.task_done()
             reactor.callFromThread(*result)
 
     def run(self, func, *args, **kwargs):
+        """
+        Cette méthode reçoit les demandes d'accès destinées à la base
+        de données et les transmet au thread dédié à cette fonction.
+        
+        @param func: La fonction à exécuter qui utilise la base de données.
+        @type func: C{callable}
+        @note: Les arguments supplémentaires passés à cette méthode
+            sont transmis à la fonction indiquée par C{func} lorsque
+            celle-ci est appelée.
+        @note: Cette méthode accepte également un paramètre nommé
+            C{transaction} qui indique si le traitement doit avoir
+            lieu dans une transaction ou non.
+        @return: Un Deferred qui sera appelé avec le résultat de
+            l'exécution de la fonction.
+        @rtype: L{defer.Deferred}
+        """
+        from vigilo.common.logging import get_logger
+        from vigilo.common.gettext import translate
+
+        logger = get_logger(__name__)
+        _ = translate(__name__)
+
         result = defer.Deferred()
         txn = kwargs.pop('transaction', True)
         self.queue.put((func, args, kwargs, result, txn))
         return result
 
     def shutdown(self):
+        """
+        Arrête le thread dédié à la gestion des accès
+        à la base de données.
+        """
         self.queue.put(None)
-        self.dbthread.join(2) 
+        return self.defer 
 
 
 class DummyDatabaseWrapper(object):
+    """
+    Une classe ayant la même API que la classe L{DatabaseWrapper}
+    et pouvant être utilisée en lieu et place de celle-ci lorsqu'il
+    n'est pas utile de déléguer les accès à la base de données à un
+    processus léger dédié (ie. dans les tests unitaires et dans les
+    règles de corrélation).
+    """
+
     def __init__(self, disable_txn=False):
+        """
+        Créer le wrapper autour des accès.
+        
+        @param disable_txn: Désactive globalement les transactions,
+            en ignorant la valeur de l'option C{transaction}
+            éventuellement passée à la méthode L{DummyDatabaseWrapper.run}.
+            Ce paramètre est surtout utile dans les tests unitaires pour
+            éviter que les bases de données en mémoire ne soient perdues
+            après un commit.
+        @type disable_txn: C{bool}
+        """
         from vigilo.common.logging import get_logger
         from vigilo.common.gettext import translate
 
@@ -99,6 +170,25 @@ class DummyDatabaseWrapper(object):
         self.disable_txn = disable_txn
 
     def run(self, func, *args, **kwargs):
+        """
+        Exécute une fonction interagissant avec la base de données.
+
+
+        @param func: La fonction à exécuter qui utilise la base de données.
+        @type func: C{callable}
+        @note: Les arguments supplémentaires passés à cette méthode
+            sont transmis à la fonction indiquée par C{func} lorsque
+            celle-ci est appelée.
+        @note: Cette méthode accepte également un paramètre nommé
+            C{transaction} qui indique si le traitement doit avoir
+            lieu dans une transaction ou non. Si le paramètre C{disable_txn}
+            a été positionné à True à l'initialisation de l'objet,
+            le traitement NE SERA PAS encapsulé dans une transaction,
+            quelle que soit la valeur de ce paramètre.
+        @return: Un Deferred qui sera appelé avec le résultat de
+            l'exécution de la fonction.
+        @rtype: L{defer.Deferred}
+        """
         txn = kwargs.pop('transaction', True) and not self.disable_txn
         if txn:
             transaction.begin()
@@ -116,4 +206,11 @@ class DummyDatabaseWrapper(object):
             if txn:
                 transaction.commit()
             return defer.succeed(res)
+
+    def shutdown(self):
+        """
+        Cette méthode ne fait rien, elle est fournie uniquement
+        pour respecter l'API de la classe L{DatabaseWrapper}.
+        """
+        pass
 
