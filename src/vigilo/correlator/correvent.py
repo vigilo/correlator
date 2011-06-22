@@ -198,7 +198,7 @@ def make_correvent(forwarder, database, dom, idnt):
                     # dépendant de l'alerte courante avec cet agrégat.
                     if succeeding_aggregates_id:
                         for succeeding_aggregate_id in succeeding_aggregates_id:
-                            events = merge_aggregates(
+                            events = yield merge_aggregates(
                                 int(succeeding_aggregate_id),
                                 int(predecessing_aggregate_id),
                                 database
@@ -320,12 +320,10 @@ def make_correvent(forwarder, database, dom, idnt):
     payload = etree.tostring(dom)
     forwarder.sendItem(payload)
 
-    statename = yield ctx.get('statename')
-
     # @XXX: Ce code est spécifique à un client particulier,
     #       il vaudrait mieux utiliser un point d'entrée
     #       à la place pour obtenir un effet similaire.
-    if statename in (u'UP', u'OK'):
+    if state in (u'UP', u'OK'):
         log_priority = 0
     else:
         log_priority = priority
@@ -333,7 +331,7 @@ def make_correvent(forwarder, database, dom, idnt):
     # On génère le message à envoyer à syslog.
     # Ceci permet de satisfaire l'exigence VIGILO_EXIG_VIGILO_COR_0040.
     data_log[DATA_LOG_ID] = idcorrevent
-    data_log[DATA_LOG_STATE] = statename
+    data_log[DATA_LOG_STATE] = state
     data_log[DATA_LOG_PRIORITY] = log_priority
     data_log[DATA_LOG_HOST] = hostname
     data_log[DATA_LOG_SERVICE] = servicename
@@ -373,7 +371,7 @@ def make_correvent(forwarder, database, dom, idnt):
     if aggregates_id:
         event_id_list = []
         for aggregate_id in aggregates_id:
-            events_id = merge_aggregates(
+            events_id = yield merge_aggregates(
                 int(aggregate_id),
                 idcorrevent,
                 database
