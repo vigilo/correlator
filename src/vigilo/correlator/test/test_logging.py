@@ -13,7 +13,7 @@ from datetime import datetime
 from lxml import etree
 import logging
 
-from helpers import settings
+from helpers import settings, populate_statename
 from helpers import setup_mc, teardown_mc, setup_db, teardown_db
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
@@ -160,14 +160,7 @@ class TestLogging(unittest.TestCase):
         """
 
         # Ajout d'états dans la BDD.
-        DBSession.add(StateName(statename=u'OK', order=0))
-        DBSession.add(StateName(statename=u'UP', order=0))
-        DBSession.add(StateName(statename=u'UNKNOWN', order=0))
-        DBSession.add(StateName(statename=u'WARNING', order=0))
-        DBSession.add(StateName(statename=u'CRITICAL', order=0))
-        DBSession.add(StateName(statename=u'UNREACHABLE', order=0))
-        DBSession.add(StateName(statename=u'DOWN', order=0))
-        DBSession.flush()
+        populate_statename()
 
         # Ajout de la date de dernière
         # modification de la topologie dans la BDD.

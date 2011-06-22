@@ -14,36 +14,9 @@ from vigilo.models.tables import Host, LowLevelService, \
 from vigilo.models.tables import Event, CorrEvent, StateName
 
 from vigilo.correlator.topology import Topology
-from helpers import setup_db, teardown_db
+from helpers import setup_db, teardown_db, populate_statename
 
-class TestTopologyFunctions(unittest.TestCase):
-    """Test des méthodes de la classe 'Topology'"""
-
-    def add_statenames(self):
-        # Ajout des noms d'états dans la BDD
-        DBSession.add(StateName(
-            statename = u'OK',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNKNOWN',
-            order = 1))
-        DBSession.add( StateName(
-            statename = u'WARNING',
-            order = 2))
-        DBSession.add(StateName(
-            statename = u'CRITICAL',
-            order = 3))
-        DBSession.add(StateName(
-            statename = u'UP',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNREACHABLE',
-            order = 1))
-        DBSession.add(StateName(
-            statename = u'DOWN',
-            order = 3))
-        DBSession.flush()
-
+class TopologyTestHelpers(object):
     def add_services(self):
         """Création de 5 couples host/service"""
         self.host1 = Host(
@@ -122,22 +95,22 @@ class TestTopologyFunctions(unittest.TestCase):
         """
         dep_group1 = DependencyGroup(
             dependent=self.service1,
-            operator=u'&',
+            operator=u'|',
             role=u'topology',
         )
         dep_group2 = DependencyGroup(
             dependent=self.service2,
-            operator=u'&',
+            operator=u'|',
             role=u'topology',
         )
         dep_group3 = DependencyGroup(
             dependent=self.service3,
-            operator=u'&',
+            operator=u'|',
             role=u'topology',
         )
         dep_group4 = DependencyGroup(
             dependent=self.service4,
-            operator=u'&',
+            operator=u'|',
             role=u'topology',
         )
         DBSession.add(dep_group1)
@@ -166,6 +139,8 @@ class TestTopologyFunctions(unittest.TestCase):
         DBSession.add(self.dependency5)
         DBSession.flush()
 
+class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
+    """Test des méthodes de la classe 'Topology'"""
     def add_events_and_aggregates(self):
         """
         Ajout de quelques événements associés à des services de
@@ -218,8 +193,8 @@ class TestTopologyFunctions(unittest.TestCase):
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
         setup_db()
+        populate_statename()
 
-        self.add_statenames()
         # Création de 5 couples host/service
         self.add_services()
 
@@ -353,6 +328,71 @@ class TestTopologyFunctions(unittest.TestCase):
         # On vérifie que le service 4 a bien causé l'agrégat 1
         # (Et uniquement l'agrégat 1).
         self.assertEqual(aggregates_id, [self.events_aggregate1.idcorrevent])
+
+class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
+    """
+    Teste la détection de chemins "vivants" dans la topologie.
+    """
+    def add_events_and_aggregates(self):
+        """
+        Ajout de quelques événements associés à des services de
+        bas niveau dans la BDD, ainsi que de quelques agrégats.
+        """
+        self.event1 = Event(
+            idsupitem = self.service3.idservice,
+            current_state = 2,
+            message = 'WARNING: RAM is overloaded',
+            timestamp = datetime.now(),
+        )
+        DBSession.add(self.event1)
+        DBSession.flush()
+
+        self.events_aggregate1 = CorrEvent(
+            idcause = self.event1.idevent,
+            impact = 1,
+            priority = 1,
+            trouble_ticket = u'azerty1234',
+            status = u'None',
+            occurrence = 1,
+            timestamp_active = datetime.now(),
+        )
+        self.events_aggregate1.events.append(self.event1)
+        DBSession.add(self.events_aggregate1)
+        DBSession.flush()
+
+    def setUp(self):
+        """Initialisation de la BDD préalable à chacun des tests"""
+        setup_db()
+        populate_statename()
+
+        # Création de 5 couples host/service
+        self.add_services()
+
+        # On ajoute quelques dépendances entre
+        # les services de bas niveau dans la BDD.
+        self.add_dependencies()
+
+    def tearDown(self):
+        """Nettoyage de la BDD à la fin de chaque test"""
+        DBSession.expunge_all()
+        DBSession.rollback()
+        DBSession.flush()
+        teardown_db()
+
+    def test_first_predecessors_aggregates(self):
+        """Pas d'agrégats prédecesseurs s'il existe un chemin "vivant"."""
+
+        # On instancie la classe topology.
+        topology = Topology()
+
+        # On ajoute quelques événements et agrégats
+        self.add_events_and_aggregates()
+
+        # On récupère les aggrégats dont dépend le service 1
+        aggregates = topology.get_first_predecessors_aggregates(
+                                                    self.service1.idservice)
+        self.assertEquals([], aggregates)
+
 
 if __name__ == "__main__":
     nose.main()

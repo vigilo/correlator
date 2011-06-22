@@ -13,7 +13,7 @@ from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
 from helpers import setup_mc, teardown_mc
-from helpers import setup_db, teardown_db
+from helpers import setup_db, teardown_db, populate_statename
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, LowLevelService, StateName, \
@@ -55,28 +55,7 @@ class TestApiFunctions(unittest.TestCase):
         """Récupération de l'arbre topologique dans le contexte"""
 
         # Ajout des noms d'états dans la BDD
-        DBSession.add(StateName(
-            statename = u'OK',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNKNOWN',
-            order = 1))
-        DBSession.add( StateName(
-            statename = u'WARNING',
-            order = 2))
-        DBSession.add(StateName(
-            statename = u'CRITICAL',
-            order = 3))
-        DBSession.add(StateName(
-            statename = u'UP',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNREACHABLE',
-            order = 1))
-        DBSession.add(StateName(
-            statename = u'DOWN',
-            order = 3))
-        DBSession.flush()
+        populate_statename()
 
         # Création d'une topologie basique par l'ajout
         # de deux hôtes et d'une dépendance entre eux.

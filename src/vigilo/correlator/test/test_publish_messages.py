@@ -12,7 +12,7 @@ import unittest
 from vigilo.correlator.publish_messages import publish_aggregate, \
                                             delete_published_aggregates, \
                                             publish_state
-from helpers import setup_db, teardown_db
+from helpers import setup_db, teardown_db, populate_statename
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, HighLevelService, LowLevelService
@@ -71,28 +71,7 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         setup_db()
 
         # Ajout des noms d'états dans la BDD
-        DBSession.add(StateName(
-            statename = u'OK',
-            order = 0))
-        DBSession.add(StateName(
-             statename = u'UNKNOWN',
-            order = 1))
-        DBSession.add(StateName(
-            statename = u'WARNING',
-            order = 2))
-        DBSession.add(StateName(
-            statename = u'CRITICAL',
-            order = 3))
-        DBSession.add(StateName(
-            statename = u'UP',
-            order = 0))
-        DBSession.add(StateName(
-            statename = u'UNREACHABLE',
-            order = 1))
-        DBSession.add(StateName(
-            statename = u'DOWN',
-            order = 3))
-        DBSession.flush()
+        populate_statename()
 
         # Ajout d'un hôte dans la BDD
         host1 = Host(

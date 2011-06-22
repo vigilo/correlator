@@ -85,6 +85,13 @@ class Topology(nx.DiGraph):
                             first_predecessors_aggregates.append(
                                                                 open_aggregate)
 
+                    # Si on a trouvé au moins un chemin sans aggrégat,
+                    # alors on considère que la connectivité est toujours
+                    # fonctionnelle et que l'incident courant est isolé.
+                    # Du coup, on n'effectue pas de rattachement.
+                    if not open_aggregates:
+                        return []
+
         return first_predecessors_aggregates
 
     def get_first_successors_aggregates(self, item_id):
