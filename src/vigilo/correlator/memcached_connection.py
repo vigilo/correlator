@@ -46,6 +46,8 @@ class MemcachedConnection(object):
      # Attribut statique de classe
     instance = None
 
+    use_database = True
+
     # Maximum de secondes au-delà duquel memcached
     # considère que l'expiration est une date absolue
     # dans le temps (timestamp Unix) et non relative.
@@ -106,7 +108,7 @@ class MemcachedConnection(object):
         return datetime.fromtimestamp(timestamp + time.time())
 
     def __remove_expired_contexts(self):
-        if self.__connection_db_session is None:
+        if self.__connection_db_session is None or not self.use_database:
             return
         now = datetime.now()
         d = self.__connection_db_session.run(
@@ -201,11 +203,12 @@ class MemcachedConnection(object):
         exp_time = self.__convert_to_datetime(kwargs.pop('time', None))
 
         def set_db(exp_time):
-            instance = CorrelationContext(key=key)
-            instance = DBSession.merge(instance)
-            instance.value = value
-            instance.expiration_date = exp_time
-            DBSession.flush()
+            if self.use_database:
+                instance = CorrelationContext(key=key)
+                instance = DBSession.merge(instance)
+                instance.value = value
+                instance.expiration_date = exp_time
+                DBSession.flush()
             return exp_time
 
         d = self.__connection_db_session.run(
@@ -253,6 +256,8 @@ class MemcachedConnection(object):
 
         if result:
             return defer.succeed(pickle.loads(str(result)))
+        elif not self.use_database:
+            return defer.succeed(None)
 
         # Pas de résultat ? On récupère l'information depuis
         # la base de données et on met à jour le cache.
@@ -309,6 +314,9 @@ class MemcachedConnection(object):
 
         # On supprime la clé 'key' et la valeur qui lui est associée.
         self.__connection_cache.delete(key)
+
+        if not self.use_database:
+            defer.returnValue(-1)
 
         for i in xrange(5):
             try:
