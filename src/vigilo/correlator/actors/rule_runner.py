@@ -92,10 +92,11 @@ class RuleRunner(child.AMPChild):
             raise
         finally:
             # Les règles de corrélation ne sont pas censées écrire
-            # dans la base de données. On fait un ROLLBACK systématique
-            # pour annuler les éventuels changements réalisés et qui
-            # peuvent générer des incohérences (concurrence entre règles).
-            transaction.abort()
+            # dans la base de données. On ferme proprement la connexion.
+            # PS :  DBSession.close effectue un ROLLBACK automatique
+            #       et libère toutes les instances (expunge_all).
+            from vigilo.models.session import DBSession
+            DBSession.close()
 
         logger.debug(u'Rule runner: process ends for rule "%s"', rule_name)
         return {}
