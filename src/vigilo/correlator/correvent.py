@@ -349,19 +349,20 @@ def make_correvent(forwarder, database, dom, idnt):
 
     LOGGER.debug(_(u'Sending correlated event to syslog'))
     data_logger = get_logger('vigilo.correlator.syslog')
-    data_logger.log(
-        log_level,
-        '%d|%s|%s|%s|%s|%d|%s',
-        data_log[DATA_LOG_ID],
-        data_log[DATA_LOG_TYPE],
-        data_log[DATA_LOG_HOST],
-        data_log[DATA_LOG_SERVICE],
-        data_log[DATA_LOG_STATE],
-        # @TODO: A réactiver si cela est souhaité
-#        ';'.join(data_log[DATA_LOG_IMPACTED_HLS]),
-        data_log[DATA_LOG_PRIORITY],
-        data_log[DATA_LOG_MESSAGE],
-    )
+    if data_logger.isEnabledFor(log_level):
+        data_logger.log(
+            log_level,
+            '%d|%s|%s|%s|%s|%d|%s',
+            data_log[DATA_LOG_ID],
+            data_log[DATA_LOG_TYPE],
+            data_log[DATA_LOG_HOST],
+            data_log[DATA_LOG_SERVICE],
+            data_log[DATA_LOG_STATE],
+            # @TODO: A réactiver si cela est souhaité
+#           ';'.join(data_log[DATA_LOG_IMPACTED_HLS]),
+            data_log[DATA_LOG_PRIORITY],
+            data_log[DATA_LOG_MESSAGE],
+        )
 
     # Si un ou plusieurs agrégats dépendant de l'alerte sont
     # spécifiés dans le contexte par la règle de corrélation

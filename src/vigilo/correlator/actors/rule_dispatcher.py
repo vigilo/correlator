@@ -250,7 +250,7 @@ class RuleDispatcher(PubSubSender):
         def prepare_ctx(res, ctx_name, value):
             return ctx.set(ctx_name, value)
         def eb(failure):
-            LOGGER.error(_("Error: %s"), failure)
+            LOGGER.error(_("Error: %s"), str(failure).decode('utf-8'))
             return failure
 
         for ctx_name, info_name in attrs.iteritems():
@@ -419,8 +419,11 @@ class RuleDispatcher(PubSubSender):
         def cb(result, dom, idnt):
             return make_correvent(self, self.__database, dom, idnt)
         def eb(failure, xml):
-            LOGGER.info(_('Error while saving the correlated event (%s). '
-                        'The message will be handled once more.'), failure)
+            LOGGER.info(_(
+                'Error while saving the correlated event (%s). '
+                'The message will be handled once more.'),
+                str(failure).decode('utf-8')
+            )
             self.queue.append(xml)
             return None
         d.addCallback(lambda res: self.__database.run(
@@ -472,7 +475,7 @@ class RuleDispatcher(PubSubSender):
                         'message #%(id)s (%(payload)s) : %(error)s'), {
             'id': idxmpp,
             'payload': payload,
-            'error': failure,
+            'error': str(failure).decode('utf-8'),
         })
 
     def connectionInitialized(self):

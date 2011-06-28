@@ -126,32 +126,25 @@ def insert_event(info_dictionary):
     # a pas fait un DBSession.add() + DBSession.flush().
     event_id = event.idevent
 
-    try:
-        # Sauvegarde de l'évènement.
-        DBSession.add(event)
+    # Sauvegarde de l'évènement.
+    DBSession.add(event)
+    DBSession.flush()
+
+    if add_history:
+        history = EventHistory()
+
+        history.type_action = is_new_event and \
+                                u'New occurrence' or \
+                                u'Nagios update state'
+
+        history.value = info_dictionary['state']
+        history.text = info_dictionary['message']
+        history.timestamp = info_dictionary['timestamp']
+        history.username = None
+        history.idevent = event.idevent
+        DBSession.add(history)
         DBSession.flush()
-
-        if add_history:
-            history = EventHistory()
-
-            history.type_action = is_new_event and \
-                                    u'New occurrence' or \
-                                    u'Nagios update state'
-
-            history.value = info_dictionary['state']
-            history.text = info_dictionary['message']
-            history.timestamp = info_dictionary['timestamp']
-            history.username = None
-            history.idevent = event.idevent
-            DBSession.add(history)
-            DBSession.flush()
-
-    # On capture les erreurs qui sont permanentes.
-    except (IntegrityError, InvalidRequestError), e:
-        LOGGER.exception(_(u'Got exception'))
-        return None
-    else:
-        return event.idevent
+    return event.idevent
 
 def insert_hls_history(info_dictionary):
     """
@@ -181,11 +174,8 @@ def insert_hls_history(info_dictionary):
     history.timestamp = datetime.now()
     history.idstatename = StateName.statename_to_value(
                             info_dictionary['state'])
-    try:
-        DBSession.add(history)
-        DBSession.flush()
-    except IntegrityError, e:
-        LOGGER.exception(_(u'Got exception'))
+    DBSession.add(history)
+    DBSession.flush()
 
 def insert_state(info_dictionary):
     """
@@ -225,11 +215,8 @@ def insert_state(info_dictionary):
     state.timestamp = info_dictionary["timestamp"]
     state.state = StateName.statename_to_value(info_dictionary["state"])
 
-    try:
-        DBSession.add(state)
-        DBSession.flush()
-    except (IntegrityError, InvalidRequestError):
-        LOGGER.exception(_(u'Got exception'))
+    DBSession.add(state)
+    DBSession.flush()
     return previous_state
 
 
