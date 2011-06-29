@@ -26,8 +26,6 @@ from vigilo.common.gettext import translate
 from vigilo.models.tables import CorrelationContext
 from vigilo.models.session import DBSession
 
-from vigilo.correlator.db_thread import DummyDatabaseWrapper
-
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
@@ -87,8 +85,6 @@ class MemcachedConnection(object):
         # et non dans __init__ : __new__ ne fera l'initialisation qu'une
         # fois (singleton). Dans __init__, l'attribut serait réinitialisé
         # à chaque récupération d'une instance.
-        if database is None:
-            database = DummyDatabaseWrapper()
         self.__connection_db_session = database
 
     def __del__(self):

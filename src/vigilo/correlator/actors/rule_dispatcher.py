@@ -32,7 +32,6 @@ from vigilo.common.gettext import translate
 from vigilo.connector.forwarder import PubSubSender
 from vigilo.connector import MESSAGEONETOONE
 
-from vigilo.models.tables import Change
 from vigilo.models.session import DBSession
 
 from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, NS_TICKET
@@ -85,40 +84,6 @@ def extract_information(payload):
         info_dictionary["host"] = None
 
     return info_dictionary
-
-def check_topology(last_topology_update):
-    """
-    Vérifie que la date de dernière modification de la topologie du parc,
-    consignée dans la base de données, est bien antérieure à la date de
-    dernière mise à jour de l'arbre topologique utilisé par le corrélateur
-    (passée en paramètre). Reconstruit cet arbre si nécessaire.
-    """
-
-    # On récupère la date de dernière modification de la topologie
-    # du parc, insérée dans la base de données par Vigiconf.
-    last_topology_modification = \
-        DBSession.query(Change.last_modified
-            ).filter(Change.element == u"Topology"
-            ).scalar()
-
-    # Si aucune date n'a été insérée par Vigiconf
-    if not last_topology_modification:
-        # On affiche un message mais on ne
-        # reconstruit pas l'arbre topologique
-        # (inutile, car il est déjà à jour).
-        LOGGER.info(_(u"No information from Vigiconf concerning the "
-                       "topology's last modification date. Therefore the "
-                       "topology has NOT been rebuilt."))
-        return
-
-    # On compare cette date à celle de la dernière modification
-    # de l'arbre topologique utilisé par le corrélateur,
-    # et on reconstruit l'arbre si nécessaire.
-    if not last_topology_update \
-        or last_topology_update < last_topology_modification:
-        conn = MemcachedConnection()
-        conn.delete('vigilo:topology')
-        LOGGER.info(_(u"Topology has been reloaded."))
 
 class RuleDispatcher(PubSubSender):
     """
@@ -258,11 +223,9 @@ class RuleDispatcher(PubSubSender):
             d.addErrback(eb)
 
         # Dans l'ordre :
-        # - On vérifie la fraîcheur des données de topologie.
         # - On insère une entrée d'historique pour l'événement.
         # - On enregistre l'état correspondant à l'événement.
         # - On réalise la corrélation.
-        d.addCallback(self.__check_topology, ctx, xml)
         d.addCallback(self.__insert_history, info_dictionary, xml)
         d.addCallback(self.__insert_state, info_dictionary, xml)
         d.addCallback(self.__do_correl, info_dictionary, idxmpp, dom, xml, ctx)
@@ -270,51 +233,6 @@ class RuleDispatcher(PubSubSender):
             LOGGER.debug(_('Correlation process ended'))
             return result
         d.addCallback(end)
-        d.callback(None)
-        return d
-
-    def __check_topology(self, result, ctx, xml):
-        LOGGER.debug(_('Checking topology'))
-
-        d = defer.Deferred()
-        d.addCallback(lambda result: ctx.last_topology_update)
-
-        def possibly_rebuild(last_mod, last_update):
-            # Si aucune date n'a été insérée par Vigiconf
-            if not last_mod:
-                # On affiche un message mais on ne
-                # reconstruit pas l'arbre topologique
-                # (inutile, car il est déjà à jour).
-                LOGGER.info(_(
-                    "No information from Vigiconf concerning the "
-                    "topology's last modification date. "
-                    "Therefore the topology has NOT been rebuilt."
-                ))
-                return
-
-            # On compare cette date à celle de la dernière modification
-            # de l'arbre topologique utilisé par le corrélateur,
-            # et on reconstruit l'arbre si nécessaire.
-            if not last_topology_update \
-                or last_topology_update < last_topology_modification:
-                conn = MemcachedConnection(self.__database)
-                conn.delete('vigilo:topology')
-                LOGGER.info(_("Topology has been reloaded."))
-
-        def last_modification(last_update):
-            # On récupère la date de dernière modification de la topologie
-            # du parc, insérée dans la base de données par Vigiconf.
-            last_mod = self.__do_in_transaction(
-                _("Error while retrieving the network's topology"),
-                xml, Exception,
-                DBSession.query(
-                    Change.last_modified
-                ).filter(Change.element == u"Topology"
-                ).scalar
-            )
-            last_mod.addCallback(possibly_rebuild, last_update)
-            return last_mod
-
         d.callback(None)
         return d
 

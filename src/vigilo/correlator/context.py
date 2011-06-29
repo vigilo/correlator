@@ -16,6 +16,7 @@ from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
 from vigilo.correlator.topology import Topology
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.correlator.memcached_connection import MemcachedConnection
 
 LOGGER = get_logger(__name__)
@@ -56,7 +57,10 @@ class Context(object):
             reçue par le corrélateur.
         @type idxmpp: C{basestring}.
         """
+        if database is None:
+            database = DummyDatabaseWrapper()
         self._connection = MemcachedConnection(database)
+        self._database = database
         self._transaction = transaction
         self._id = str(idxmpp)
         if timeout is None:
@@ -77,7 +81,11 @@ class Context(object):
 
         if topology is None:
             topology = Topology()
-            dl = defer.DeferredList([
+            yield self._database.run(
+                topology.generate,
+                transaction=self._transaction
+            )
+            yield defer.DeferredList([
                 self._connection.set(
                     'vigilo:topology',
                     topology,
@@ -89,8 +97,6 @@ class Context(object):
                     transaction=self._transaction,
                 ),
             ])
-            yield dl
-
         defer.returnValue(topology)
 
     @property

@@ -22,12 +22,11 @@ _ = translate(__name__)
 class Topology(nx.DiGraph):
     """
     Graphe topologique représentant les dépendances entre les services de bas
-    niveau. Hérite de la classe DiGraph de la librairie NEtworkX.
+    niveau. Hérite de la classe DiGraph de la bibliothèque NetworkX.
     """
 
     def __init__(self):
         super(Topology, self).__init__()
-        self.generate()
 
     def generate(self):
         """Génère le graphe en récupérant les informations dans la BDD."""

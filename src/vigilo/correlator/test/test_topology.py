@@ -202,6 +202,10 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         # les services de bas niveau dans la BDD.
         self.add_dependencies()
 
+        # On prépare la topology.
+        self.topology = Topology()
+        self.topology.generate()
+
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
         DBSession.expunge_all()
@@ -211,13 +215,9 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
     def test_instanciation(self):
         """Instanciation de la classe 'Topology'"""
-
-        # On instancie la classe topology.
-        topology = Topology()
-
         # On vérifie que les noeuds correspondent bien
         # à la liste des services insérés dans la BDD.
-        nodes = topology.nodes()
+        nodes = self.topology.nodes()
         nodes.sort()
         node_list = [self.service1.idservice,
                     self.service2.idservice,
@@ -229,7 +229,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
         # On vérifie que les dépendances correspondent
         # bien à la liste celles de la BDD.
-        edges = topology.edges()
+        edges = self.topology.edges()
         edges.sort()
         edge_list = [(self.service2.idservice, self.service1.idservice),
                     (self.service3.idservice, self.service1.idservice),
@@ -241,15 +241,11 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
     def test_first_predecessors_aggregates(self):
         """Récupération des premiers agrégats dont dépend une alerte brute"""
-
-        # On instancie la classe topology.
-        topology = Topology()
-
         # On ajoute quelques événements et agrégats
         self.add_events_and_aggregates()
 
         # On récupère les aggrégats dont dépend le service 1
-        aggregates = topology.get_first_predecessors_aggregates(
+        aggregates = self.topology.get_first_predecessors_aggregates(
                                                     self.service1.idservice)
         aggregates_id = []
         for aggregate in aggregates:
@@ -262,7 +258,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         self.assertEqual(aggregates_id, aggregate_list)
 
         # On récupère les aggrégats dont dépend le service 2
-        aggregates = topology.get_first_predecessors_aggregates(
+        aggregates = self.topology.get_first_predecessors_aggregates(
                                                     self.service2.idservice)
         aggregates_id = []
         for aggregate in aggregates:
@@ -273,10 +269,6 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
     def test_first_successors_aggregates(self):
         """Récupération des premiers agrégats dépendant d'une alerte brute"""
-
-        # On instancie la classe topology.
-        topology = Topology()
-
         # On ajoute quelques événements et agrégats
         self.add_events_and_aggregates()
 
@@ -309,7 +301,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         DBSession.flush()
 
         # On récupère les aggrégats causés par le service 5
-        aggregates = topology.get_first_successors_aggregates(
+        aggregates = self.topology.get_first_successors_aggregates(
                                                     self.service5.idservice)
         aggregates_id = []
         for aggregate in aggregates:
@@ -319,7 +311,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         self.assertEqual(aggregates_id, [])
 
         # On récupère les aggrégats causés par le service 4
-        aggregates = topology.get_first_successors_aggregates(
+        aggregates = self.topology.get_first_successors_aggregates(
                                                     self.service4.idservice)
         aggregates_id = []
         for aggregate in aggregates:
@@ -372,6 +364,10 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
         # les services de bas niveau dans la BDD.
         self.add_dependencies()
 
+        # On prépare la topology.
+        self.topology = Topology()
+        self.topology.generate()
+
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
         DBSession.expunge_all()
@@ -381,15 +377,11 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
 
     def test_first_predecessors_aggregates(self):
         """Pas d'agrégats prédecesseurs s'il existe un chemin "vivant"."""
-
-        # On instancie la classe topology.
-        topology = Topology()
-
         # On ajoute quelques événements et agrégats
         self.add_events_and_aggregates()
 
         # On récupère les aggrégats dont dépend le service 1
-        aggregates = topology.get_first_predecessors_aggregates(
+        aggregates = self.topology.get_first_predecessors_aggregates(
                                                     self.service1.idservice)
         self.assertEquals([], aggregates)
 
