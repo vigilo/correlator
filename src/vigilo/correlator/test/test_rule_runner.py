@@ -77,6 +77,7 @@ class TestRuleException(unittest.TestCase):
     @inlineCallbacks
     def test_rule_exception(self):
         """Test d'une règle qui lève une exception."""
+        raise SkipTest # tant que le test n'est pas fiable (SIGCHLD / nose)
         import twisted
         if tuple(twisted.__version__.split(".")) < ("8", "2", "0"):
             raise SkipTest()
@@ -115,6 +116,7 @@ class TestRuleException(unittest.TestCase):
     @inlineCallbacks
     def test_rule_timeout(self):
         """Test d'une règle qui dépasse le délai maximum autorisé."""
+        raise SkipTest # tant que le test n'est pas fiable (SIGCHLD / nose)
         import twisted
         if tuple(twisted.__version__.split(".")) < ("8", "2", "0"):
             raise SkipTest()
