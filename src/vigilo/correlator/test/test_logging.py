@@ -141,8 +141,11 @@ class TestLogging(unittest.TestCase):
         }
 
         # - D'abord l'évènement ;
-        yield ctx.set('raw_event_id', insert_event(info_dictionary))
+        LOGGER.info("Inserting event")
+        raw_id = insert_event(info_dictionary)
+        yield ctx.set('raw_event_id', raw_id)
         # - Et ensuite l'état.
+        LOGGER.info("Inserting state")
         insert_state(info_dictionary)
         DBSession.flush()
 
@@ -150,8 +153,9 @@ class TestLogging(unittest.TestCase):
         # comme s'il avait été traité au préalable par le rule_dispatcher.
         rd = RuleDispatcherStub()
 
-        LOGGER.error('Creating new correlated event')
+        LOGGER.info('Creating a new correlated event')
         yield make_correvent(rd, DummyDatabaseWrapper(True), item, self.XMPP_id)
+        defer.returnValue(None)
 
     def add_data(self):
         """
@@ -189,6 +193,7 @@ class TestLogging(unittest.TestCase):
             command = u'halt',
             weight = 42,
         )
+        DBSession.add(self.lls)
         DBSession.flush()
 
     @deferred(timeout=30)
@@ -261,7 +266,7 @@ class TestLogging(unittest.TestCase):
         # On recoit un message "WARNING" concernant lls1.
         LOGGER.debug("Received 'WARNING' message on lls1")
         ctx = Context(self.XMPP_id, database=DummyDatabaseWrapper(True))
-        self.simulate_message_reception(u"WARNING", host_name, lls_name)
+        yield self.simulate_message_reception(u"WARNING", host_name, lls_name)
 
         event = DBSession.query(Event.idevent).one()
         event_id = event.idevent
@@ -284,7 +289,7 @@ class TestLogging(unittest.TestCase):
         LOGGER.debug("Received 'CRITICAL' message on lls1")
         ctx = Context(self.XMPP_id + 1, database=DummyDatabaseWrapper(True))
         yield ctx.set('update_id', event_id)
-        self.simulate_message_reception(u"CRITICAL", host_name, lls_name)
+        yield self.simulate_message_reception(u"CRITICAL", host_name, lls_name)
 
         event = DBSession.query(Event.idevent).one()
         event_id = event.idevent

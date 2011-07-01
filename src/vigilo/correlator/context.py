@@ -58,7 +58,7 @@ class Context(object):
         @type idxmpp: C{basestring}.
         """
         if database is None:
-            database = DummyDatabaseWrapper()
+            database = DummyDatabaseWrapper(not transaction)
         self._connection = MemcachedConnection(database)
         self._database = database
         self._transaction = transaction
@@ -156,8 +156,7 @@ class Context(object):
             est autorisé, sauf ceux dont le nom commence par '_'.
         @type prop: C{str}
         """
-        return defer.maybeDeferred(
-            self._connection.delete,
+        return self._connection.delete(
             'vigilo:%s:%s' % (prop, self._id),
             self._transaction,
         )

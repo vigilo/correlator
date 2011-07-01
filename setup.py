@@ -45,7 +45,6 @@ setup(name='vigilo-correlator',
         install_requires=[
             'setuptools',
             'lxml',
-            # @TODO Doit-on utiliser twisted.protocols.memcache à la place ?
             'python-memcached',
             'vigilo-models',
             'vigilo-pubsub',

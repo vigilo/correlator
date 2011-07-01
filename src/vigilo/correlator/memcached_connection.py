@@ -11,11 +11,11 @@ except ImportError:
     import pickle
 
 import transaction
-import memcache as mc
 from datetime import datetime
 import time
-from twisted.internet import task, defer
+from twisted.internet import task, defer, reactor, protocol
 from twisted.python.failure import Failure
+from twisted.protocols.memcache import MemCacheProtocol
 
 from sqlalchemy.exc import OperationalError
 
@@ -33,14 +33,18 @@ __all__ = (
     'MemcachedConnection',
 )
 
+class ReconnectingMemcachedClientFactory(protocol.ReconnectingClientFactory):
+    maxDelay = 60
+
+    def buildProtocol(self, addr):
+        self.resetDelay()
+        return MemCacheProtocol(10)
 
 class MemcachedConnection(object):
     """
     Classe gérant la connexion et les échanges avec
-    le serveur MemcacheD. Hérite de la classe mc.
+    le serveur MemcacheD.
     """
-    # @TODO: utiliser t.p.m.MemCacheProtocol à la place de cette classe.
-
      # Attribut statique de classe
     instance = None
 
@@ -65,6 +69,7 @@ class MemcachedConnection(object):
             # Construction de l'objet..
             cls.instance = object.__new__(cls)
             cls.instance.__connection_cache = None
+            cls.instance.__connection_cache_deferred = None
             cls.instance.__connection_db_session = None
             cls.instance.__expiration = task.LoopingCall(
                 cls.instance.__remove_expired_contexts)
@@ -91,8 +96,6 @@ class MemcachedConnection(object):
         """
         Destruction de la connexion à memcached.
         """
-        if self.__connection_cache:
-            self.__connection_cache.disconnect_all()
         self.__expiration.stop()
         self.__expiration_defer.cancel()
 
@@ -137,37 +140,36 @@ class MemcachedConnection(object):
         del cls.instance
         cls.instance = None
 
-    def connect(self):
-        """
-        Établit la connexion.
-        """
+    def __get_connection(self):
+        if self.__connection_cache_deferred:
+            return self.__connection_cache_deferred
 
-        # Clôture d'une éventuelle connection ouverte
-        # précédemment et devenue inopérante.
-        # pylint: disable-msg=E0203
-        if self.__connection_cache:
-            # Si la connexion est en fait encore active on ne fait rien.
-            if self.__connection_cache.set('vigilo', 1, time=1):
-                return
-            self.__connection_cache.disconnect_all()
+        mc_host = settings['correlator']['memcached_host']
+        mc_port = settings['correlator'].as_int('memcached_port')
+        LOGGER.info(_("Establishing connection to MemcacheD "
+                        "server (%s)..."), "%s:%d" % (mc_host, mc_port))
 
-        # Récupération des informations de connection.
-        host = settings['correlator']['memcached_host']
-        port = settings['correlator'].as_int('memcached_port')
-        conn_str = '%s:%d' % (host, port)
+        d = protocol.ClientCreator(
+                reactor,
+                MemCacheProtocol,
+                # Délai de détection de perte de connexion à memcached.
+                1,
+            ).connectTCP(mc_host, mc_port, timeout=2)
 
-        # Paramètre de débogage.
-        try:
-            debug = settings['correlator'].as_bool('memcached_debug')
-        except KeyError:
-            debug = False
+        def eb(failure):
+            LOGGER.info(
+                _("Could not connect to memcached: %s"),
+                str(failure).decode('utf-8')
+            )
+            return None
 
-        # Établissement de la connexion.
-        LOGGER.info(_("Establishing connection to MemcacheD server (%s)..."),
-                    conn_str)
-        self.__connection_cache = mc.Client([conn_str])
-        self.__connection_cache.debug = debug
-        self.__connection_cache.behaviors = {'support_cas': 1}
+        def cb(proto):
+            self.__connection_cache = proto
+
+        d.addErrback(eb)
+        d.addCallback(cb)
+        self.__connection_cache_deferred = d
+        return d
 
     def set(self, key, value, transaction=True, **kwargs):
         """
@@ -188,44 +190,50 @@ class MemcachedConnection(object):
                         'txn': transaction,
                     })
 
-        # On établit la connection au serveur Memcached si nécessaire.
-        if not self.__connection_cache:
-            self.connect()
-
-        # On sérialise la valeur 'value' avant son enregistrement
-        value = pickle.dumps(value)
-
-        # On associe la valeur 'value' à la clé 'key'.
+        # On sérialise la valeur avant son enregistrement
+        pick_value = pickle.dumps(value)
         exp_time = self.__convert_to_datetime(kwargs.pop('time', None))
+        flags = kwargs.pop('flags', 0)
 
         def set_db(exp_time):
             if self.use_database:
                 instance = CorrelationContext(key=key)
                 instance = DBSession.merge(instance)
-                instance.value = value
+                instance.value = pick_value
                 instance.expiration_date = exp_time
+                DBSession.add(instance)
                 DBSession.flush()
-            return exp_time
 
-        d = self.__connection_db_session.run(
-            set_db,
-            exp_time,
-            transaction=transaction
-        )
-
-        def set_cache(exp_time, key, value, **kwargs):
+        def prep_exp_time(res, exp_time):
             # memcached utilise 0 pour indiquer l'absence d'expiration.
             if exp_time is None:
                 exp_time = 0
             else:
                 exp_time = int(time.mktime(exp_time.timetuple()))
-            
-            self.__connection_cache.set(key, value, time=exp_time, **kwargs)
-            return 1
-        d.addCallback(set_cache, key, value, **kwargs)
-        return d
+            return exp_time
 
-    def get(self, key, transaction=True):
+        def set_cache(exp_time, key, flags):
+            # Les erreurs sur le changement dans le cache sont ignorées
+            # et la valeur positionnée est retournée à l'appelant.
+            if self.__connection_cache:
+                return self.__connection_cache.set(key, pick_value, flags, exp_time)
+
+        d_res = defer.Deferred()
+        d = self.__get_connection()
+        self.__connection_cache_deferred = d_res
+        d.addCallback(lambda x:
+            self.__connection_db_session.run(
+                set_db,
+                exp_time,
+                transaction=transaction
+            )
+        )
+        d.addCallback(prep_exp_time, exp_time)
+        d.addCallback(set_cache, key, flags)
+        d.addCallback(lambda x: d_res.callback(value))
+        return d_res
+
+    def get(self, key, transaction=True, flags=0):
         """
         Récupère la valeur associée à la clé 'key'.
         Renvoie None si cette clé n'existe pas.
@@ -243,31 +251,22 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
-        # On établit la connection au serveur Memcached si nécessaire.
-        if not self.__connection_cache:
-            self.connect()
+        connected = False
+        d_res = defer.Deferred()
+        d = self.__get_connection()
+        self.__connection_cache_deferred = d_res
 
-        # On récupère la valeur associée à la clé 'key'.
-        result = self.__connection_cache.get(key)
+        def get_from_cache(res):
+            if self.__connection_cache:
+                connected = True
+                return self.__connection_cache.get(key)
+            return (0, None)
+        d.addCallback(get_from_cache)
 
-        if result:
-            return defer.succeed(pickle.loads(str(result)))
-        elif not self.use_database:
-            return defer.succeed(None)
-
-        # Pas de résultat ? On récupère l'information depuis
-        # la base de données et on met à jour le cache.
-        d = self.__connection_db_session.run(
-            DBSession.query(CorrelationContext).get, key,
-            transaction=transaction,
-        )
-        def eb(failure):
-            LOGGER.error(failure)
-            raise failure.value
-        d.addErrback(eb)
-
-        def cb(instance):
-            if not instance:
+        def set_cache(instance, key, flags):
+            # La valeur n'existait pas dans la base de données.
+            if instance is None:
+                # @TODO: retourner une Failure à la place ?
                 return None
 
             exp_time = instance.expiration_date
@@ -280,13 +279,42 @@ class MemcachedConnection(object):
             else:
                 exp_time = 0
 
-            self.__connection_cache.set(key, instance.value, time=exp_time)
-            result = instance.value
-            return pickle.loads(str(result))
-        d.addCallback(cb)
-        return d
+            result = pickle.loads(str(instance.value))
+            if not connected:
+                return result
 
-    @defer.inlineCallbacks
+            def set_in_cache(res):
+                return self.__connection_cache.set(key, instance.value, flags, exp_time)
+
+            d3 = defer.succeed(None)
+            d3.addCallback(set_in_cache)
+            d3.addCallback(lambda x: result)
+            return d3
+
+        def check_result(result, key, txn, flags):
+            # Le cache a renvoyé un résultat, on le retourne
+            # à la fonction appelante.
+
+            if result[-1] is not None:
+                return pickle.loads(str(result[-1]))
+
+            if not self.use_database:
+                return None
+
+            # Pas de résultat en cache, on interroge la base de données
+            # et on met à jour le cache avec le résultat.
+            d2 = self.__connection_db_session.run(
+                DBSession.query(CorrelationContext).get, key,
+                transaction=txn,
+            )
+
+            d2.addCallback(set_cache, key, flags)
+            return d2
+
+        d.addCallback(check_result, key, transaction, flags)
+        d.addCallback(lambda res: d_res.callback(res))
+        return d_res
+
     def delete(self, key, transaction=True):
         """
         Supprime la clé 'key' et la valeur qui lui est associée.
@@ -304,32 +332,32 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
-        # On établit la connection au serveur Memcached si nécessaire.
-        if not self.__connection_cache:
-            self.connect()
+        def delete_db(result, txn):
+            return self.__connection_db_session.run(
+                DBSession.query(
+                    CorrelationContext
+                ).filter(CorrelationContext.key == key).delete,
+                transaction=txn,
+            )
 
-        # On supprime la clé 'key' et la valeur qui lui est associée.
-        self.__connection_cache.delete(key)
+        def flush_db(nb_deleted, txn):
+            d2 = self.__connection_db_session.run(
+                DBSession.flush,
+                transaction=transaction,
+            )
+            d2.addCallback(lambda res: nb_deleted)
+            return d2
 
-        if not self.use_database:
-            defer.returnValue(-1)
+        # On supprime la clé 'key' et la valeur qui lui est associée du cache.
+        d_res = defer.Deferred()
+        d = self.__get_connection()
+        self.__connection_cache_deferred = d_res
+        d.addCallback(lambda res: self.__connection_cache.delete(key))
 
-        for i in xrange(5):
-            try:
-                nb_deleted = yield self.__connection_db_session.run(
-                    DBSession.query(
-                        CorrelationContext
-                    ).filter(CorrelationContext.key == key).delete,
-                    transaction=transaction,
-                )
-                yield self.__connection_db_session.run(
-                    DBSession.flush,
-                    transaction=transaction,
-                )
-            except OperationalError, e:
-                if not e.connection_invalidated:
-                    raise e
-            else:
-                break
+        if self.use_database:
+            d.addCallback(delete_db, transaction)
+            d.addCallback(flush_db, transaction)
 
-        defer.returnValue(nb_deleted)
+        d.addCallback(lambda res: d_res.callback(res))
+        return d_res
+

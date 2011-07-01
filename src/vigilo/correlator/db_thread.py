@@ -201,7 +201,7 @@ class DummyDatabaseWrapper(object):
             if txn:
                 transaction.abort()
             self.logger.error(res)
-            return res
+            return defer.fail(res)
         else:
             if txn:
                 transaction.commit()

@@ -7,14 +7,14 @@
 
 import unittest
 from nose.twistedtools import reactor, deferred
-from twisted.internet import defer
+from twisted.internet import defer, reactor, protocol
+from twisted.protocols.memcache import MemCacheProtocol
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
-import memcache as mc
 from helpers import settings
 from helpers import setup_mc, teardown_mc
 from helpers import setup_db, teardown_db
@@ -68,16 +68,20 @@ class TestMemcachedConnection(unittest.TestCase):
         setup_mc()
 
         # On tente à nouveau d'associer la valeur 'value' à la clé 'key'
-        yield conn.set(key, value)
+        set_value = yield conn.set(key, value)
+        print "'%s' set to '%s'" % (key, set_value)
 
         # On vérifie que la clé a bien été ajoutée
         # et qu'elle est bien associée à la valeur 'value'.
         host = settings['correlator']['memcached_host']
         port = settings['correlator'].as_int('memcached_port')
-        conn_str = '%s:%d' % (host, port)
-        connection = mc.Client([conn_str])
-        connection.behaviors = {'support_cas': 1}
-        self.assertEqual(pickle.loads(connection.get(key)), value)
+        connection = yield protocol.ClientCreator(
+                reactor, MemCacheProtocol
+            ).connectTCP(host, port)
+        print "Connected to %s:%d using %r" % (host, port, connection)
+        received = yield connection.get(key)
+        print "Received: %r" % (received, )
+        self.assertEqual(pickle.loads(received[-1]), value)
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
@@ -97,10 +101,12 @@ class TestMemcachedConnection(unittest.TestCase):
         # On associe la valeur 'value' à la clé 'key'.
         host = settings['correlator']['memcached_host']
         port = settings['correlator'].as_int('memcached_port')
-        conn_str = '%s:%d' % (host, port)
-        connection = mc.Client([conn_str])
-        connection.behaviors = {'support_cas': 1}
-        connection.set(key, pickle.dumps(value))
+        connection = yield protocol.ClientCreator(
+                reactor, MemCacheProtocol
+            ).connectTCP(host, port)
+        print "Connecting to %s:%d using %r" % (host, port, connection)
+        res = yield connection.set(key, pickle.dumps(value))
+        print "Success?", res
 
         # On tente à nouveau de récupérer la valeur associée à la clé 'key'
         result = yield conn.get(key)
@@ -126,17 +132,18 @@ class TestMemcachedConnection(unittest.TestCase):
         # On ajoute la clé 'key'.
         host = settings['correlator']['memcached_host']
         port = settings['correlator'].as_int('memcached_port')
-        conn_str = '%s:%d' % (host, port)
-        connection = mc.Client([conn_str])
-        connection.behaviors = {'support_cas': 1}
+        print "Connecting to %s:%d" % (host, port)
+        connection = yield protocol.ClientCreator(
+                reactor, MemCacheProtocol
+            ).connectTCP(host, port)
         yield conn.set(key, value)
 
         # On tente à nouveau de supprimer la clé 'key'
-        self.assertTrue(conn.delete(key))
+        yield conn.delete(key)
 
         # On s'assure que la clé a bien été supprimée
         value = yield connection.get(key)
-        self.assertFalse(value)
+        self.assertEquals(None, value[-1])
 
 
 class TestMemcachedWithoutAnyConnection(unittest.TestCase):
