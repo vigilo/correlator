@@ -49,8 +49,7 @@ class PriorityMaxRule(Rule):
         hostname = yield ctx.get('hostname')
         servicename = yield ctx.get('servicename')
         priority = yield ctx.get('priority')
-
-        item_id = SupItem.get_supitem(hostname, servicename)
+        item_id = yield ctx.get('idsupitem')
 
         curr_priority = DBSession.query(
                 CorrEvent.priority

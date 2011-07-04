@@ -17,7 +17,7 @@ from helpers import settings, populate_statename
 from helpers import setup_mc, teardown_mc, setup_db, teardown_db
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
-                            Event, Change
+                            Event, Change, SupItem
 
 from vigilo.pubsub.xml import NS_EVENT
 from vigilo.correlator.context import Context
@@ -125,11 +125,14 @@ class TestLogging(unittest.TestCase):
 """ % infos
         item = etree.fromstring(payload)
 
+        idsupitem = SupItem.get_supitem(host_name, service_name)
+
         # On ajoute les données nécessaires dans le contexte.
         ctx = Context(self.XMPP_id, database=DummyDatabaseWrapper(True))
         yield ctx.set('hostname', host_name)
         yield ctx.set('servicename', service_name)
         yield ctx.set('statename', new_state)
+        yield ctx.set('idsupitem', idsupitem)
 
         # On insère les données nécessaires dans la BDD:
         info_dictionary = {
@@ -138,6 +141,7 @@ class TestLogging(unittest.TestCase):
             "state": new_state,
             "timestamp": timestamp,
             "message": new_state,
+            "idsupitem": idsupitem,
         }
 
         # - D'abord l'évènement ;

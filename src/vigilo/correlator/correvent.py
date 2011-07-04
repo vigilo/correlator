@@ -86,11 +86,7 @@ def make_correvent(forwarder, database, dom, idnt):
         })
         defer.returnValue(None)
 
-    item_id = yield database.run(
-        SupItem.get_supitem,
-        hostname, servicename,
-        transaction=False
-    )
+    item_id = yield ctx.get('idsupitem')
 
     state_ok = yield database.run(
         StateName.statename_to_value,

@@ -201,16 +201,36 @@ class RuleDispatcher(PubSubSender):
         if dom[0].tag != namespaced_tag(NS_EVENT, 'event'):
             return defer.succeed(None)
 
+        idsupitem = self.__do_in_transaction(
+            _("Error while retrieving supervised item ID"),
+            xml, SQLAlchemyError,
+            SupItem.get_supitem,
+            info_dictionary['host'],
+            info_dictionary['service']
+        )
+        idsupitem.addCallback(self.__finalizeInfo,
+            idxmpp,
+            dom, xml,
+            info_dictionary
+        )
+        return idsupitem
+
+    def __finalizeInfo(self, idsupitem, idxmpp, dom, xml, info_dictionary):
+        # Ajoute l'identifiant du SupItem aux informations.
+        info_dictionary['idsupitem'] = idsupitem
+
         # On initialise le contexte et on y insère
-        # les informations de l'alerte traitée.
+        # les informations sur l'alerte traitée.
         ctx = Context(idxmpp, self.__database)
-        d = defer.Deferred()
+
         attrs = {
             'hostname': 'host',
             'servicename': 'service',
             'statename': 'state',
             'timestamp': 'timestamp',
         }
+
+        d = defer.Deferred()
 
         def prepare_ctx(res, ctx_name, value):
             return ctx.set(ctx_name, value)

@@ -16,7 +16,7 @@ from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.pubsub.xml import NS_EVENT
 from helpers import setup_db, teardown_db
 
-from vigilo.models.tables import State, StateName, Event, \
+from vigilo.models.tables import State, StateName, Event, SupItem, \
                             LowLevelService, HighLevelService, Host, \
                             CorrEvent
 from vigilo.models.session import DBSession
@@ -91,6 +91,11 @@ class TestDbInsertion(unittest.TestCase):
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary['idsupitem'] = SupItem.get_supitem(
+            info_dictionary['host'],
+            info_dictionary['service']
+        )
+
         # Insertion de l'événement dans la BDD
         idevent = insert_event(info_dictionary)
 
@@ -145,6 +150,10 @@ class TestDbInsertion(unittest.TestCase):
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary['idsupitem'] = SupItem.get_supitem(
+            info_dictionary['host'],
+            info_dictionary['service']
+        )
 
         # Insertion de l'événement dans la BDD
         idevent = insert_event(info_dictionary)
@@ -169,6 +178,10 @@ class TestDbInsertion(unittest.TestCase):
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary['idsupitem'] = SupItem.get_supitem(
+            info_dictionary['host'],
+            info_dictionary['service']
+        )
 
         # Insertion de l'événement dans la BDD
         idevent = insert_event(info_dictionary)

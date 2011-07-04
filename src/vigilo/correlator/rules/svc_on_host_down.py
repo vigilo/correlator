@@ -70,6 +70,7 @@ def on_host_down(result, forwarder, database, idnt, ctx=None):
                 "message": message,
                 "timestamp": timestamp,
                 "state": "UNKNOWN",
+                "idsupitem": svc.idsupitem,
             }
         )
 

@@ -51,10 +51,7 @@ def insert_event(info_dictionary):
                             info_dictionary["service"])
         return None
 
-    # On récupère l'identifiant de l'item (hôte ou service) concerné.
-    item_id = SupItem.get_supitem(info_dictionary["host"],
-                                  info_dictionary["service"])
-    if not item_id:
+    if not info_dictionary['idsupitem']:
         LOGGER.error(_(u'Got a reference to a non configured item '
                        '(%(host)r, %(service)r), skipping event'), {
                             "host": info_dictionary["host"],
@@ -77,7 +74,7 @@ def insert_event(info_dictionary):
                             EVENTSAGGREGATE_TABLE.c.idcorrevent)
                 ).join((cause_event,
                         cause_event.idevent == CorrEvent.idcause)
-                ).filter(current_event.idsupitem == item_id
+                ).filter(current_event.idsupitem == info_dictionary['idsupitem']
                 ).filter(not_(and_(
                     cause_event.current_state.in_([
                         StateName.statename_to_value(u'OK'),
@@ -99,7 +96,7 @@ def insert_event(info_dictionary):
             return None
         # Sinon, il s'agit d'un nouvel incident, on le prépare.
         event = Event()
-        event.idsupitem = item_id
+        event.idsupitem = info_dictionary['idsupitem']
         LOGGER.debug(_(u'Creating new event'))
     except MultipleResultsFound:
         # Si plusieurs événements ont été trouvés
@@ -143,7 +140,6 @@ def insert_event(info_dictionary):
         history.username = None
         history.idevent = event.idevent
         DBSession.add(history)
-        DBSession.flush()
     return event.idevent
 
 def insert_hls_history(info_dictionary):
@@ -156,11 +152,7 @@ def insert_hls_history(info_dictionary):
     @type info_dictionary: C{dict}
     """
 
-    # On récupère l'identifiant du service de haut niveau.
-    item_id = SupItem.get_supitem(info_dictionary['host'],
-                                    info_dictionary['service'])
-
-    if not item_id:
+    if not info_dictionary['idsupitem']:
         LOGGER.error(_(u'Got a reference to a non configured high-level '
                         'service (%(service)r)'), {
                             "service": info_dictionary["service"],
@@ -168,14 +160,13 @@ def insert_hls_history(info_dictionary):
         return None
 
     history = HLSHistory()
-    history.idhls = item_id
+    history.idhls = info_dictionary['idsupitem']
     # On enregistre l'heure à laquelle le message a
     # été traité plutôt que le timestamp du message.
     history.timestamp = datetime.now()
     history.idstatename = StateName.statename_to_value(
                             info_dictionary['state'])
     DBSession.add(history)
-    DBSession.flush()
 
 def insert_state(info_dictionary):
     """
@@ -188,25 +179,21 @@ def insert_state(info_dictionary):
     @type info_dictionary: C{dict}
     """
 
-    # On récupère l'identifiant de l'item (hôte ou service) concerné.
-    item_id = SupItem.get_supitem(info_dictionary["host"],
-                                  info_dictionary["service"])
-
-    if not item_id:
+    if not info_dictionary['idsupitem']:
         LOGGER.error(_(u'Got a reference to a non configured item '
                        '(%(host)r, %(service)r), skipping state'), {
                             "host": info_dictionary["host"],
                             "service": info_dictionary["service"],
                         })
         return None
+
     # On vérifie s'il existe déjà un état
     # enregistré dans la BDD pour cet item.
-    state = DBSession.query(State
-                ).filter(State.idsupitem == item_id
-                ).first()
+    state = DBSession.query(State).get(info_dictionary['idsupitem'])
+
     # Le cas échéant, on le crée.
     if not state:
-        state = State(idsupitem = item_id)
+        state = State(idsupitem=info_dictionary['idsupitem'])
 
     previous_state = state.state
 
@@ -216,7 +203,6 @@ def insert_state(info_dictionary):
     state.state = StateName.statename_to_value(info_dictionary["state"])
 
     DBSession.add(state)
-    DBSession.flush()
     return previous_state
 
 
