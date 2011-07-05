@@ -112,6 +112,9 @@ class TestSvcHostDownRule(unittest.TestCase):
     def test_on_host_down(self):
         """Fonction de passage à UNKNOWN des services d'un hôte DOWN"""
         yield self.setup_context("UP", "DOWN")
+        # le timestamp par défaut est plus récent et insert_state refusera la
+        # mise à jour
+        self.lls.state.timestamp = datetime.fromtimestamp(1)
         yield on_host_down(
             None,
             None,

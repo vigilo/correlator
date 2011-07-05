@@ -33,6 +33,12 @@ __all__ = (
 )
 
 
+class OldStateReceived(object):
+    def __init__(self, current, received):
+        self.current = current
+        self.received = received
+
+
 def insert_event(info_dictionary):
     """
     Insère un événement dans la BDD.
@@ -194,6 +200,8 @@ def insert_state(info_dictionary):
     # Le cas échéant, on le crée.
     if not state:
         state = State(idsupitem=info_dictionary['idsupitem'])
+    elif state and state.timestamp > info_dictionary["timestamp"]:
+        return OldStateReceived(state.timestamp, info_dictionary["timestamp"])
 
     previous_state = state.state
 

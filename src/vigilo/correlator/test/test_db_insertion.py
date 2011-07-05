@@ -11,10 +11,10 @@ from lxml import etree
 
 from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-                                        add_to_aggregate
+                                    add_to_aggregate, OldStateReceived
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.pubsub.xml import NS_EVENT
-from helpers import setup_db, teardown_db
+from helpers import setup_db, teardown_db, populate_statename
 
 from vigilo.models.tables import State, StateName, Event, SupItem, \
                             LowLevelService, HighLevelService, Host, \
@@ -28,17 +28,12 @@ class TestDbInsertion(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""
 
     def setUp(self):
-        """Set up the fixture used to test the model."""
         print "setting up the database"
         setup_db()
-        DBSession.add(StateName(statename=u'OK', order=0))
-        DBSession.add(StateName(statename=u'UP', order=0))
-        DBSession.add(StateName(statename=u'WARNING', order=2))
-        DBSession.add(StateName(statename=u'DOWN', order=3))
+        populate_statename()
         DBSession.flush()
 
     def tearDown(self):
-        """Tear down the fixture used to test the model."""
         print "tearing down the database"
         # Évite que d'anciennes instances viennent perturber le test suivant.
         DBSession.rollback()
@@ -117,11 +112,11 @@ class TestDbInsertion(unittest.TestCase):
                             event.message)
 
         # Insertion de l'état dans la BDD
+        state = DBSession.query(State).get(info_dictionary['idsupitem'])
+        # le timestamp par défaut est plus récent et insert_state refusera la
+        # mise à jour
+        state.timestamp = info_dictionary['timestamp']
         insert_state(info_dictionary)
-
-        state = DBSession.query(State).filter_by(
-                        idsupitem=event.supitem.idsupitem
-                    ).one()
 
         # Vérification des informations de l'état dans la BDD.
         self.assertEquals(LowLevelService, type(state.supitem))
@@ -203,11 +198,11 @@ class TestDbInsertion(unittest.TestCase):
                             event.message)
 
         # Insertion de l'état dans la BDD
+        state = DBSession.query(State).get(info_dictionary['idsupitem'])
+        # le timestamp par défaut est plus récent et insert_state refusera la
+        # mise à jour
+        state.timestamp = info_dictionary['timestamp']
         insert_state(info_dictionary)
-
-        state = DBSession.query(State).filter_by(
-                        idsupitem=event.supitem.idsupitem
-                    ).one()
 
         # Vérification des informations de l'état dans la BDD.
         self.assertEquals(Host, type(state.supitem))
@@ -371,5 +366,35 @@ class TestDbInsertion(unittest.TestCase):
         self.assertTrue(event1 in events_aggregate1.events )
 
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_insert_old_state(self):
+        """Abandon de l'insertion d'un état ancien"""
+        self.make_dependencies()
+        ts_old = "1239104006"
+        ts_recent = "1239104042"
+        ts_recent_dt = datetime.fromtimestamp(int(ts_recent))
+        idsupitem = SupItem.get_supitem("server.example.com", "Load")
+        # Insertion de l'état récent
+        state = DBSession.query(State).get(idsupitem)
+        state.timestamp = ts_recent_dt
+        # Création d'un message d'événement portant sur un SBN.
+        xml = """
+<event xmlns="%(xmlns)s">
+    <timestamp>%(ts_old)s</timestamp>
+    <host>server.example.com</host>
+    <service>Load</service>
+    <state>WARNING</state>
+    <message>WARNING: Load average is above 4 (4.5)</message>
+</event>""" % {'xmlns': NS_EVENT, "ts_old": ts_old}
+
+        # Extraction des informations du messages
+        info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary['idsupitem'] = SupItem.get_supitem(
+            info_dictionary['host'],
+            info_dictionary['service']
+        )
+        # Insertion de l'ancien événement dans la BDD
+        result = insert_state(info_dictionary)
+        self.assertTrue(isinstance(result, OldStateReceived))
+        supitem = DBSession.query(SupItem).get(idsupitem)
+        self.assertEqual(supitem.state.timestamp, ts_recent_dt)
+

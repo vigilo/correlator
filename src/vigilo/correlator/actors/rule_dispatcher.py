@@ -33,6 +33,7 @@ from vigilo.connector.forwarder import PubSubSender
 from vigilo.connector import MESSAGEONETOONE
 
 from vigilo.models.session import DBSession
+from vigilo.models.tables import SupItem
 
 from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, NS_TICKET
 from vigilo.correlator.actors import rule_runner, executor
@@ -40,7 +41,7 @@ from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-                                            insert_hls_history
+                                    insert_hls_history, OldStateReceived
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
 from vigilo.correlator.amp.correlator import Correlator
@@ -243,20 +244,34 @@ class RuleDispatcher(PubSubSender):
             d.addErrback(eb)
 
         # Dans l'ordre :
-        # - On insère une entrée d'historique pour l'événement.
         # - On enregistre l'état correspondant à l'événement.
+        # - On insère une entrée d'historique pour l'événement.
         # - On réalise la corrélation.
-        d.addCallback(self._insert_history, info_dictionary, xml)
         d.addCallback(self._insert_state, info_dictionary, xml)
-        d.addCallback(self._do_correl, info_dictionary, idxmpp, dom, xml, ctx)
-        def end(result):
-            LOGGER.debug(_('Correlation process ended'))
-            return result
-        d.addCallback(end)
+        d.addCallback(self._insert_history, info_dictionary, idxmpp, dom, ctx, xml)
         d.callback(None)
         return d
 
-    def _insert_history(self, result, info_dictionary, xml):
+    def _insert_state(self, result, info_dictionary, xml):
+        LOGGER.debug(_('Inserting state'))
+        d = self._do_in_transaction(
+            _("Error while saving state"),
+            xml, SQLAlchemyError,
+            insert_state, info_dictionary
+        )
+        return d
+
+    def _insert_history(self, previous_state, info_dictionary, idxmpp, dom, ctx, xml):
+        if isinstance(previous_state, OldStateReceived):
+            LOGGER.debug("Ignoring old state for host %(host)s and service "
+                         "%(srv)s (current is %(cur)s, received %(recv)s)"
+                         % {"host": info_dictionary["host"],
+                            "srv": info_dictionary["service"],
+                            "cur": previous_state.current,
+                            "recv": previous_state.received,
+                            }
+                         )
+            return # on arrête le processus ici
         # On insère le message dans la BDD, sauf s'il concerne un HLS.
         if not info_dictionary["host"]:
             LOGGER.debug(_('Inserting an entry in the HLS history'))
@@ -272,25 +287,13 @@ class RuleDispatcher(PubSubSender):
                 xml, SQLAlchemyError,
                 insert_event, info_dictionary
             )
+        d.addCallback(self._do_correl, previous_state, info_dictionary,
+                                       idxmpp, dom, xml, ctx)
         return d
 
-    def _insert_state(self, result, info_dictionary, xml):
-        LOGGER.debug(_('Inserting state'))
-
-        def cb(result):
-            return result, raw_event_id
-
-        d = self.__do_in_transaction(
-            _("Error while saving state"),
-            xml, SQLAlchemyError,
-            insert_state, info_dictionary
-        )
-        d.addCallback(cb)
-        return d
-
-    def _do_correl(self, result, info_dictionary, idxmpp, dom, xml, ctx):
+    def _do_correl(self, raw_event_id, previous_state, info_dictionary,
+                   idxmpp, dom, xml, ctx):
         LOGGER.debug(_('Actual correlation'))
-        previous_state, raw_event_id = result
 
         d = defer.Deferred()
         d.addCallback(lambda result: ctx.set('previous_state', previous_state))
@@ -316,6 +319,10 @@ class RuleDispatcher(PubSubSender):
             return self.tree_end
         d.addCallback(start_correl, self._executor.build_execution_tree())
 
+        def end(result):
+            LOGGER.debug(_('Correlation process ended'))
+            return result
+        d.addCallback(end)
         d.callback(None)
         return d
 

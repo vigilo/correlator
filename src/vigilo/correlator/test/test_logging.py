@@ -17,7 +17,7 @@ from helpers import settings, populate_statename
 from helpers import setup_mc, teardown_mc, setup_db, teardown_db
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
-                            Event, Change, SupItem
+                            Event, Change, SupItem, State
 
 from vigilo.pubsub.xml import NS_EVENT
 from vigilo.correlator.context import Context
@@ -150,6 +150,8 @@ class TestLogging(unittest.TestCase):
         yield ctx.set('raw_event_id', raw_id)
         # - Et ensuite l'état.
         LOGGER.info("Inserting state")
+        # Si le timestamp est trop récent insert_state ne fera rien
+        DBSession.query(State).get(idsupitem).timestamp = timestamp
         insert_state(info_dictionary)
         DBSession.flush()
 
