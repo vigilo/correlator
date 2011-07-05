@@ -95,7 +95,7 @@ class RuleDispatcher(PubSubSender):
         super(RuleDispatcher, self).__init__()
         self.max_send_simult = 1
         self.tree_end = None
-        self.__database = database
+        self._database = database
 
         # Préparation du pool d'exécuteurs de règles.
         timeout = settings['correlator'].as_int('rules_timeout')
@@ -121,7 +121,7 @@ class RuleDispatcher(PubSubSender):
             ampChildArgs=(sys.argv[0], ),
             starter=ProcessStarter(self, database),
         )
-        self.__executor = executor.Executor(self)
+        self._executor = executor.Executor(self)
 
     def doWork(self, *args, **kwargs):
         """
@@ -189,7 +189,7 @@ class RuleDispatcher(PubSubSender):
 
         # S'il s'agit d'un message concernant un ticket d'incident :
         if dom[0].tag == namespaced_tag(NS_TICKET, 'ticket'):
-            d = self.__do_in_transaction(
+            d = self._do_in_transaction(
                 _("Error while modifying ticket"),
                 xml, Exception,
                 handle_ticket, info_dictionary,
@@ -201,27 +201,27 @@ class RuleDispatcher(PubSubSender):
         if dom[0].tag != namespaced_tag(NS_EVENT, 'event'):
             return defer.succeed(None)
 
-        idsupitem = self.__do_in_transaction(
+        idsupitem = self._do_in_transaction(
             _("Error while retrieving supervised item ID"),
             xml, SQLAlchemyError,
             SupItem.get_supitem,
             info_dictionary['host'],
             info_dictionary['service']
         )
-        idsupitem.addCallback(self.__finalizeInfo,
+        idsupitem.addCallback(self._finalizeInfo,
             idxmpp,
             dom, xml,
             info_dictionary
         )
         return idsupitem
 
-    def __finalizeInfo(self, idsupitem, idxmpp, dom, xml, info_dictionary):
+    def _finalizeInfo(self, idsupitem, idxmpp, dom, xml, info_dictionary):
         # Ajoute l'identifiant du SupItem aux informations.
         info_dictionary['idsupitem'] = idsupitem
 
         # On initialise le contexte et on y insère
         # les informations sur l'alerte traitée.
-        ctx = Context(idxmpp, self.__database)
+        ctx = Context(idxmpp, self._database)
 
         attrs = {
             'hostname': 'host',
@@ -246,9 +246,9 @@ class RuleDispatcher(PubSubSender):
         # - On insère une entrée d'historique pour l'événement.
         # - On enregistre l'état correspondant à l'événement.
         # - On réalise la corrélation.
-        d.addCallback(self.__insert_history, info_dictionary, xml)
-        d.addCallback(self.__insert_state, info_dictionary, xml)
-        d.addCallback(self.__do_correl, info_dictionary, idxmpp, dom, xml, ctx)
+        d.addCallback(self._insert_history, info_dictionary, xml)
+        d.addCallback(self._insert_state, info_dictionary, xml)
+        d.addCallback(self._do_correl, info_dictionary, idxmpp, dom, xml, ctx)
         def end(result):
             LOGGER.debug(_('Correlation process ended'))
             return result
@@ -256,25 +256,25 @@ class RuleDispatcher(PubSubSender):
         d.callback(None)
         return d
 
-    def __insert_history(self, result, info_dictionary, xml):
+    def _insert_history(self, result, info_dictionary, xml):
         # On insère le message dans la BDD, sauf s'il concerne un HLS.
         if not info_dictionary["host"]:
             LOGGER.debug(_('Inserting an entry in the HLS history'))
-            d = self.__do_in_transaction(
+            d = self._do_in_transaction(
                 _("Error while adding an entry in the HLS history"),
                 xml, SQLAlchemyError,
                 insert_hls_history, info_dictionary
             )
         else:
             LOGGER.debug(_('Inserting an entry in the history'))
-            d = self.__do_in_transaction(
+            d = self._do_in_transaction(
                 _("Error while adding an entry in the history"),
                 xml, SQLAlchemyError,
                 insert_event, info_dictionary
             )
         return d
 
-    def __insert_state(self, raw_event_id, info_dictionary, xml):
+    def _insert_state(self, result, info_dictionary, xml):
         LOGGER.debug(_('Inserting state'))
 
         def cb(result):
@@ -288,7 +288,7 @@ class RuleDispatcher(PubSubSender):
         d.addCallback(cb)
         return d
 
-    def __do_correl(self, result, info_dictionary, idxmpp, dom, xml, ctx):
+    def _do_correl(self, result, info_dictionary, idxmpp, dom, xml, ctx):
         LOGGER.debug(_('Actual correlation'))
         previous_state, raw_event_id = result
 
@@ -305,21 +305,21 @@ class RuleDispatcher(PubSubSender):
             # Gère les erreurs détectées à la fin du processus de corrélation,
             # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
             self.tree_end.addCallbacks(
-                self.__send_result,
-                self.__correlation_eb,
+                self._send_result,
+                self._correlation_eb,
                 callbackArgs=[xml, info_dictionary],
                 errbackArgs=[idxmpp, payload],
             )
-            self.tree_end.addErrback(self.__send_result_eb, idxmpp, payload)
+            self.tree_end.addErrback(self._send_result_eb, idxmpp, payload)
             # On lance le processus de corrélation.
             tree_start.callback((idxmpp, payload))
             return self.tree_end
-        d.addCallback(start_correl, self.__executor.build_execution_tree())
+        d.addCallback(start_correl, self._executor.build_execution_tree())
 
         d.callback(None)
         return d
 
-    def __send_result(self, result, xml, info_dictionary):
+    def _send_result(self, result, xml, info_dictionary):
         """
         Traite le résultat de l'exécution de TOUTES les règles
         de corrélation.
@@ -355,7 +355,7 @@ class RuleDispatcher(PubSubSender):
 
         dom = dom[0]
         def cb(result, dom, idnt):
-            return make_correvent(self, self.__database, dom, idnt)
+            return make_correvent(self, self._database, dom, idnt)
         def eb(failure, xml):
             LOGGER.info(_(
                 'Error while saving the correlated event (%s). '
@@ -364,17 +364,17 @@ class RuleDispatcher(PubSubSender):
             )
             self.queue.append(xml)
             return None
-        d.addCallback(lambda res: self.__database.run(
+        d.addCallback(lambda res: self._database.run(
             transaction.begin, transaction=False))
         d.addCallback(cb, dom, idnt)
-        d.addCallback(lambda res: self.__database.run(
+        d.addCallback(lambda res: self._database.run(
             transaction.commit, transaction=False))
         d.addErrback(eb, xml)
 
         d.callback(None)
         return d
 
-    def __correlation_eb(self, failure, idxmpp, payload):
+    def _correlation_eb(self, failure, idxmpp, payload):
         """
         Cette méthode est appelée lorsque la corrélation échoue.
         Elle se contente d'afficher un message d'erreur.
@@ -395,7 +395,7 @@ class RuleDispatcher(PubSubSender):
         })
         return failure
 
-    def __send_result_eb(self, failure, idxmpp, payload):
+    def _send_result_eb(self, failure, idxmpp, payload):
         """
         Cette méthode est appelée lorsque la corrélation
         s'est bien déroulée mais que le traitement des résultats
@@ -455,7 +455,7 @@ class RuleDispatcher(PubSubSender):
             result = self.publishXml(item)
             return result
 
-    def __do_in_transaction(self, error_desc, xml, exc, func, *args, **kwargs):
+    def _do_in_transaction(self, error_desc, xml, exc, func, *args, **kwargs):
         """
         Encapsule une opération nécessitant d'accéder à la base de données
         dans une transaction.
@@ -477,7 +477,7 @@ class RuleDispatcher(PubSubSender):
             d'attente du corrélateur pour pouvoir être à nouveau traité
             ultérieurement.
         """
-        d = self.__database.run(func, *args, **kwargs)
+        d = self._database.run(func, *args, **kwargs)
         def eb(failure):
             if failure.check(exc):
                 LOGGER.info(_('%s. The message will be handled once more.') %
