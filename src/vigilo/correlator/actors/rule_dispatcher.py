@@ -497,3 +497,13 @@ class RuleDispatcher(PubSubSender):
         d.addErrback(eb)
         return d
 
+    def getStats(self):
+        """Récupère des métriques de fonctionnement du corrélateur"""
+        def add_exec_stats(stats):
+            rule_stats = self._executor.getStats()
+            stats.update(rule_stats)
+            return stats
+        d = super(RuleDispatcher, self).getStats()
+        d.addCallback(add_exec_stats)
+        return d
+

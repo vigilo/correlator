@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import time
+
 from twisted.internet import defer
 from twisted.internet.error import ProcessTerminated
 
@@ -16,10 +18,28 @@ class Executor(object):
     """
     Construit un arbre d'exécution à base de L{Deferred}s,
     en suivant la hiérarchie des règles de corrélation.
+
+    La variable d'instance C{_stats} contient les temps d'exécution des règles.
+    Elle est de la forme suivante::
+
+        {"NomRegle1": [duree1, duree2, duree3, duree4, ...,
+         "NomRegle2": [duree1, duree2, duree3, duree4, ...,
+         "NomRegle3": [duree1, duree2, duree3, duree4, ...,
+        }
+
+    La fonction L{getStats}() utilise ensuite ces valeurs pour publier des
+    moyennes d'exécution donnant lieu à de la métrologie.
+
+    @ivar _stats: statistiques d'exécution, au format ci-dessus
+    @ivar _stats: C{dict}
+    @ivar _stats_tmp: stockage temporaire des timestamps d'exécution
+    @ivar _stats_tmp: C{dict}
     """
 
     def __init__(self, dispatcher):
         self.__dispatcher = dispatcher
+        self._stats = {}
+        self._stats_tmp = {}
 
     def build_execution_tree(self):
         d = defer.Deferred()
@@ -61,11 +81,15 @@ class Executor(object):
             return failure
 
         def before_work(result, rule):
-            LOGGER.debug(_('Executing correlation rule "%s"'), rule)
+            LOGGER.debug('Executing correlation rule "%s"', rule)
+            self._stats_tmp[rule] = time.time()
             return result
 
         def after_work(result, rule):
-            LOGGER.debug(_('Done executing correlation rule "%s"'), rule)
+            time_spent = time.time() - self._stats_tmp[rule]
+            LOGGER.debug('Done executing correlation rule "%(rule)s" (%(time).4fs)',
+                         {"rule": rule, "time": time_spent})
+            self._stats.setdefault(rule, []).append(time_spent)
             return result
 
         # L'exécution de la règle échoue si au moins une de ses dépendances
@@ -105,3 +129,15 @@ class Executor(object):
         work.addErrback(eb, rule_name)
         return d
 
+    def getStats(self):
+        prefix = "rule-"
+        stats = {}
+        for rulename, durations in self._stats.iteritems():
+            if not durations:
+                continue # pas de messages depuis la dernière fois
+            average = sum(durations) / len(durations)
+            stats[prefix+rulename] = round(average, 5)
+            # et on ré-initialise
+            self._stats[rulename] = []
+        stats[prefix+"total"] = sum(stats.values())
+        return stats
