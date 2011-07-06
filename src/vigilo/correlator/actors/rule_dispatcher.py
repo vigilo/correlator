@@ -229,6 +229,7 @@ class RuleDispatcher(PubSubSender):
             'servicename': 'service',
             'statename': 'state',
             'timestamp': 'timestamp',
+            'idsupitem': 'idsupitem',
         }
 
         d = defer.Deferred()
