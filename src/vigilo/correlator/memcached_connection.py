@@ -161,15 +161,30 @@ class MemcachedConnection(object):
                 _("Could not connect to memcached: %s"),
                 str(failure).decode('utf-8')
             )
+            self.__connection_cache_deferred = None
             return None
 
         def cb(proto):
+            # La connexion précédente a fait un timeout,
+            # on vide le cache histoire d'éviter de récupérer
+            # des données obsolètes.
+            if self.__connection_cache and proto:
+                proto = proto.flushAll()
+                proto.addErrback(self._eb)
             self.__connection_cache = proto
 
         d.addErrback(eb)
         d.addCallback(cb)
         self.__connection_cache_deferred = d
         return d
+
+    def _eb(self, failure):
+        LOGGER.info(
+            _("Lost connection to memcached: %s"),
+            str(failure).decode('utf-8')
+        )
+        self.__connection_cache_deferred = None
+        return self.__get_connection()
 
     def set(self, key, value, transaction=True, **kwargs):
         """
@@ -216,7 +231,9 @@ class MemcachedConnection(object):
             # Les erreurs sur le changement dans le cache sont ignorées
             # et la valeur positionnée est retournée à l'appelant.
             if self.__connection_cache:
-                return self.__connection_cache.set(key, pick_value, flags, exp_time)
+                res = self.__connection_cache.set(key, pick_value, flags, exp_time)
+                res.addErrback(self._eb)
+                return res
 
         d_res = defer.Deferred()
         d = self.__get_connection()
@@ -256,10 +273,12 @@ class MemcachedConnection(object):
         d = self.__get_connection()
         self.__connection_cache_deferred = d_res
 
-        def get_from_cache(res):
+        def get_from_cache(dummy):
             if self.__connection_cache:
                 connected = True
-                return self.__connection_cache.get(key)
+                res = self.__connection_cache.get(key)
+                res.addErrback(self._eb)
+                return res
             return (0, None)
         d.addCallback(get_from_cache)
 
@@ -283,8 +302,10 @@ class MemcachedConnection(object):
             if not connected:
                 return result
 
-            def set_in_cache(res):
-                return self.__connection_cache.set(key, instance.value, flags, exp_time)
+            def set_in_cache(dummy):
+                res = self.__connection_cache.set(key, instance.value, flags, exp_time)
+                res.addErrback(self._eb)
+                return res
 
             d3 = defer.succeed(None)
             d3.addCallback(set_in_cache)
@@ -352,7 +373,12 @@ class MemcachedConnection(object):
         d_res = defer.Deferred()
         d = self.__get_connection()
         self.__connection_cache_deferred = d_res
-        d.addCallback(lambda res: self.__connection_cache.delete(key))
+
+        def delete_cache(dummy):
+            res = self.__connection_cache.delete(key)
+            res.addErrback(self._eb)
+            return res
+        d.addCallback(delete_cache)
 
         if self.use_database:
             d.addCallback(delete_db, transaction)
