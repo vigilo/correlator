@@ -139,5 +139,6 @@ class Executor(object):
             stats[prefix+rulename] = round(average, 5)
             # et on ré-initialise
             self._stats[rulename] = []
-        stats[prefix+"total"] = sum(stats.values())
+        if stats:
+            stats[prefix+"total"] = sum(stats.values())
         return stats
