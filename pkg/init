@@ -16,14 +16,18 @@
 # Description: Vigilo event correlator
 ### END INIT INFO
 
+# Regler une valeur ici pour lancer le correlateur sous un autre nom
+NUM=
+
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/vigilo-correlator
 NAME=vigilo-correlator
 TAPNAME=vigilo-correlator
-LOCK_FILE=/var/lock/subsys/$NAME
-
 USER=vigilo-correlator
-PID_FILE=/var/run/$NAME/$NAME.pid
+
+[ -n "$NUM" ] && DOTNUM=.$NUM
+LOCK_FILE=/var/lock/subsys/$NAME${DOTNUM}
+PID_FILE=/var/run/$NAME/$NAME${DOTNUM}.pid
 TWISTD_OPTIONS=""
 OPTIONS=""
 
@@ -48,9 +52,10 @@ start() {
         TWISTD_OPTIONS="$TWISTD_OPTIONS --logfile /dev/null"
         OUTPUT=">/dev/null 2>&1"
     fi
+    [ -n "$NUM" ] && SERVICENAME="--name ${NAME}${NUM}"
 
     echo -n "Starting $NAME: "
-    su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE $TWISTD_OPTIONS $TAPNAME $OPTIONS $OUTPUT"
+    su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE $TWISTD_OPTIONS $TAPNAME $SERVICENAME $OPTIONS $OUTPUT"
     RETVAL=$?
     [ "$1" = "debug" ] && return
     if [ $RETVAL -eq 0 ]; then
