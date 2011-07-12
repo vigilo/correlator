@@ -63,7 +63,7 @@ context_timeout = 60.
 memcached_host = 127.0.0.1
 
 # Port du serveur memcached.
-memcached_port = 11215
+memcached_port = 11211
 
 # Activation du mode débogage de la connexion
 # à memcached.
