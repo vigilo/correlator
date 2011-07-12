@@ -67,7 +67,7 @@ def setup_mc():
     # while loop. Oh well...
     time.sleep(1)
     # On s'assure qu'une connexion vers memcached est ouverte.
-    MemcachedConnection(DummyDatabaseWrapper(True))
+    MemcachedConnection()
 
 def teardown_mc():
     """Détruit le serveur memcached créé pour le passage d'un test."""

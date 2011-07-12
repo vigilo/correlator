@@ -23,7 +23,12 @@ from vigilo.correlator.context import Context
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 class TestMemcachedConnection(unittest.TestCase):
-    """Test des méthodes de la classe 'MemcachedConnection'"""
+    """
+    Test des méthodes de la classe 'MemcachedConnection'
+
+    Le setUp et le tearDown sont décorés par @deferred() pour que la création
+    de la base soit réalisée dans le même threads que les accès dans les tests.
+    """
 
     @deferred(timeout=30)
     def setUp(self):
@@ -45,8 +50,8 @@ class TestMemcachedConnection(unittest.TestCase):
         setup_mc()
 
         # On instancie deux fois la classe MemcachedConnection.
-        conn1 = MemcachedConnection(DummyDatabaseWrapper(True))
-        conn2 = MemcachedConnection(DummyDatabaseWrapper(True))
+        conn1 = MemcachedConnection()
+        conn2 = MemcachedConnection()
 
         # On s'assure que les deux instances
         # représentent en fait le même objet.
@@ -62,7 +67,7 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_set"
 
         # On instancie la classe MemcachedConnection.
-        conn = MemcachedConnection(DummyDatabaseWrapper(True))
+        conn = MemcachedConnection()
 
         # On initialise le serveur Memcached.
         setup_mc()
@@ -93,7 +98,7 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_get"
 
         # On instancie la classe MemcachedConnection.
-        conn = MemcachedConnection(DummyDatabaseWrapper(True))
+        conn = MemcachedConnection()
 
         # On initialise le serveur Memcached.
         setup_mc()
@@ -124,7 +129,7 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_delete"
 
         # On instancie la classe MemcachedConnection.
-        conn = MemcachedConnection(DummyDatabaseWrapper(True))
+        conn = MemcachedConnection()
 
         # On initialise le serveur Memcached.
         setup_mc()
@@ -146,33 +151,3 @@ class TestMemcachedConnection(unittest.TestCase):
         self.assertEquals(None, value[-1])
 
 
-class TestMemcachedWithoutAnyConnection(unittest.TestCase):
-    """
-    Le setUp et le tearDown sont décorés par @deferred() pour que la création
-    de la base soit réalisée dans le même threads que les accès dans les tests.
-    """
-
-    @deferred(timeout=30)
-    def setUp(self):
-        setup_db()
-        return defer.succeed(None)
-
-    @deferred(timeout=30)
-    def tearDown(self):
-        super(TestMemcachedWithoutAnyConnection, self).tearDown()
-        teardown_db()
-        return defer.succeed(None)
-
-    @deferred(timeout=30)
-    @defer.inlineCallbacks
-    def test_no_memcache(self):
-        """Teste les contextes de corrélation en l'absence de memcached."""
-        key = "vigilo_test_no_memcache"
-        value = "test_no_memcache"
-
-        ctx = Context('test_no_memcache', database=DummyDatabaseWrapper(True))
-        yield ctx.set('occurrences_count', 42)
-
-        # On tente à nouveau de supprimer la clé 'key'
-        occurrences_count = yield ctx.get('occurrences_count')
-        self.assertEqual(42, occurrences_count)

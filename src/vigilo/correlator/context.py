@@ -59,7 +59,7 @@ class Context(object):
         """
         if database is None:
             database = DummyDatabaseWrapper(not transaction)
-        self._connection = MemcachedConnection(database)
+        self._connection = MemcachedConnection()
         self._database = database
         self._transaction = transaction
         self._id = str(idxmpp)

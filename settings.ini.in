@@ -56,10 +56,6 @@ backup_table_to_bus = tobus
 #hostname = hostname
 
 [correlator]
-# URL de la base de données contenant
-# les contextes de corrélation.
-context_db_url = postgres://vigilo:vigilo@127.0.0.1/vigilo
-
 # Délai d'expiration par défaut des contextes.
 context_timeout = 60.
 

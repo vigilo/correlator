@@ -23,9 +23,6 @@ from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
-from vigilo.models.tables import CorrelationContext
-from vigilo.models.session import DBSession
-
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
@@ -48,14 +45,10 @@ class MemcachedConnection(object):
      # Attribut statique de classe
     instance = None
 
-    use_database = True
-
     # Maximum de secondes au-delà duquel memcached
     # considère que l'expiration est une date absolue
     # dans le temps (timestamp Unix) et non relative.
     MAX_RELATIVE = 60 * 60 * 24 * 30
-
-    CONTEXT_TIMER = 60.
 
     def __new__(cls, *args, **kwargs):
         """
@@ -70,19 +63,9 @@ class MemcachedConnection(object):
             cls.instance = object.__new__(cls)
             cls.instance.__connection_cache = None
             cls.instance.__connection_cache_deferred = None
-            cls.instance.__connection_db_session = None
-            cls.instance.__expiration = task.LoopingCall(
-                cls.instance.__remove_expired_contexts)
-
-            # Le timer est réglé sur 0 dans les tests unitaires,
-            # où nous n'avons pas besoin d'expirer les contextes.
-            if cls.CONTEXT_TIMER:
-                cls.instance.__expiration_defer = \
-                    cls.instance.__expiration.start(cls.CONTEXT_TIMER)
-
         return cls.instance
 
-    def __init__(self, database):
+    def __init__(self):
         """
         Initialisation de la connexion.
         """
@@ -90,14 +73,7 @@ class MemcachedConnection(object):
         # et non dans __init__ : __new__ ne fera l'initialisation qu'une
         # fois (singleton). Dans __init__, l'attribut serait réinitialisé
         # à chaque récupération d'une instance.
-        self.__connection_db_session = database
-
-    def __del__(self):
-        """
-        Destruction de la connexion à memcached.
-        """
-        self.__expiration.stop()
-        self.__expiration_defer.cancel()
+        pass
 
     def __convert_to_datetime(self, timestamp):
         if not timestamp:
@@ -105,27 +81,6 @@ class MemcachedConnection(object):
         if timestamp > self.MAX_RELATIVE:
             return datetime.fromtimestamp(timestamp)
         return datetime.fromtimestamp(timestamp + time.time())
-
-    def __remove_expired_contexts(self):
-        if self.__connection_db_session is None or not self.use_database:
-            return
-        now = datetime.now()
-        d = self.__connection_db_session.run(
-            DBSession.query(
-                    CorrelationContext
-            ).filter(CorrelationContext.expiration_date < now
-            ).delete,
-        )
-
-        def print_stats(nb_deleted):
-            LOGGER.debug(_(
-                'Deleted %(nb_deleted)d expired '
-                'correlation contexts'), {
-                    'nb_deleted': nb_deleted,
-                })
-
-        d.addCallback(print_stats)
-        return d
 
     @classmethod
     def reset(cls):
@@ -210,15 +165,6 @@ class MemcachedConnection(object):
         exp_time = self.__convert_to_datetime(kwargs.pop('time', None))
         flags = kwargs.pop('flags', 0)
 
-        def set_db(exp_time):
-            if self.use_database:
-                instance = CorrelationContext(key=key)
-                instance = DBSession.merge(instance)
-                instance.value = pick_value
-                instance.expiration_date = exp_time
-                DBSession.add(instance)
-                DBSession.flush()
-
         def prep_exp_time(res, exp_time):
             # memcached utilise 0 pour indiquer l'absence d'expiration.
             if exp_time is None:
@@ -238,13 +184,6 @@ class MemcachedConnection(object):
         d_res = defer.Deferred()
         d = self.__get_connection()
         self.__connection_cache_deferred = d_res
-        d.addCallback(lambda x:
-            self.__connection_db_session.run(
-                set_db,
-                exp_time,
-                transaction=transaction
-            )
-        )
         d.addCallback(prep_exp_time, exp_time)
         d.addCallback(set_cache, key, flags)
         d.addCallback(lambda x: d_res.callback(value))
@@ -319,19 +258,6 @@ class MemcachedConnection(object):
             if result[-1] is not None:
                 return pickle.loads(str(result[-1]))
 
-            if not self.use_database:
-                return None
-
-            # Pas de résultat en cache, on interroge la base de données
-            # et on met à jour le cache avec le résultat.
-            d2 = self.__connection_db_session.run(
-                DBSession.query(CorrelationContext).get, key,
-                transaction=txn,
-            )
-
-            d2.addCallback(set_cache, key, flags)
-            return d2
-
         d.addCallback(check_result, key, transaction, flags)
         d.addCallback(lambda res: d_res.callback(res))
         return d_res
@@ -353,22 +279,6 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
-        def delete_db(result, txn):
-            return self.__connection_db_session.run(
-                DBSession.query(
-                    CorrelationContext
-                ).filter(CorrelationContext.key == key).delete,
-                transaction=txn,
-            )
-
-        def flush_db(nb_deleted, txn):
-            d2 = self.__connection_db_session.run(
-                DBSession.flush,
-                transaction=transaction,
-            )
-            d2.addCallback(lambda res: nb_deleted)
-            return d2
-
         # On supprime la clé 'key' et la valeur qui lui est associée du cache.
         d_res = defer.Deferred()
         d = self.__get_connection()
@@ -379,10 +289,6 @@ class MemcachedConnection(object):
             res.addErrback(self._eb)
             return res
         d.addCallback(delete_cache)
-
-        if self.use_database:
-            d.addCallback(delete_db, transaction)
-            d.addCallback(flush_db, transaction)
 
         d.addCallback(lambda res: d_res.callback(res))
         return d_res
