@@ -207,54 +207,21 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
-        connected = False
         d_res = defer.Deferred()
         d = self.__get_connection()
         self.__connection_cache_deferred = d_res
 
         def get_from_cache(dummy):
             if self.__connection_cache:
-                connected = True
                 res = self.__connection_cache.get(key)
                 res.addErrback(self._eb)
                 return res
             return (0, None)
         d.addCallback(get_from_cache)
 
-        def set_cache(instance, key, flags):
-            # La valeur n'existait pas dans la base de données.
-            if instance is None:
-                # @TODO: retourner une Failure à la place ?
-                return None
-
-            exp_time = instance.expiration_date
-            if exp_time is not None:
-                # Si la valeur a une date de validité dans le passé,
-                # on l'ignore. La valeur sera supprimée bientôt.
-                if exp_time < datetime.now():
-                    return None
-                exp_time = int(time.mktime(exp_time.timetuple()))
-            else:
-                exp_time = 0
-
-            result = pickle.loads(str(instance.value))
-            if not connected:
-                return result
-
-            def set_in_cache(dummy):
-                res = self.__connection_cache.set(key, instance.value, flags, exp_time)
-                res.addErrback(self._eb)
-                return res
-
-            d3 = defer.succeed(None)
-            d3.addCallback(set_in_cache)
-            d3.addCallback(lambda x: result)
-            return d3
-
         def check_result(result, key, txn, flags):
             # Le cache a renvoyé un résultat, on le retourne
             # à la fonction appelante.
-
             if result[-1] is not None:
                 return pickle.loads(str(result[-1]))
 
