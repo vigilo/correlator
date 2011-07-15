@@ -105,14 +105,19 @@ class ConnectionStub(object):
 
     def get(self, key, transaction=True):
         print "GETTING: %r = %r" % (key, self.data.get(key))
-        return self.data.get(key)
+        return defer.succeed(self.data.get(key))
 
     def set(self, key, value, transaction=True, **kwargs):
         self.data[key] = value
+        return defer.succeed(None)
 
     def delete(self, key, transaction=True):
         del self.data[key]
+        return defer.succeed(None)
 
+    def topology(self):
+        topology = self.get('vigilo:topology')
+        return defer.succeed(None)
 
 # Mocks
 class ContextStub(Context):
