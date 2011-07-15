@@ -43,7 +43,7 @@ DATA_LOG_PRIORITY = 6
 DATA_LOG_MESSAGE = 7
 
 @defer.inlineCallbacks
-def make_correvent(forwarder, database, dom, idnt):
+def make_correvent(forwarder, database, dom, idnt, context_factory=Context):
     """
     Récupère dans le contexte les informations transmises par
     les règles, crée les événements corrélés (agrégats
@@ -53,7 +53,7 @@ def make_correvent(forwarder, database, dom, idnt):
         - VIGILO_EXIG_VIGILO_COR_0040,
         - VIGILO_EXIG_VIGILO_COR_0060.
     """
-    ctx = Context(idnt, database, transaction=False)
+    ctx = context_factory(idnt, database, transaction=False)
     raw_event_id = yield ctx.get('raw_event_id')
 
     # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :

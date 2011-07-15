@@ -14,13 +14,13 @@ from lxml import etree
 import logging
 
 from helpers import settings, populate_statename
-from helpers import setup_mc, teardown_mc, setup_db, teardown_db
+from helpers import setup_db, teardown_db
+from helpers import ContextStubFactory
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
                             Event, Change, SupItem, State
 
 from vigilo.pubsub.xml import NS_EVENT
-from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import insert_event, insert_state
 from vigilo.correlator.correvent import make_correvent
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
@@ -128,7 +128,7 @@ class TestLogging(unittest.TestCase):
         idsupitem = SupItem.get_supitem(host_name, service_name)
 
         # On ajoute les données nécessaires dans le contexte.
-        ctx = Context(self.XMPP_id, database=DummyDatabaseWrapper(True))
+        ctx = self.context_factory(self.XMPP_id)
         yield ctx.set('hostname', host_name)
         yield ctx.set('servicename', service_name)
         yield ctx.set('statename', new_state)
@@ -160,7 +160,8 @@ class TestLogging(unittest.TestCase):
         rd = RuleDispatcherStub()
 
         LOGGER.info('Creating a new correlated event')
-        yield make_correvent(rd, DummyDatabaseWrapper(True), item, self.XMPP_id)
+        yield make_correvent(rd, DummyDatabaseWrapper(True), item,
+                             self.XMPP_id, self.context_factory)
         defer.returnValue(None)
 
     def add_data(self):
@@ -207,8 +208,8 @@ class TestLogging(unittest.TestCase):
         """Initialisation des tests"""
 
         # On prépare la base de données et le serveur MemcacheD.
-        setup_mc()
         setup_db()
+        self.context_factory = ContextStubFactory()
 
         # On récupère le logger 'vigilo.correlator.syslog'
         # défini dans les settings.
@@ -242,7 +243,6 @@ class TestLogging(unittest.TestCase):
         # Évite que d'anciennes instances viennent perturber le test suivant.
         DBSession.expunge_all()
         teardown_db()
-        teardown_mc()
         return defer.succeed(None)
 
     @deferred(timeout=30)
@@ -271,7 +271,7 @@ class TestLogging(unittest.TestCase):
 
         # On recoit un message "WARNING" concernant lls1.
         LOGGER.debug("Received 'WARNING' message on lls1")
-        ctx = Context(self.XMPP_id, database=DummyDatabaseWrapper(True))
+        ctx = self.context_factory(self.XMPP_id)
         yield self.simulate_message_reception(u"WARNING", host_name, lls_name)
 
         event = DBSession.query(Event.idevent).one()
@@ -293,7 +293,7 @@ class TestLogging(unittest.TestCase):
 
         # On recoit un message "CRITICAL" concernant lls1.
         LOGGER.debug("Received 'CRITICAL' message on lls1")
-        ctx = Context(self.XMPP_id + 1, database=DummyDatabaseWrapper(True))
+        ctx = self.context_factory(self.XMPP_id + 1)
         yield ctx.set('update_id', event_id)
         yield self.simulate_message_reception(u"CRITICAL", host_name, lls_name)
 

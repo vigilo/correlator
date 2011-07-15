@@ -9,10 +9,11 @@ import random
 import threading
 from datetime import datetime
 import unittest
+
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
-from helpers import setup_mc, teardown_mc
+from mock import Mock
 from helpers import setup_db, teardown_db, populate_statename
 
 from vigilo.models.session import DBSession
@@ -32,7 +33,6 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def setUp(self):
         """Initialisation d'un contexte préalable à chacun des tests."""
-        setup_mc()
         setup_db()
         return defer.succeed(None)
 
@@ -40,7 +40,6 @@ class TestApiFunctions(unittest.TestCase):
     def tearDown(self):
         """Nettoyage du contexte à la fin de chaque test."""
         teardown_db()
-        teardown_mc()
         return defer.succeed(None)
 
     def test_contexts(self):
@@ -94,11 +93,16 @@ class TestApiFunctions(unittest.TestCase):
 
         # Création d'un contexte
         ctx = Context(42)
+        ctx._connection = Mock()
+        ctx._connection.get.side_effect = lambda *a: defer.succeed(None)
+        ctx._connection.set.side_effect = lambda *a, **kw: defer.succeed(None)
 
         # On s'assure que la date de dernière mise à jour
         # de l'arbre topologique est bien nulle au départ.
         last_update = yield ctx.get('last_topology_update')
         self.assertEquals(last_update, None)
+        ctx._connection.get.assert_called_with(
+                "vigilo:last_topology_update", ctx._transaction)
 
         # Instanciation de la topologie
         topology = Topology()
@@ -111,9 +115,13 @@ class TestApiFunctions(unittest.TestCase):
         ctx_topology = yield ctx.topology
         self.assertEquals(ctx_topology.nodes(), topology.nodes())
         self.assertEquals(ctx_topology.edges(), topology.edges())
+        set_calls = ctx._connection.set.call_args_list
+        self.assertEqual(set_calls[0][0][0], "vigilo:topology")
+        self.assertEqual(set_calls[1][0][0], "vigilo:last_topology_update")
 
         # On s'assure que la date de la mise à jour de l'arbre
         # topologique renseignée dans le contexte est bien
         # postérieure à la date calculée précédemment.
+        ctx._connection.get.side_effect = lambda *a: defer.succeed(set_calls[1][0][1])
         last_update = yield ctx.last_topology_update
         self.assertTrue(last_update > date)

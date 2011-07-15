@@ -20,7 +20,6 @@ from vigilo.models import tables
 from vigilo.models.session import DBSession
 from vigilo.pubsub.xml import NS_COMMAND
 
-from vigilo.correlator.context import Context
 from vigilo.correlator.amp.commands import SendToBus
 
 from vigilo.correlator.rules.svc_on_host_down import SvcHostDown, NAGIOS_MESSAGE

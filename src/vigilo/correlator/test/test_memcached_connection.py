@@ -19,8 +19,6 @@ from helpers import settings
 from helpers import setup_mc, teardown_mc
 from helpers import setup_db, teardown_db
 from vigilo.correlator.memcached_connection import MemcachedConnection
-from vigilo.correlator.context import Context
-from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 class TestMemcachedConnection(unittest.TestCase):
     """
