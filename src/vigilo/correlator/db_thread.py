@@ -100,7 +100,11 @@ class DatabaseWrapper(object):
                 logger.error(result[1])
             else:
                 if txn:
-                    transaction.commit()
+                    try:
+                        transaction.commit()
+                    except:
+                        result = d.errback, Failure()
+                        logger.error(result[1])
             self.queue.task_done()
             reactor.callFromThread(*result)
 
@@ -204,7 +208,11 @@ class DummyDatabaseWrapper(object):
             return defer.fail(res)
         else:
             if txn:
-                transaction.commit()
+                try:
+                    transaction.commit()
+                except:
+                    result = d.errback, Failure()
+                    logger.error(result[1])
             return defer.succeed(res)
 
     def shutdown(self):
