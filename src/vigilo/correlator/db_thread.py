@@ -69,7 +69,7 @@ class DatabaseWrapper(object):
         Cette méthode est exécutée dans un thread séparé.
         C'est elle qui traite les demandes d'opérations sur la base de données
         et retourne les résultats sous la forme d'un objet C{Deferred}.
-        
+
         @note: Cette méthode ne retourne pas tant que la méthode
             L{DatabaseWrapper.shutdown} n'a pas été appelée.
         """
@@ -93,18 +93,13 @@ class DatabaseWrapper(object):
                 transaction.begin()
             try:
                 result = d.callback, func(*args, **kwargs)
+                if txn:
+                    transaction.commit()
             except:
                 if txn:
                     transaction.abort()
                 result = d.errback, Failure()
                 logger.error(result[1])
-            else:
-                if txn:
-                    try:
-                        transaction.commit()
-                    except:
-                        result = d.errback, Failure()
-                        logger.error(result[1])
             self.queue.task_done()
             reactor.callFromThread(*result)
 
@@ -112,7 +107,7 @@ class DatabaseWrapper(object):
         """
         Cette méthode reçoit les demandes d'accès destinées à la base
         de données et les transmet au thread dédié à cette fonction.
-        
+
         @param func: La fonction à exécuter qui utilise la base de données.
         @type func: C{callable}
         @note: Les arguments supplémentaires passés à cette méthode
@@ -142,7 +137,7 @@ class DatabaseWrapper(object):
         à la base de données.
         """
         self.queue.put(None)
-        return self.defer 
+        return self.defer
 
 
 class DummyDatabaseWrapper(object):
@@ -157,7 +152,7 @@ class DummyDatabaseWrapper(object):
     def __init__(self, disable_txn=False):
         """
         Créer le wrapper autour des accès.
-        
+
         @param disable_txn: Désactive globalement les transactions,
             en ignorant la valeur de l'option C{transaction}
             éventuellement passée à la méthode L{DummyDatabaseWrapper.run}.
