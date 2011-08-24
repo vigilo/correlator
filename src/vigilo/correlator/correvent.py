@@ -43,7 +43,7 @@ DATA_LOG_PRIORITY = 6
 DATA_LOG_MESSAGE = 7
 
 @defer.inlineCallbacks
-def make_correvent(forwarder, database, dom, idnt, context_factory=Context):
+def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_factory=Context):
     """
     Récupère dans le contexte les informations transmises par
     les règles, crée les événements corrélés (agrégats
@@ -69,9 +69,9 @@ def make_correvent(forwarder, database, dom, idnt, context_factory=Context):
     if raw_event_id is None:
         defer.returnValue(None)
 
-    state = yield ctx.get('statename')
-    hostname = yield ctx.get('hostname')
-    servicename = yield ctx.get('servicename')
+    state = info_dictionary['state']
+    hostname = info_dictionary['host']
+    servicename = info_dictionary['service']
 
     # Si une règle ou un callback demande explicitement qu'aucune
     # alerte ne soit générée pour cet événement, on lui obéit ici.

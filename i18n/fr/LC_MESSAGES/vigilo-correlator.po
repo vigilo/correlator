@@ -191,8 +191,8 @@ msgstr "Connexion en cours au serveur MemcacheD (%s) ..."
 #: src/vigilo/correlator/memcached_connection.py:186
 #, python-format
 msgid "Trying to set value '%(value)s' for key '%(key)s' (transaction=%(txn)r)."
-msgstr "Tentative de changement de la valeur de la clé '%(key)s' en "
-"'%(value)s' (transaction=%(txn)r)."
+msgstr "Tentative d'affectation de la valeur '%(value)s' à la clé '%(key)s' "
+"(transaction=%(txn)r)."
 
 #: src/vigilo/correlator/memcached_connection.py:241
 #, python-format

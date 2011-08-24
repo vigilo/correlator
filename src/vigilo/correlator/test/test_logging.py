@@ -161,7 +161,8 @@ class TestLogging(unittest.TestCase):
 
         LOGGER.info('Creating a new correlated event')
         yield make_correvent(rd, DummyDatabaseWrapper(True), item,
-                             self.XMPP_id, self.context_factory)
+                             self.XMPP_id, info_dictionary,
+                             self.context_factory)
         defer.returnValue(None)
 
     def add_data(self):

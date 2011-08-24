@@ -78,7 +78,10 @@ def get_all_services(hostname, database=None):
     if database is None:
         database = DummyDatabaseWrapper(True)
     return database.run(
-        DBSession.query(LowLevelService).join(
+        DBSession.query(
+            LowLevelService.idsupitem,
+            LowLevelService.servicename,
+        ).join(
             (Host, Host.idsupitem == LowLevelService.idhost)
         ).filter(Host.name == unicode(hostname)
         ).all

@@ -362,8 +362,8 @@ class RuleDispatcher(PubSubSender):
             return d
 
         dom = dom[0]
-        def cb(result, dom, idnt):
-            return make_correvent(self, self._database, dom, idnt)
+        def cb(result, *args, **kwargs):
+            return make_correvent(self, self._database, *args, **kwargs)
         def eb(failure, xml):
             LOGGER.info(_(
                 'Error while saving the correlated event (%s). '
@@ -374,7 +374,7 @@ class RuleDispatcher(PubSubSender):
             return None
         d.addCallback(lambda res: self._database.run(
             transaction.begin, transaction=False))
-        d.addCallback(cb, dom, idnt)
+        d.addCallback(cb, dom, idnt, info_dictionary)
         d.addCallback(lambda res: self._database.run(
             transaction.commit, transaction=False))
         d.addErrback(eb, xml)
