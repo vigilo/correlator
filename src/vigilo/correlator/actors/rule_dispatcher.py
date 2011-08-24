@@ -13,6 +13,7 @@ des commandes pour Nagios).
 """
 
 import sys
+import time
 from datetime import datetime
 
 import transaction
@@ -123,6 +124,8 @@ class RuleDispatcher(PubSubSender):
             starter=ProcessStarter(self, database),
         )
         self._executor = executor.Executor(self)
+        self._tmp_correl_time = None
+        self._correl_times = []
 
     def doWork(self, *args, **kwargs):
         """
@@ -316,12 +319,15 @@ class RuleDispatcher(PubSubSender):
             )
             self.tree_end.addErrback(self._send_result_eb, idxmpp, payload)
             # On lance le processus de corrélation.
+            self._tmp_correl_time = time.time()
             tree_start.callback((idxmpp, payload))
             return self.tree_end
         d.addCallback(start_correl, self._executor.build_execution_tree())
 
         def end(result):
-            LOGGER.debug(_('Correlation process ended'))
+            duration = time.time() - self._tmp_correl_time
+            self._correl_times.append(duration)
+            LOGGER.debug(_('Correlation process ended (%.4fs)'), duration)
             return result
         d.addCallback(end)
         d.callback(None)
@@ -502,6 +508,10 @@ class RuleDispatcher(PubSubSender):
         def add_exec_stats(stats):
             rule_stats = self._executor.getStats()
             stats.update(rule_stats)
+            if self._correl_times:
+                stats["rule-total"] = round(sum(self._correl_times) /
+                                            len(self._correl_times), 5)
+                self._correl_times = []
             return stats
         d = super(RuleDispatcher, self).getStats()
         d.addCallback(add_exec_stats)

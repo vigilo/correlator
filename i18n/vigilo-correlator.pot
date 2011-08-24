@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.5\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2011-08-24 16:18+0200\n"
+"POT-Creation-Date: 2011-08-24 16:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -221,86 +221,87 @@ msgstr ""
 msgid "Rule %(rule_name)s timed out"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:155
+#: src/vigilo/correlator/actors/rule_dispatcher.py:158
 #, python-format
 msgid "Skipping unrecognized item (%s)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:185
+#: src/vigilo/correlator/actors/rule_dispatcher.py:188
 msgid "Received invalid XMPP item ID (None)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:194
+#: src/vigilo/correlator/actors/rule_dispatcher.py:197
 msgid "Error while modifying ticket"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:206
+#: src/vigilo/correlator/actors/rule_dispatcher.py:209
 msgid "Error while retrieving supervised item ID"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:240
+#: src/vigilo/correlator/actors/rule_dispatcher.py:243
 #, python-format
 msgid "Error: %s"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:257
+#: src/vigilo/correlator/actors/rule_dispatcher.py:260
 msgid "Inserting state"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:259
+#: src/vigilo/correlator/actors/rule_dispatcher.py:262
 msgid "Error while saving state"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:278
+#: src/vigilo/correlator/actors/rule_dispatcher.py:281
 msgid "Inserting an entry in the HLS history"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:280
+#: src/vigilo/correlator/actors/rule_dispatcher.py:283
 msgid "Error while adding an entry in the HLS history"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:285
+#: src/vigilo/correlator/actors/rule_dispatcher.py:288
 msgid "Inserting an entry in the history"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:287
+#: src/vigilo/correlator/actors/rule_dispatcher.py:290
 msgid "Error while adding an entry in the history"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:297
+#: src/vigilo/correlator/actors/rule_dispatcher.py:300
 msgid "Actual correlation"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:324
-msgid "Correlation process ended"
+#: src/vigilo/correlator/actors/rule_dispatcher.py:330
+#, python-format
+msgid "Correlation process ended (%.4fs)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:344
+#: src/vigilo/correlator/actors/rule_dispatcher.py:350
 msgid "Handling correlation results"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:368
+#: src/vigilo/correlator/actors/rule_dispatcher.py:374
 #, python-format
 msgid ""
 "Error while saving the correlated event (%s). The message will be handled "
 "once more."
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:399
+#: src/vigilo/correlator/actors/rule_dispatcher.py:405
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:420
+#: src/vigilo/correlator/actors/rule_dispatcher.py:426
 #, python-format
 msgid "Unable to store correlated alert for message #%(id)s (%(payload)s) : %(error)s"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:444
+#: src/vigilo/correlator/actors/rule_dispatcher.py:450
 msgid "Connection lost"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:491
+#: src/vigilo/correlator/actors/rule_dispatcher.py:497
 #, python-format
 msgid "%s. The message will be handled once more."
 msgstr ""
