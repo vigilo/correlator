@@ -80,7 +80,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
         LOGGER.info(_(
             'Ignoring event #%(idevent)d on (%(host)r, %(service)r) '
             'as requested by the correlation rules') % {
-                'idevent': idnt,
+                'idevent': raw_event_id,
                 'host': hostname,
                 'service': servicename,
         })
