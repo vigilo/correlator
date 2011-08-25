@@ -93,6 +93,8 @@ class RuleDispatcher(PubSubSender):
     et envoie ensuite les résultats sur le bus.
     """
 
+    _context_factory = Context
+
     def __init__(self, database):
         super(RuleDispatcher, self).__init__()
         self.max_send_simult = 1
@@ -225,7 +227,7 @@ class RuleDispatcher(PubSubSender):
 
         # On initialise le contexte et on y insère
         # les informations sur l'alerte traitée.
-        ctx = Context(idxmpp, self._database)
+        ctx = self._context_factory(idxmpp, self._database)
 
         attrs = {
             'hostname': 'host',

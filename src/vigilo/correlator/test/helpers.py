@@ -28,6 +28,9 @@ from vigilo.correlator.context import Context
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
+from vigilo.common.logging import get_logger
+LOGGER = get_logger(__name__)
+
 MemcachedConnection.CONTEXT_TIMER = 0
 
 
@@ -58,6 +61,7 @@ def setup_mc():
     env = os.environ.copy()
     env["PATH"] += ":/usr/sbin" # Sur mandriva, memcached est dans /usr/sbin
     memcached_bin = None
+    LOGGER.info("Configuring memcached to run on port %d", port)
     mc_pid = subprocess.Popen([settings['correlator']["memcached_command"],
                                "-l", "127.0.0.1",
                                "-p", str(port)],
@@ -65,22 +69,23 @@ def setup_mc():
                                close_fds=True).pid
     # Give it time to start up properly. I should try a client connection in a
     # while loop. Oh well...
+    MemcachedConnection.reset()
     time.sleep(1)
-    # On s'assure qu'une connexion vers memcached est ouverte.
     MemcachedConnection()
 
 def teardown_mc():
     """Détruit le serveur memcached créé pour le passage d'un test."""
-    # Détruit l'objet qui gère la connexion.
-    MemcachedConnection.reset()
+    LOGGER.info("Killing memcached instance running on port %d",
+        settings['correlator']['memcached_port'])
     try:
         # Tue le serveur memcached lancé en arrière-plan.
         os.kill(mc_pid, signal.SIGTERM)
         os.wait() # Avoid zombies. Bad zombies.
     except OSError, e:
+        # We mostly ignore errors, maybe we should
+        # do something more useful here.
         print e
-        pass # Ignore errors, maybe we should
-             # do something more useful here.
+    return MemcachedConnection.reset()
 
 with_mc = nose.with_setup(setup_mc, teardown_mc)
 

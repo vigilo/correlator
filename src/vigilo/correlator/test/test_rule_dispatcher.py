@@ -27,7 +27,7 @@ class TestableRuleDispatcher(RuleDispatcher):
         PubSubSender.__init__(self)
         self.max_send_simult = 1
         self.tree_end = None
-        self._database = DummyDatabaseWrapper(settings['database'])
+        self._database = DummyDatabaseWrapper(True)
         self._executor = Executor(self)
 
 class RuleDispatcherTestCase(unittest.TestCase):
@@ -86,6 +86,7 @@ class RuleDispatcherTestCase(unittest.TestCase):
         ts_recent_dt = datetime.fromtimestamp(int(ts_recent))
         idsupitem = tables.SupItem.get_supitem("server.example.com", "Load")
         self.rd._do_correl = Mock(name="do_correl")
+        self.rd._context_factory = Mock(name="context") # pas besoin ici
         # Insertion de l'état récent
         state = DBSession.query(tables.State).get(idsupitem)
         state.timestamp = ts_recent_dt
@@ -102,6 +103,7 @@ class RuleDispatcherTestCase(unittest.TestCase):
         </item>
         """ % {'xmlns': NS_EVENT, "ts_old": ts_old}
         d = self.rd._processMessage(xml)
+
         def cb(result):
             self.assertEqual(DBSession.query(tables.Event).count(), 0,
                 "L'événement ne doit pas avoir été inséré")

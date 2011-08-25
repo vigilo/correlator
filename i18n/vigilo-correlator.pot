@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.5\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2011-08-24 16:55+0200\n"
+"POT-Creation-Date: 2011-08-25 19:53+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -153,32 +153,32 @@ msgstr ""
 msgid "handle_ticket: Event %r history updated successfully."
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:104
+#: src/vigilo/correlator/memcached_connection.py:63
 #, python-format
-msgid "Establishing connection to MemcacheD server (%s)..."
+msgid "Connecting to memcached server (%s)..."
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:116
+#: src/vigilo/correlator/memcached_connection.py:73
 #, python-format
-msgid "Could not connect to memcached: %s"
+msgid "Connection to memcached (%(conn)s) lost: %(reason)s"
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:138
+#: src/vigilo/correlator/memcached_connection.py:86
 #, python-format
-msgid "Lost connection to memcached: %s"
+msgid "Connection to memcached (%(conn)s) failed: %(reason)s"
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:156
+#: src/vigilo/correlator/memcached_connection.py:189
 #, python-format
 msgid "Trying to set value '%(value)s' for key '%(key)s' (transaction=%(txn)r)."
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:204
+#: src/vigilo/correlator/memcached_connection.py:226
 #, python-format
 msgid "Trying to get the value of the key '%(key)s' (transaction=%(txn)r)."
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:243
+#: src/vigilo/correlator/memcached_connection.py:258
 #, python-format
 msgid "Trying to delete the key '%(key)s' (transaction=%(txn)r)."
 msgstr ""

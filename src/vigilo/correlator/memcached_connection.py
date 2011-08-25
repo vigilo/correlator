@@ -30,12 +30,95 @@ __all__ = (
     'MemcachedConnection',
 )
 
-class ReconnectingMemcachedClientFactory(protocol.ReconnectingClientFactory):
-    maxDelay = 60
+class VigiloMemCacheProtocol(MemCacheProtocol):
+    def connectionMade(self):
+        """
+        Appelle la méthode C{connectionMade} de la factory
+        lorsque la connexion à memcached est établie.
+        """
+        self.factory.connectionMade(self)
+
+class MemcachedClientFactory(protocol.ReconnectingClientFactory):
+    """
+    Factory pour le protocole memcached supportant les reconnexions
+    automatiques.
+    """
+    maxDelay = 10
+    _waiting = []
+    instance = None
+
+    # Évite que le délai maximum de reconnexion soit atteint
+    # trop rapidement (ce qui arrive avec la valeur par défaut).
+    factor = 1.6180339887498948
 
     def buildProtocol(self, addr):
+        """Crée l'instance du protocole."""
         self.resetDelay()
-        return MemCacheProtocol(10)
+        return protocol.ReconnectingClientFactory.buildProtocol(self, addr)
+
+    def connectionMade(self, protocol):
+        """
+        Méthode appelée lorsque le protocole sous-jacent est prêt.
+        Cette méthode déclenche l'exécution des C{Deferred} qui
+        dépendent du protocole.
+
+        @type: Instance (initialisée) du protocole.
+        @rtype: L{VigiloMemCacheProtocol}
+        """
+        LOGGER.info(_("Connected to memcached (%s)"),
+            protocol.transport.getPeer())
+        self.instance = protocol
+        for d in self._waiting:
+            d.callback(protocol)
+        self._waiting = []
+
+    def startedConnecting(self, connector):
+        """
+        Méthode appelée lorsque la connexion au serveur memcached
+        est en cours.
+        """
+        LOGGER.info(_("Connecting to memcached server (%s)..."),
+                    connector.getDestination())
+        return protocol.ReconnectingClientFactory.startedConnecting(
+            self, connector)
+
+    def clientConnectionLost(self, connector, reason):
+        """
+        Méthode appelée lorsque la connexion à memcached est perdue.
+        """
+        LOGGER.info(_("Connection to memcached (%(conn)s) lost: %(reason)s"), {
+                        'conn': connector.getDestination(),
+                        'reason': reason,
+                    })
+        self.instance = None
+        return protocol.ReconnectingClientFactory.clientConnectionLost(
+            self, connector, reason)
+
+    def clientConnectionFailed(self, connector, reason):
+        """
+        Méthode appelée lorsque la connexion à memcached n'a pas pu
+        être établie.
+        """
+        LOGGER.info(_("Connection to memcached (%(conn)s) failed: %(reason)s"), {
+                        'conn': connector.getDestination(),
+                        'reason': reason,
+                    })
+        self.instance = None
+        return protocol.ReconnectingClientFactory.clientConnectionFailed(
+            self, connector, reason)
+
+    def getInstance(self):
+        """
+        Retourne un C{Deferred} qui permettra d'interagir avec le cache.
+
+        @return: Instance permettant d'interagir avec le cache.
+        @rtype: L{VigiloMemCacheProtocol}
+        """
+        if self.instance is not None:
+            return defer.succeed(self.instance)
+        d = defer.Deferred()
+        self._waiting.append(d)
+        return d
 
 class MemcachedConnection(object):
     """
@@ -61,8 +144,16 @@ class MemcachedConnection(object):
         if cls.instance is None:
             # Construction de l'objet..
             cls.instance = object.__new__(cls)
-            cls.instance.__connection_cache = None
-            cls.instance.__connection_cache_deferred = None
+
+            # Connexion à memcached en utilisant la factory
+            # qui se reconnecte automatiquement.
+            mc_host = settings['correlator']['memcached_host']
+            mc_port = settings['correlator'].as_int('memcached_port')
+            factory = MemcachedClientFactory()
+            factory.protocol = lambda: VigiloMemCacheProtocol(timeOut=2)
+            connector = reactor.connectTCP(mc_host, mc_port, factory)
+            cls.instance._connector = connector
+            cls.instance._cache = connector.factory
         return cls.instance
 
     def __init__(self):
@@ -92,54 +183,12 @@ class MemcachedConnection(object):
             Cette méthode n'existe que pour faciliter le travail des
             tests unitaires de cette classe.
         """
+        if cls.instance is None:
+            return
+        # On se déconnecte proprement de memcached.
+        cls.instance._connector.disconnect()
         del cls.instance
         cls.instance = None
-
-    def __get_connection(self):
-        if self.__connection_cache_deferred:
-            return self.__connection_cache_deferred
-
-        mc_host = settings['correlator']['memcached_host']
-        mc_port = settings['correlator'].as_int('memcached_port')
-        LOGGER.info(_("Establishing connection to MemcacheD "
-                        "server (%s)..."), "%s:%d" % (mc_host, mc_port))
-
-        d = protocol.ClientCreator(
-                reactor,
-                MemCacheProtocol,
-                # Délai de détection de perte de connexion à memcached.
-                1,
-            ).connectTCP(mc_host, mc_port, timeout=2)
-
-        def eb(failure):
-            LOGGER.info(
-                _("Could not connect to memcached: %s"),
-                str(failure).decode('utf-8')
-            )
-            self.__connection_cache_deferred = None
-            return None
-
-        def cb(proto):
-            # La connexion précédente a fait un timeout,
-            # on vide le cache histoire d'éviter de récupérer
-            # des données obsolètes.
-            if self.__connection_cache and proto:
-                proto = proto.flushAll()
-                proto.addErrback(self._eb)
-            self.__connection_cache = proto
-
-        d.addErrback(eb)
-        d.addCallback(cb)
-        self.__connection_cache_deferred = d
-        return d
-
-    def _eb(self, failure):
-        LOGGER.info(
-            _("Lost connection to memcached: %s"),
-            str(failure).decode('utf-8')
-        )
-        self.__connection_cache_deferred = None
-        return self.__get_connection()
 
     def set(self, key, value, transaction=True, **kwargs):
         """
@@ -165,29 +214,21 @@ class MemcachedConnection(object):
         exp_time = self.__convert_to_datetime(kwargs.pop('time', None))
         flags = kwargs.pop('flags', 0)
 
-        def prep_exp_time(res, exp_time):
-            # memcached utilise 0 pour indiquer l'absence d'expiration.
-            if exp_time is None:
-                exp_time = 0
-            else:
-                exp_time = int(time.mktime(exp_time.timetuple()))
-            return exp_time
+        # memcached utilise 0 pour indiquer l'absence d'expiration.
+        if exp_time is None:
+            exp_time = 0
+        else:
+            exp_time = int(time.mktime(exp_time.timetuple()))
 
-        def set_cache(exp_time, key, flags):
-            # Les erreurs sur le changement dans le cache sont ignorées
-            # et la valeur positionnée est retournée à l'appelant.
-            if self.__connection_cache:
-                res = self.__connection_cache.set(key, pick_value, flags, exp_time)
-                res.addErrback(self._eb)
-                return res
+        def _check_set(res):
+            # Lève une exception si la valeur n'a pas pu être stockée.
+            if not res:
+                raise Exception
 
-        d_res = defer.Deferred()
-        d = self.__get_connection()
-        self.__connection_cache_deferred = d_res
-        d.addCallback(prep_exp_time, exp_time)
-        d.addCallback(set_cache, key, flags)
-        d.addCallback(lambda x: d_res.callback(value))
-        return d_res
+        d = self._cache.getInstance()
+        d.addCallback(lambda cache: cache.set(key, pick_value, flags, exp_time))
+        d.addCallback(_check_set)
+        return d
 
     def get(self, key, transaction=True, flags=0):
         """
@@ -207,27 +248,18 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
-        d_res = defer.Deferred()
-        d = self.__get_connection()
-        self.__connection_cache_deferred = d_res
+        def _check_result(result, key, txn, flags):
+            # Idéalement, on voudrait pouvoir traiter ce cas différemment,
+            # mais le rule_dispatcher ne définit pas forcément à l'avance
+            # tous les attributs du contexte qu'il est susceptible d'utiliser.
+            if result[-1] is None:
+                return None
+            return pickle.loads(str(result[-1]))
 
-        def get_from_cache(dummy):
-            if self.__connection_cache:
-                res = self.__connection_cache.get(key)
-                res.addErrback(self._eb)
-                return res
-            return (0, None)
-        d.addCallback(get_from_cache)
-
-        def check_result(result, key, txn, flags):
-            # Le cache a renvoyé un résultat, on le retourne
-            # à la fonction appelante.
-            if result[-1] is not None:
-                return pickle.loads(str(result[-1]))
-
-        d.addCallback(check_result, key, transaction, flags)
-        d.addCallback(lambda res: d_res.callback(res))
-        return d_res
+        d = self._cache.getInstance()
+        d.addCallback(lambda cache: cache.get(key))
+        d.addCallback(_check_result, key, transaction, flags)
+        return d
 
     def delete(self, key, transaction=True):
         """
@@ -246,17 +278,7 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
-        # On supprime la clé 'key' et la valeur qui lui est associée du cache.
-        d_res = defer.Deferred()
-        d = self.__get_connection()
-        self.__connection_cache_deferred = d_res
-
-        def delete_cache(dummy):
-            res = self.__connection_cache.delete(key)
-            res.addErrback(self._eb)
-            return res
-        d.addCallback(delete_cache)
-
-        d.addCallback(lambda res: d_res.callback(res))
-        return d_res
+        d = self._cache.getInstance()
+        d.addCallback(lambda cache: cache.delete(key))
+        return d
 

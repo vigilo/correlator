@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-11-19 12:29+0100\n"
-"PO-Revision-Date: 2011-08-24 16:55+0200\n"
+"PO-Revision-Date: 2011-08-25 19:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -130,9 +130,7 @@ msgstr "Aggregat #%(src)d und Aggregat #%(dest)d werden zusammengeführt"
 
 #: src/vigilo/correlator/db_insertion.py:281
 msgid "Got a reference to a nonexistent aggregate, aborting"
-msgstr ""
-"Verweis auf ein nicht existierendes Quell-Aggregat "
-"vorhanden, abbrechen"
+msgstr "Verweis auf ein nicht existierendes Quell-Aggregat vorhanden, abbrechen"
 
 #: src/vigilo/correlator/handle_ticket.py:35
 #, python-format
@@ -178,32 +176,36 @@ msgstr ""
 msgid "handle_ticket: Event %r history updated successfully."
 msgstr "handle_ticket: Verlauf des Ereignisses %r erfolgreich aktualisiert."
 
-#: src/vigilo/correlator/memcached_connection.py:104
-#, python-format
-msgid "Establishing connection to MemcacheD server (%s)..."
+#: src/vigilo/correlator/memcached_connection.py:63
+#, fuzzy, python-format
+msgid "Connecting to memcached server (%s)..."
 msgstr "Verbindung zum MemcacheD Server (%s) wird hergestellt..."
 
-#: src/vigilo/correlator/memcached_connection.py:116
+#: src/vigilo/correlator/memcached_connection.py:73
 #, python-format
-msgid "Could not connect to memcached: %s"
+msgid "Connection to memcached (%(conn)s) lost: %(reason)s"
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:138
+#: src/vigilo/correlator/memcached_connection.py:86
 #, python-format
-msgid "Lost connection to memcached: %s"
+msgid "Connection to memcached (%(conn)s) failed: %(reason)s"
 msgstr ""
 
-#: src/vigilo/correlator/memcached_connection.py:156
+#: src/vigilo/correlator/memcached_connection.py:189
 #, python-format
 msgid "Trying to set value '%(value)s' for key '%(key)s' (transaction=%(txn)r)."
-msgstr "Versucht den Wert '%(value)s' für Schlüssel '%(key)s' einzustellen (transaction=%(txn)r)."
+msgstr ""
+"Versucht den Wert '%(value)s' für Schlüssel '%(key)s' einzustellen "
+"(transaction=%(txn)r)."
 
-#: src/vigilo/correlator/memcached_connection.py:204
+#: src/vigilo/correlator/memcached_connection.py:226
 #, python-format
 msgid "Trying to get the value of the key '%(key)s' (transaction=%(txn)r)."
-msgstr "Versucht, den Wert von Schlüssel '%(key)s' zu erhalten (transaction=%(txn)r)."
+msgstr ""
+"Versucht, den Wert von Schlüssel '%(key)s' zu erhalten "
+"(transaction=%(txn)r)."
 
-#: src/vigilo/correlator/memcached_connection.py:243
+#: src/vigilo/correlator/memcached_connection.py:258
 #, python-format
 msgid "Trying to delete the key '%(key)s' (transaction=%(txn)r)."
 msgstr "Versucht, den Schlüssel '%(key)s' zu löschen (transaction=%(txn)r)."

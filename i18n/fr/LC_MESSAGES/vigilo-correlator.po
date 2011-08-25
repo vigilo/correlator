@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2011-08-24 16:55+0200\n"
+"PO-Revision-Date: 2011-08-25 19:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -172,36 +172,36 @@ msgstr ""
 msgid "handle_ticket: Event %r history updated successfully."
 msgstr "handle_ticket: L'historique de l'évenement %r a bien été mis à jour"
 
-#: src/vigilo/correlator/memcached_connection.py:104
+#: src/vigilo/correlator/memcached_connection.py:63
 #, python-format
-msgid "Establishing connection to MemcacheD server (%s)..."
-msgstr "Connexion en cours au serveur MemcacheD (%s) ..."
+msgid "Connecting to memcached server (%s)..."
+msgstr "Connexion au serveur memcached (%s) ..."
 
-#: src/vigilo/correlator/memcached_connection.py:116
+#: src/vigilo/correlator/memcached_connection.py:73
 #, python-format
-msgid "Could not connect to memcached: %s"
-msgstr "Impossible de se connecter à memcached : %s"
+msgid "Connection to memcached (%(conn)s) lost: %(reason)s"
+msgstr "Connexion à memcached (%(conn)s) perdue : %(reason)s"
 
-#: src/vigilo/correlator/memcached_connection.py:138
+#: src/vigilo/correlator/memcached_connection.py:86
 #, python-format
-msgid "Lost connection to memcached: %s"
-msgstr "Connexion à memcached perdue : %s"
+msgid "Connection to memcached (%(conn)s) failed: %(reason)s"
+msgstr "Échec de la connexion à memcached (%(conn)s) : %(reason)s"
 
-#: src/vigilo/correlator/memcached_connection.py:156
+#: src/vigilo/correlator/memcached_connection.py:189
 #, python-format
 msgid "Trying to set value '%(value)s' for key '%(key)s' (transaction=%(txn)r)."
 msgstr ""
 "Tentative d'affectation de la valeur '%(value)s' à la clé '%(key)s' "
 "(transaction=%(txn)r)."
 
-#: src/vigilo/correlator/memcached_connection.py:204
+#: src/vigilo/correlator/memcached_connection.py:226
 #, python-format
 msgid "Trying to get the value of the key '%(key)s' (transaction=%(txn)r)."
 msgstr ""
 "Tentative de récupération de la valeur de la clé '%(key)s' "
 "(transaction=%(txn)r)."
 
-#: src/vigilo/correlator/memcached_connection.py:243
+#: src/vigilo/correlator/memcached_connection.py:258
 #, python-format
 msgid "Trying to delete the key '%(key)s' (transaction=%(txn)r)."
 msgstr "Tentative de suppression de la clé '%(key)s' (transaction=%(txn)r)."
