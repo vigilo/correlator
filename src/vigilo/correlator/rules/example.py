@@ -6,6 +6,7 @@
 """Exemple de module pour les règles de corrélation."""
 from __future__ import absolute_import
 
+from twisted.internet import defer
 from vigilo.correlator.rule import Rule
 
 from vigilo.common.logging import get_logger
@@ -19,7 +20,8 @@ class ExampleRule(Rule):
 
     depends = []
 
-    def process(self, link, xmpp_id, payload):
+    @defer.inlineCallbacks
+    def process(self, link, xmpp_id):
         """
         Traitement du message par la règle.
         Ici, on se contente d'afficher une trace.
@@ -30,9 +32,9 @@ class ExampleRule(Rule):
         @type link: C{vigilo.correlator.actors.rule_runner.RuleRunner}
         @param xmpp_id: Identifiant XMPP de l'alerte brute traitée.
         @type xmpp_id: C{unicode}
-        @param payload: Le message reçu par le corrélateur sur le bus XMPP.
-        @type payload: C{unicode}
         """
+        ctx = self._get_context(xmpp_id)
+        payload = yield ctx.get('payload')
         LOGGER.debug(_(u'id %(id)s payload %(payload)s'), {
                         "id": xmpp_id,
                         "payload": payload,

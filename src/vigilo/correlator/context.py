@@ -47,6 +47,7 @@ class Context(object):
         -   occurrences_count : nombre d'occurrences de l'alerte (C{int}).
         -   priority : priorité de l'événement corrélé (C{int}).
         -   no_alert : empêche la génération d'une alerte corrélée.
+        -   payload : message brut (XML sérialisé) de l'événement reçu (C{str}).
     """
 
     def __init__(self, idxmpp, database=None, transaction=True, timeout=None):

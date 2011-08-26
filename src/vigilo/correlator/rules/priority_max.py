@@ -32,7 +32,7 @@ class PriorityMaxRule(Rule):
     depends = ['PriorityRule']
 
     @defer.inlineCallbacks
-    def process(self, link, xmpp_id, payload):
+    def process(self, link, xmpp_id):
         """
         Traitement du message par la règle.
 
@@ -42,8 +42,6 @@ class PriorityMaxRule(Rule):
         @type link: C{vigilo.correlator.actors.rule_runner.RuleRunner}
         @param xmpp_id: Identifiant XMPP de l'alerte brute traitée.
         @type xmpp_id: C{unicode}
-        @param payload: Le message reçu par le corrélateur sur le bus XMPP.
-        @type payload: C{unicode}
         """
         ctx = self._get_context(xmpp_id)
         hostname = yield ctx.get('hostname')

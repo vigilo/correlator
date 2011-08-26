@@ -100,7 +100,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         """
         yield self.setup_context("UP", "DOWN")
         rule_runner = Mock()
-        yield self.rule.process(rule_runner, self.message_id, None)
+        yield self.rule.process(rule_runner, self.message_id)
         print rule_runner.callRemote.call_count
         self.assertEqual(rule_runner.callRemote.call_count, 1)
         print rule_runner.callRemote.call_args
@@ -129,7 +129,7 @@ class TestSvcHostDownRule(unittest.TestCase):
     def test_host_up(self):
         """Demander les états des services d'un hôte qui passe UP"""
         yield self.setup_context("DOWN", "UP")
-        yield self.rule.process(self.rule_runner, self.message_id, None)
+        yield self.rule.process(self.rule_runner, self.message_id)
         expected = NAGIOS_MESSAGE % {
             "ns": NS_COMMAND,
             "timestamp": 42,
@@ -155,7 +155,7 @@ class TestSvcHostDownRule(unittest.TestCase):
             ))
         DBSession.flush()
         rule_runner = Mock()
-        yield self.rule.process(rule_runner, self.message_id, None)
+        yield self.rule.process(rule_runner, self.message_id)
         servicenames.insert(0, "testservice") # crée en setUp
         print "Count:", rule_runner.callRemote.call_count
         self.assertEqual(rule_runner.callRemote.call_count, len(servicenames))

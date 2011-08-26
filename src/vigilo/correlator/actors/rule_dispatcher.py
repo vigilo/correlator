@@ -66,6 +66,7 @@ def extract_information(payload):
                        "ticket_id": None,
                        "acknowledgement_status": None,}
 
+    # @TODO: spécifier explicitement le(s) XMLNS au(x)quel(s) on s'attend.
     # Récupération du namespace utilisé
     namespace = payload.nsmap[payload.prefix]
 
@@ -302,6 +303,7 @@ class RuleDispatcher(PubSubSender):
         LOGGER.debug(_('Actual correlation'))
 
         d = defer.Deferred()
+        d.addCallback(lambda result: ctx.set('payload', xml))
         d.addCallback(lambda result: ctx.set('previous_state', previous_state))
 
         if raw_event_id:
@@ -322,7 +324,7 @@ class RuleDispatcher(PubSubSender):
             self.tree_end.addErrback(self._send_result_eb, idxmpp, payload)
             # On lance le processus de corrélation.
             self._tmp_correl_time = time.time()
-            tree_start.callback((idxmpp, payload))
+            tree_start.callback(idxmpp)
             return self.tree_end
         d.addCallback(start_correl, self._executor.build_execution_tree())
 

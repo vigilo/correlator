@@ -112,20 +112,20 @@ class Executor(object):
         # - le tuple (1) est composé d'un booléen indiquant
         #   si le deferred s'est exécuté (toujours True ici
         #   car fireOnOneCallback vaut 0).
-        # - le tuple (2) contient l'identifiant XMPP et le XML.
-        idxmpp, xml = result[0][1]
+        # - le tuple (2) contient l'identifiant XMPP de l'événement.
+        idxmpp = result[0][1]
 
         d = defer.Deferred()
 
-        def cb(result, idxmpp, xml):
-            d.callback((idxmpp, xml))
+        def cb(result, idxmpp):
+            d.callback(idxmpp)
 
         def eb(failure, rule_name, *args):
             d.errback(failure)
 
         work = self.__dispatcher.doWork(rule_runner.RuleCommand,
-            rule_name=rule_name, idxmpp=idxmpp, xml=xml)
-        work.addCallback(cb, idxmpp, xml)
+            rule_name=rule_name, idxmpp=idxmpp)
+        work.addCallback(cb, idxmpp)
         work.addErrback(eb, rule_name)
         return d
 

@@ -97,7 +97,7 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
     """
 
     @defer.inlineCallbacks
-    def process(self, link, xmpp_id, payload): # pylint: disable-msg=W0613
+    def process(self, link, xmpp_id):
         """
         Traitement du message par la règle.
 
@@ -107,8 +107,6 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
         @type link: C{vigilo.correlator.actors.rule_runner.RuleRunner}
         @param xmpp_id: Identifiant XMPP de l'alerte brute traitée.
         @type xmpp_id: C{unicode}
-        @param payload: Le message reçu par le corrélateur sur le bus XMPP.
-        @type payload: C{unicode}
         """
 
         ctx = self._get_context(xmpp_id)

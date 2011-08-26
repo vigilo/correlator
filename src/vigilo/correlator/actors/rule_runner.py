@@ -28,7 +28,6 @@ class RuleCommand(amp.Command):
     arguments = [
         ('rule_name', amp.String()),
         ('idxmpp', amp.String()),
-        ('xml', amp.Unicode()),
     ]
     response = [
     ]
@@ -57,7 +56,7 @@ class RuleRunner(child.AMPChild):
         super(RuleRunner, self).__init__()
 
     @RuleCommand.responder
-    def rule_runner(self, rule_name, idxmpp, xml):
+    def rule_runner(self, rule_name, idxmpp):
         from vigilo.models.configure import configure_db
         configure_db(settings['database'], 'sqlalchemy_')
 
@@ -78,7 +77,7 @@ class RuleRunner(child.AMPChild):
 
         try:
             transaction.begin()
-            rule.process(self, idxmpp, xml)
+            rule.process(self, idxmpp)
             transaction.commit()
         except KeyboardInterrupt:
             raise
