@@ -19,7 +19,7 @@ from datetime import datetime
 import transaction
 from sqlalchemy.exc import SQLAlchemyError
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer, reactor, error
 from twisted.protocols import amp
 from ampoule import pool
 from wokkel.generic import parseXml
@@ -34,7 +34,7 @@ from vigilo.connector.forwarder import PubSubSender
 from vigilo.connector import MESSAGEONETOONE
 
 from vigilo.models.session import DBSession
-from vigilo.models.tables import SupItem
+from vigilo.models.tables import SupItem, Version
 
 from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, NS_TICKET
 from vigilo.correlator.actors import rule_runner, executor
@@ -129,6 +129,31 @@ class RuleDispatcher(PubSubSender):
         self._executor = executor.Executor(self)
         self._tmp_correl_time = None
         self._correl_times = []
+
+    def check_database_connectivity(self):
+        def _db_request(self):
+            """
+            Requête SQL élémentaire afin de vérifier
+            la connectivité avec la base de données.
+            """
+            return Version.by_object_name('vigilo.models')
+
+        # Évite de boucler sur une erreur si la base de données
+        # n'est pas disponible au lancement du corrélateur.
+        d = database.run(_db_request)
+
+        def no_database(failure):
+            """
+            Méthode appelée lorsque la connexion avec la base de données
+            ne peut être établie.
+            """
+            LOGGER.error(_("Unable to contact the database: %s"),
+                failure.getErrorMessage())
+            try:
+                reactor.stop()
+            except error.ReactorNotRunning:
+                pass
+        d.addErrback(no_database)
 
     def doWork(self, *args, **kwargs):
         """

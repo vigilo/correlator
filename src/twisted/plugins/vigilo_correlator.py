@@ -103,6 +103,7 @@ class CorrelatorServiceMaker(object):
         nodetopublish = settings.get('publications', {})
 
         msg_handler = RuleDispatcher(database)
+        msg_handler.check_database_connectivity()
         msg_handler.setHandlerParent(xmpp_client)
 
         # Présence
