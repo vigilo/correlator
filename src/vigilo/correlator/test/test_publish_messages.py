@@ -13,6 +13,7 @@ from vigilo.correlator.publish_messages import publish_aggregate, \
                                             delete_published_aggregates, \
                                             publish_state
 from helpers import setup_db, teardown_db, populate_statename
+from helpers import RuleDispatcherStub
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, HighLevelService, LowLevelService
@@ -23,18 +24,6 @@ from time import mktime
 
 from vigilo.common.conf import settings
 settings.load_module(__name__)
-
-
-class RuleDispatcherStub():
-    """Classe simulant le fonctionnement du RuleDispatcher de messages"""
-    def __init__(self):
-        self.buffer = []
-    def sendItem(self, value):
-        """Simule l'écriture d'un message sur la file"""
-        self.buffer.append(value)
-    def clear(self):
-        """Vide la file de messages"""
-        self.buffer = []
 
 class TestAggregatesHandlerFunctions(unittest.TestCase):
     """Suite de tests du module publish_messages"""

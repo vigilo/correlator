@@ -72,6 +72,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     state = info_dictionary['state']
     hostname = info_dictionary['host']
     servicename = info_dictionary['service']
+    timestamp = info_dictionary['timestamp']
 
     # Si une règle ou un callback demande explicitement qu'aucune
     # alerte ne soit générée pour cet événement, on lui obéit ici.
@@ -139,6 +140,12 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
         )
 
         if correvent:
+            if correvent.timestamp_active > timestamp:
+                LOGGER.info(_('Ignoring request to update correlated event %r: '
+                                'a more recent update already exists in the '
+                                'database'), update_id)
+                defer.returnValue(None)
+
             LOGGER.debug(_(u'Updating existing correlated event (%r)'),
                 update_id)
         else:
@@ -266,13 +273,6 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                 service_tag = etree.SubElement(highlevel_tag, "service")
                 service_tag.text = service.servicename
                 data_log[DATA_LOG_IMPACTED_HLS].append(service.servicename)
-
-    # Détermine le timestamp de l'événement.
-    timestamp = dom.findtext(namespaced_tag(NS_EVENT, "timestamp"))
-    try:
-        timestamp = datetime.fromtimestamp(int(timestamp))
-    except (ValueError, TypeError):
-        timestamp = datetime.now()
 
     # Nouvel événement, on met à jour la date.
     if correvent.timestamp_active is None:

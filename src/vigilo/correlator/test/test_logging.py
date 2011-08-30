@@ -15,7 +15,7 @@ import logging
 
 from helpers import settings, populate_statename
 from helpers import setup_db, teardown_db
-from helpers import ContextStubFactory
+from helpers import ContextStubFactory, RuleDispatcherStub
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, StateName, \
                             Event, Change, SupItem, State
@@ -27,22 +27,6 @@ from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
-
-class RuleDispatcherStub():
-    """Classe simulant le fonctionnement du RuleDispatcher."""
-
-    def __init__(self, *args):
-        """Initialisation."""
-        self.buffer = []
-
-    def sendItem(self, item):
-        """Simule l'écriture d'un message sur la file"""
-        self.buffer.append(item)
-
-    def clear(self):
-        """Vide la file de messages"""
-        self.buffer = []
-
 
 class LogHandlerStub(object):
     """Classe interceptant les logs du corrélateur pendant les tests."""

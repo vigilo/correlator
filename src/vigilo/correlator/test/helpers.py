@@ -147,6 +147,17 @@ class ContextStubFactory(object):
             print "GETTING PREVIOUS CONTEXT FOR", idxmpp
         return self.contexts[idxmpp]
 
+class RuleDispatcherStub():
+    """Classe simulant le fonctionnement du RuleDispatcher"""
+    def __init__(self):
+        self.buffer = []
+    def sendItem(self, value):
+        """Simule l'écriture d'un message sur la file"""
+        LOGGER.info("Sending this payload to the bus: %r", value)
+        self.buffer.append(value)
+    def clear(self):
+        """Vide la file de messages"""
+        self.buffer = []
 
 class RuleRunnerStub(object):
     """
