@@ -17,7 +17,7 @@ import time
 from datetime import datetime
 
 import transaction
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import exc
 
 from twisted.internet import defer, reactor, error
 from twisted.protocols import amp
@@ -222,8 +222,8 @@ class RuleDispatcher(PubSubSender):
         # S'il s'agit d'un message concernant un ticket d'incident :
         if dom[0].tag == namespaced_tag(NS_TICKET, 'ticket'):
             d = self._do_in_transaction(
-                _("Error while modifying ticket"),
-                xml, Exception,
+                _("Error while modifying the ticket"),
+                xml, [exc.OperationalError],
                 handle_ticket, info_dictionary,
             )
             return d
@@ -235,7 +235,7 @@ class RuleDispatcher(PubSubSender):
 
         idsupitem = self._do_in_transaction(
             _("Error while retrieving supervised item ID"),
-            xml, SQLAlchemyError,
+            xml, [exc.OperationalError],
             SupItem.get_supitem,
             info_dictionary['host'],
             info_dictionary['service']
@@ -288,7 +288,7 @@ class RuleDispatcher(PubSubSender):
         LOGGER.debug(_('Inserting state'))
         d = self._do_in_transaction(
             _("Error while saving state"),
-            xml, SQLAlchemyError,
+            xml, [exc.OperationalError],
             insert_state, info_dictionary
         )
         return d
@@ -309,14 +309,14 @@ class RuleDispatcher(PubSubSender):
             LOGGER.debug(_('Inserting an entry in the HLS history'))
             d = self._do_in_transaction(
                 _("Error while adding an entry in the HLS history"),
-                xml, SQLAlchemyError,
+                xml, [exc.OperationalError],
                 insert_hls_history, info_dictionary
             )
         else:
             LOGGER.debug(_('Inserting an entry in the history'))
             d = self._do_in_transaction(
                 _("Error while adding an entry in the history"),
-                xml, SQLAlchemyError,
+                xml, [exc.OperationalError],
                 insert_event, info_dictionary
             )
         d.addCallback(self._do_correl, previous_state, info_dictionary,
@@ -498,7 +498,7 @@ class RuleDispatcher(PubSubSender):
             result = self.publishXml(item)
             return result
 
-    def _do_in_transaction(self, error_desc, xml, exc, func, *args, **kwargs):
+    def _do_in_transaction(self, error_desc, xml, ex, func, *args, **kwargs):
         """
         Encapsule une opération nécessitant d'accéder à la base de données
         dans une transaction.
@@ -508,9 +508,9 @@ class RuleDispatcher(PubSubSender):
         @type error_desc: C{unicode}
         @param xml: Le message XML sérialisé en cours de traitement.
         @type xml: C{unicode}
-        @param exc: Le type d'exceptions à capturer. En général, il s'agit
-            de C{SQLAlchemyError}.
-        @type exc: C{Exception}
+        @param ex: Le type d'exceptions à capturer. Il peut également s'agir
+            d'une liste de types d'exceptions.
+        @type ex: C{Exception} or C{list} of C{Exception}
         @param func: La fonction à appeler pour exécuter l'opération.
         @type func: C{callable}
         @note: Des paramètres additionnels (nommés ou non) peuvent être
@@ -520,15 +520,21 @@ class RuleDispatcher(PubSubSender):
             d'attente du corrélateur pour pouvoir être à nouveau traité
             ultérieurement.
         """
-        d = self._database.run(func, *args, **kwargs)
+        if not isinstance(ex, list):
+            ex = [ex]
+
         def eb(failure):
-            if failure.check(exc):
-                LOGGER.info(_('%s. The message will be handled once more.') %
+            if failure.check(*ex):
+                LOGGER.info(_('%s. The message will be handled once more.'),
                     error_desc)
                 self.queue.append(xml)
-            else:
-                LOGGER.error(failure)
+                return failure
+
+            LOGGER.error(_('Unexpected error: %s'),
+                failure.getErrorMessage())
             return failure
+
+        d = self._database.run(func, *args, **kwargs)
         d.addErrback(eb)
         return d
 
