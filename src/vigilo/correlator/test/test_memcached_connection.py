@@ -137,14 +137,25 @@ class TestMemcachedConnection(unittest.TestCase):
     @defer.inlineCallbacks
     def test_reconnection(self):
         """Reconnexion automatique à memcached"""
-        raise SkipTest # Bruit avec d'autres tests ?
-
         yield self.cache.set("test", 42)
 
-        # On tue memcached puis on le relance,
-        # afin de simuler une perte de connexion.
-        teardown_mc()
-        setup_mc()
+        # On coupe la connexion. Comme la factory n'a pas demandé
+        # cette coupure, elle va automatiquement tenter une reconnexion.
+        self.cache._cache._instance.transport.loseConnection()
 
+        # Ce deferred va émettre une exception car la connexion
+        # a été perdue entre temps et car le deferred avait été
+        # créé AVANT que la perte de connexion ne soit détectée.
+        try:
+            yield self.cache.get("test")
+            self.fail("A TimeoutError exception was expected")
+        except (defer.TimeoutError, KeyboardInterrupt):
+            pass
+        except:
+            self.fail("A TimeoutError exception was expected")
+
+        # Ce get() fonctionnera car la connexion a été rétablie
+        # entre temps (reconnexion automatique).
         value = yield self.cache.get("test")
         self.assertEquals(42, value)
+

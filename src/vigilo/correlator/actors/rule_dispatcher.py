@@ -193,8 +193,9 @@ class RuleDispatcher(PubSubSender):
         except KeyboardInterrupt:
             raise
         except:
+            # L'exception est loggée, mais le message est ignoré
+            # afin de ne pas bloquer le corrélateur.
             LOGGER.exception("Runtime exception")
-            raise
 
     def _processMessage(self, xml):
         """
@@ -268,12 +269,15 @@ class RuleDispatcher(PubSubSender):
         def prepare_ctx(res, ctx_name, value):
             return ctx.set(ctx_name, value)
         def eb(failure):
-            LOGGER.error(_("Error: %s"), str(failure).decode('utf-8'))
+            if failure.check(defer.TimeoutError):
+                LOGGER.info(_("The connection to memcached timed out. "
+                                "The message will be handled once more."))
+                self.queue.append(xml)
+                return # Provoque le retraitement du message.
             return failure
 
         for ctx_name, info_name in attrs.iteritems():
             d.addCallback(prepare_ctx, ctx_name, info_dictionary[info_name])
-            d.addErrback(eb)
 
         # Dans l'ordre :
         # - On enregistre l'état correspondant à l'événement.
@@ -281,6 +285,7 @@ class RuleDispatcher(PubSubSender):
         # - On réalise la corrélation.
         d.addCallback(self._insert_state, info_dictionary, xml)
         d.addCallback(self._insert_history, info_dictionary, idxmpp, dom, ctx, xml)
+        d.addErrback(eb)
         d.callback(None)
         return d
 

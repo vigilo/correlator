@@ -32,7 +32,7 @@ from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
 MemcachedConnection.CONTEXT_TIMER = 0
-
+defer.Deferred.debug = 1
 
 def get_available_port():
     """
@@ -55,6 +55,12 @@ mc_pid = None
 def setup_mc():
     """Lance un serveur memcached pour les tests."""
     global mc_pid
+
+    # Juste pour être sûr...
+    if mc_pid:
+        LOGGER.info("Forcefully stopping previous instance of memcached")
+        teardown_mc()
+
     settings['correlator']['memcached_host'] = "127.0.0.1"
     port = get_available_port()
     settings['correlator']['memcached_port'] = port
@@ -75,6 +81,7 @@ def setup_mc():
 
 def teardown_mc():
     """Détruit le serveur memcached créé pour le passage d'un test."""
+    global mc_pid
     LOGGER.info("Killing memcached instance running on port %d",
         settings['correlator']['memcached_port'])
     try:
@@ -85,6 +92,8 @@ def teardown_mc():
         # We mostly ignore errors, maybe we should
         # do something more useful here.
         print e
+    finally:
+        mc_pid = None
     return MemcachedConnection.reset()
 
 with_mc = nose.with_setup(setup_mc, teardown_mc)

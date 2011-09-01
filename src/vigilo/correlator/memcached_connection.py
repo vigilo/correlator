@@ -36,7 +36,8 @@ class VigiloMemCacheProtocol(MemCacheProtocol):
         Appelle la méthode C{connectionMade} de la factory
         lorsque la connexion à memcached est établie.
         """
-        self.factory.connectionMade(self)
+        if hasattr(self.factory, 'clientConnectionMade'):
+            self.factory.clientConnectionMade(self)
 
 class MemcachedClientFactory(protocol.ReconnectingClientFactory):
     """
@@ -45,18 +46,13 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
     """
     maxDelay = 10
     _waiting = []
-    instance = None
+    _instance = None
 
     # Évite que le délai maximum de reconnexion soit atteint
     # trop rapidement (ce qui arrive avec la valeur par défaut).
     factor = 1.6180339887498948
 
-    def buildProtocol(self, addr):
-        """Crée l'instance du protocole."""
-        self.resetDelay()
-        return protocol.ReconnectingClientFactory.buildProtocol(self, addr)
-
-    def connectionMade(self, protocol):
+    def clientConnectionMade(self, protocol):
         """
         Méthode appelée lorsque le protocole sous-jacent est prêt.
         Cette méthode déclenche l'exécution des C{Deferred} qui
@@ -65,11 +61,17 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
         @type: Instance (initialisée) du protocole.
         @rtype: L{VigiloMemCacheProtocol}
         """
+        self.resetDelay()
         LOGGER.info(_("Connected to memcached (%s)"),
             protocol.transport.getPeer())
-        self.instance = protocol
+        self._instance = protocol
         for d in self._waiting:
-            d.callback(protocol)
+            try:
+                d.callback(protocol)
+            except defer.AlreadyCalledError:
+                # @FIXME: est-ce qu'on devrait vraiment ignorer l'erreur ?
+                # Pour le moment je n'ai eu cette erreur que dans les tests.
+                pass
         self._waiting = []
 
     def startedConnecting(self, connector):
@@ -90,7 +92,7 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
                         'conn': connector.getDestination(),
                         'reason': reason,
                     })
-        self.instance = None
+        self._instance = None
         return protocol.ReconnectingClientFactory.clientConnectionLost(
             self, connector, reason)
 
@@ -103,7 +105,7 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
                         'conn': connector.getDestination(),
                         'reason': reason,
                     })
-        self.instance = None
+        self._instance = None
         return protocol.ReconnectingClientFactory.clientConnectionFailed(
             self, connector, reason)
 
@@ -114,11 +116,33 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
         @return: Instance permettant d'interagir avec le cache.
         @rtype: L{VigiloMemCacheProtocol}
         """
-        if self.instance is not None:
-            return defer.succeed(self.instance)
+        if self._instance is not None:
+            return defer.succeed(self._instance)
         d = defer.Deferred()
         self._waiting.append(d)
         return d
+
+    def reset(self):
+        self.stopTrying()
+        # Nécessaire car stopTrying empêche la (re)connexion,
+        # mais n'interrompt pas les connexions actives.
+        if self.connector:
+            self.connector.disconnect()
+
+        self.stopFactory()
+
+        # On arrête l'éventuel IDelayedCall généré
+        # lors d'une reconnexion.
+        if self._callID:
+            try:
+                self._callID.cancel()
+            except KeyboardInterrupt:
+                raise
+            except:
+                pass
+
+        self._instance = None
+        self._waiting = []
 
 class MemcachedConnection(object):
     """
@@ -185,8 +209,10 @@ class MemcachedConnection(object):
         """
         if cls.instance is None:
             return
-        # On se déconnecte proprement de memcached.
-        cls.instance._connector.disconnect()
+        if cls.instance._connector:
+            cls.instance._connector.disconnect()
+        if cls.instance._cache:
+            cls.instance._cache.reset()
         del cls.instance
         cls.instance = None
 
