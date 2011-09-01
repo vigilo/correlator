@@ -113,15 +113,19 @@ def setup_db():
 def teardown_db():
     """Supprime toutes les tables du modèle de la BDD."""
     metadata.drop_all()
+
+
+# Mocks
 class ConnectionStub(object):
-    def __init__(self):
-        self.data = {}
+    # Variable de classe (partagée). Penser à la réinitialiser en tearDown
+    data = {}
 
     def get(self, key, transaction=True):
         print "GETTING: %r = %r" % (key, self.data.get(key))
         return defer.succeed(self.data.get(key))
 
     def set(self, key, value, transaction=True, **kwargs):
+        print "SETTING: %r = %r" % (key, value)
         self.data[key] = value
         return defer.succeed(None)
 
@@ -133,7 +137,6 @@ class ConnectionStub(object):
         topology = self.get('vigilo:topology')
         return defer.succeed(None)
 
-# Mocks
 class ContextStub(Context):
     def __init__(self, idxmpp, timeout=None):
         self._connection = ConnectionStub()
@@ -155,6 +158,10 @@ class ContextStubFactory(object):
         else:
             print "GETTING PREVIOUS CONTEXT FOR", idxmpp
         return self.contexts[idxmpp]
+
+    def reset(self):
+        for context in self.contexts.values():
+            context._connection.data = {}
 
 class RuleDispatcherStub():
     """Classe simulant le fonctionnement du RuleDispatcher"""

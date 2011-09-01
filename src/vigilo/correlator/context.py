@@ -115,7 +115,7 @@ class Context(object):
         """
         Récupération de la valeur d'un des attributs du contexte.
 
-        @param prop: Nom de l'attribut, tout identifieur Python valide
+        @param prop: Nom de l'attribut, tout identifiant Python valide
             est autorisé, sauf ceux dont le nom commence par '_'.
         @type prop: C{str}
         @return: Valeur de l'attribut demandé.
@@ -135,11 +135,11 @@ class Context(object):
         """
         Modification dynamique d'un des attributs du contexte.
 
-        @param prop: Nom de l'attribut, tout identifieur Python valide
+        @param prop: Nom de l'attribut, tout identifiant Python valide
             est autorisé, sauf ceux dont le nom commence par '_'.
         @type prop: C{str}
-        @param value: Valeur à donner à l'attribut. La valeur doit pouvoir
-            être sérialisée à l'aide du module C{pickle} de Python.
+        @param value: Valeur à donner à l'attribut. La valeur doit
+            être sérialisable à l'aide du module C{pickle} de Python.
         @type value: C{mixed}
         """
         return self._connection.set(
@@ -153,7 +153,7 @@ class Context(object):
         """
         Suppression dynamique d'un attribut du contexte.
 
-        @param prop: Nom de l'attribut, tout identifieur Python valide
+        @param prop: Nom de l'attribut, tout identifiant Python valide
             est autorisé, sauf ceux dont le nom commence par '_'.
         @type prop: C{str}
         """
@@ -161,3 +161,50 @@ class Context(object):
             'vigilo:%s:%s' % (prop, self._id),
             self._transaction,
         )
+
+    def getShared(self, prop):
+        """
+        Récupération de la valeur d'un des attributs partagés du contexte.
+
+        @param prop: Nom de l'attribut partagé, tout identifiant Python valide
+            est autorisé, sauf ceux dont le nom commence par '_'.
+        @type prop: C{str}
+        @return: Valeur de l'attribut partagé demandé.
+        @rtype: C{mixed}
+        """
+        return self._connection.get(
+            'shared:%s' % (prop, ),
+            self._transaction,
+        )
+
+    def setShared(self, prop, value):
+        """
+        Modification dynamique d'un des attributs partagés du contexte.
+
+        @param prop: Nom de l'attribut partagé, tout identifiant Python valide
+            est autorisé, sauf ceux dont le nom commence par '_'.
+        @type prop: C{str}
+        @param value: Valeur à donner à l'attribut partagé. La valeur doit
+            être sérialisable à l'aide du module C{pickle} de Python.
+        @type value: C{mixed}
+        """
+        return self._connection.set(
+            'shared:%s' % (prop, ),
+            value,
+            self._transaction,
+            time=self._timeout,
+        )
+
+    def deleteShared(self, prop):
+        """
+        Suppression dynamique d'un attribut partagé du contexte.
+
+        @param prop: Nom de l'attribut partagé, tout identifiant Python valide
+            est autorisé, sauf ceux dont le nom commence par '_'.
+        @type prop: C{str}
+        """
+        return self._connection.delete(
+            'shared:%s' % (prop, ),
+            self._transaction,
+        )
+

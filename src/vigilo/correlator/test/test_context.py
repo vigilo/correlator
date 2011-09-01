@@ -15,12 +15,15 @@ from twisted.internet import defer
 
 from mock import Mock
 from helpers import setup_db, teardown_db, populate_statename
+from helpers import setup_mc, teardown_mc
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, LowLevelService, StateName, \
                                     Dependency, DependencyGroup
 from vigilo.correlator.topology import Topology
 from vigilo.correlator.context import Context
+from vigilo.correlator.test.helpers import ConnectionStub
+
 
 class TestApiFunctions(unittest.TestCase):
     """
@@ -125,3 +128,65 @@ class TestApiFunctions(unittest.TestCase):
         ctx._connection.get.side_effect = lambda *a: defer.succeed(set_calls[1][0][1])
         last_update = yield ctx.last_topology_update
         self.assertTrue(last_update > date)
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_set_get(self):
+        """set/get"""
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        yield ctx.set("foo", "bar")
+        foo = yield ctx.get("foo")
+        self.assertEquals(foo, "bar")
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_context_specific(self):
+        """
+        L'attribut classique est spécifique au contexte
+        donc sa valeur n'est pas vue par les autres contextes.
+        """
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        yield ctx.set("foo", "bar")
+        ctx2 = Context(43)
+        ctx2._connection = ConnectionStub()
+        foo = yield ctx2.get("foo")
+        self.assertEquals(foo, None)
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_delete(self):
+        """La suppression doit fonctionner correctement"""
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        yield ctx.set("foo", "bar")
+        yield ctx.delete("foo")
+        foo = yield ctx.get("foo")
+        self.assertEquals(foo, None)
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_shared_set_get(self):
+        """set/get d'un attribut partagé"""
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        yield ctx.setShared("foo", "bar")
+        foo = yield ctx.getShared("foo")
+        self.assertEquals(foo, "bar")
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_shared_visibility(self):
+        """Visibilité des attributs partagés"""
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        yield ctx.setShared("foo", "bar")
+        ctx2 = Context(43)
+        ctx2._connection = ConnectionStub()
+        foo = yield ctx2.getShared("foo")
+        self.assertEquals(foo, "bar")
+        yield ctx.deleteShared("foo")
+        foo = yield ctx2.getShared("foo")
+        self.assertEquals(foo, None)
+
