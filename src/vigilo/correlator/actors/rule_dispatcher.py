@@ -131,7 +131,7 @@ class RuleDispatcher(PubSubSender):
         self._correl_times = []
 
     def check_database_connectivity(self):
-        def _db_request(self):
+        def _db_request():
             """
             Requête SQL élémentaire afin de vérifier
             la connectivité avec la base de données.
@@ -140,7 +140,7 @@ class RuleDispatcher(PubSubSender):
 
         # Évite de boucler sur une erreur si la base de données
         # n'est pas disponible au lancement du corrélateur.
-        d = database.run(_db_request)
+        d = self._database.run(_db_request)
 
         def no_database(failure):
             """
