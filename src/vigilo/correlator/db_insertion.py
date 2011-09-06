@@ -223,22 +223,16 @@ def add_to_aggregate(idevent, aggregate, database):
     @param aggregate: Agrégat vers lequel se fait l'ajout.
     @type aggregate: L{CorrEvent}
     """
-    d = database.run(
-        DBSession.query(Event).get, idevent,
-        transaction=False
-    )
+    def add_event(idevent):
+        event = DBSession.query(Event).get(idevent)
 
-    def add_event(event):
         if not event:
             raise ValueError, idevent
 
         if not event in aggregate.events:
-            d = database.run(aggregate.events.append, event, transaction=False)
-            d.addCallback(lambda res: database.run(
-                DBSession.flush, transaction=False))
-            return d
-    d.addCallback(add_event)
-    return d
+            aggregate.events.append(event)
+            DBSession.flush()
+    return database.run(add_event, idevent, transaction=False)
 
 
 def merge_aggregates(sourceaggregateid, destinationaggregateid, database):
