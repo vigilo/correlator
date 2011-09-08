@@ -21,7 +21,7 @@ from vigilo.common.gettext import translate
 from vigilo.common.conf import settings
 
 from vigilo.models.session import DBSession
-from vigilo.models.tables import SupItem, CorrEvent, Event
+from vigilo.models.tables import SupItem, CorrEvent, Event, StateName
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -49,6 +49,8 @@ class PriorityMaxRule(Rule):
         priority = yield ctx.get('priority')
         item_id = yield ctx.get('idsupitem')
 
+        state_ok = StateName.statename_to_value(u'OK')
+        state_up = StateName.statename_to_value(u'UP')
         curr_priority = DBSession.query(
                 CorrEvent.priority
             ).join(
