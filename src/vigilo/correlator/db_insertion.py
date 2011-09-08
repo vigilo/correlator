@@ -223,6 +223,11 @@ def add_to_aggregate(idevent, aggregate, database):
     @param aggregate: Agrégat vers lequel se fait l'ajout.
     @type aggregate: L{CorrEvent}
     """
+    LOGGER.debug(_('Adding event #%(event)d to aggregate #%(aggregate)d'), {
+                    'event': idevent,
+                    'aggregate': aggregate.idcorrevent,
+                })
+
     def add_event(idevent):
         event = DBSession.query(Event).get(idevent)
 
