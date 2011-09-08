@@ -11,6 +11,7 @@ import sys
 import os
 
 from twisted.protocols import amp
+from twisted.internet import defer
 from ampoule import child
 import transaction
 
@@ -75,27 +76,39 @@ class RuleRunner(child.AMPChild):
                             'idxmpp': idxmpp,
                         })
 
-        try:
-            transaction.begin()
-            rule.process(self, idxmpp)
+        def commit(res):
             transaction.commit()
-        except KeyboardInterrupt:
-            raise
-        except:
-            logger.exception(_('Got an exception while running rule %(rule)s. '
-                                'Running the correlator in the foreground '
-                                '(%(prog)s -n) may help troubleshooting'), {
-                                    'rule': rule_name,
-                                    'prog': sys.argv[0],
-                                })
-            raise
-        finally:
+            return res
+
+        def finalize_transaction(res):
             # Les règles de corrélation ne sont pas censées écrire
             # dans la base de données. On ferme proprement la connexion.
             # PS :  DBSession.close effectue un ROLLBACK automatique
             #       et libère toutes les instances (expunge_all).
             from vigilo.models.session import DBSession
             DBSession.close()
+            return res
 
-        logger.debug(u'Rule runner: process ends for rule "%s"', rule_name)
-        return {}
+        def log_errors(failure):
+            logger.exception(_('Got an exception while running rule %(rule)s. '
+                                'Running the correlator in the foreground '
+                                '(vigilo-correlator -n vigilo-correlator) may '
+                                'help troubleshooting'), {
+                                    'rule': rule_name,
+                                })
+            return failure
+
+        def return_to_amp(res):
+            return {}
+
+        def log_end(res):
+            logger.debug(u'Rule runner: process ends for rule "%s"', rule_name)
+            return res
+
+        transaction.begin()
+        d = defer.maybeDeferred(rule.process, self, idxmpp)
+        d.addCallback(commit)
+        d.addBoth(finalize_transaction)
+        d.addCallbacks(return_to_amp, log_errors)
+        d.addBoth(log_end)
+        return d
