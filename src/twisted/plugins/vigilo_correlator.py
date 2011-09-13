@@ -108,8 +108,9 @@ class CorrelatorServiceMaker(object):
 
         # Présence
         from vigilo.connector.presence import PresenceManager
-        presence_manager = PresenceManager(msg_handler)
+        presence_manager = PresenceManager()
         presence_manager.setHandlerParent(xmpp_client)
+        msg_handler.registerProducer(presence_manager, True)
 
         # Statistiques
         from vigilo.connector.status import StatusPublisher
