@@ -99,6 +99,7 @@ class RuleDispatcher(PubSubSender):
     def __init__(self, database):
         super(RuleDispatcher, self).__init__()
         self.max_send_simult = 1
+        self._process_as_string = True
         self.tree_end = None
         self._database = database
 
