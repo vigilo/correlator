@@ -36,7 +36,8 @@ from vigilo.connector import MESSAGEONETOONE
 from vigilo.models.session import DBSession
 from vigilo.models.tables import SupItem, Version
 
-from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, NS_TICKET
+from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, NS_TICKET, \
+                                NS_COMPUTATION_ORDER
 from vigilo.correlator.actors import rule_runner, executor
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.context import Context
@@ -47,6 +48,7 @@ from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
 from vigilo.correlator.amp.correlator import Correlator
 from vigilo.correlator.amp.starter import ProcessStarter
+from vigilo.correlator import registry
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -218,6 +220,11 @@ class RuleDispatcher(PubSubSender):
             LOGGER.error(_("Received invalid XMPP item ID (None)"))
             return defer.succeed(None)
 
+        # Ordre de calcul de l'état d'un service de haut niveau.
+        if dom[0].tag == namespaced_tag(NS_COMPUTATION_ORDER,
+                                        'computation_order'):
+            return self._computation_order(dom, xml, idxmpp)
+
         # Extraction des informations du message
         info_dictionary = extract_information(dom[0])
 
@@ -248,6 +255,42 @@ class RuleDispatcher(PubSubSender):
             info_dictionary
         )
         return idsupitem
+
+    def _computation_order(self, dom, xml, idxmpp):
+        if 'HighLevelServiceDepsRule' not in \
+            registry.get_registry().rules.keys():
+            LOGGER.warning(_("The rule 'vigilo.correlator_enterprise."
+                            "rules.hls_deps:HighLevelServiceDepsRule' "
+                            "must be loaded for computation orders to "
+                            "be handled properly."))
+            return defer.succeed(None)
+
+        from vigilo.correlator_enterprise.rules.hls_deps.compute_hls_states \
+            import compute_hls_states
+
+        def eb(failure):
+            if failure.check(defer.TimeoutError):
+                LOGGER.info(_("The connection to memcached timed out. "
+                                "The message will be handled once more."))
+                self.queue.append(xml)
+                return # Provoque le retraitement du message.
+            return failure
+
+        ctx = self._context_factory(idxmpp, self._database)
+        hls_names = set()
+        for child in dom[0].iterchildren():
+            servicename = child.text
+            if not isinstance(servicename, unicode):
+                servicename = servicename.decode('utf-8')
+            hls_names.add(servicename)
+
+        d = ctx.set('impacted_hls', list(hls_names))
+        d.addCallback(lambda _dummy: ctx.set('hostname', None))
+        d.addCallback(lambda _dummy: ctx.set('servicename', None))
+        d.addErrback(eb)
+        d.addCallback(compute_hls_states, self, self._database, idxmpp)
+        return d
+
 
     def _finalizeInfo(self, idsupitem, idxmpp, dom, xml, info_dictionary):
         # Ajoute l'identifiant du SupItem aux informations.
@@ -557,4 +600,3 @@ class RuleDispatcher(PubSubSender):
         d = super(RuleDispatcher, self).getStats()
         d.addCallback(add_exec_stats)
         return d
-

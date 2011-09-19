@@ -24,7 +24,7 @@ require_tls = False
 # séparés par des virgules.
 # À minima, il doit être abonné aux événements bruts publiés par
 # le connector-nagios.
-subscriptions = /vigilo/event,
+subscriptions = /vigilo/event, /vigilo/computation_order
 
 # Le trafic lié au bus XMPP doit-il être enregistré dans les logs ?
 log_traffic = False
