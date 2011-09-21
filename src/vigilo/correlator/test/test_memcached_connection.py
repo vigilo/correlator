@@ -32,7 +32,7 @@ class TestMemcachedConnection(unittest.TestCase):
     de la base soit réalisée dans le même threads que les accès dans les tests.
     """
 
-    @deferred(timeout=10)
+    @deferred(timeout=30)
     def setUp(self):
         super(TestMemcachedConnection, self).setUp()
         setup_db()
@@ -40,7 +40,7 @@ class TestMemcachedConnection(unittest.TestCase):
         self.cache = MemcachedConnection()
         return defer.succeed(None)
 
-    @deferred(timeout=10)
+    @deferred(timeout=30)
     def tearDown(self):
         """Arrêt du serveur Memcached à la fin de chaque test."""
         super(TestMemcachedConnection, self).tearDown()
@@ -60,7 +60,7 @@ class TestMemcachedConnection(unittest.TestCase):
         self.assertEqual(conn, self.cache)
         return defer.succeed(None)
 
-    @deferred(timeout=10)
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_set(self):
         """Association d'une valeur à une clé"""
@@ -83,7 +83,7 @@ class TestMemcachedConnection(unittest.TestCase):
         LOGGER.info("Received: %r", received)
         self.assertEqual(pickle.loads(received[-1]), value)
 
-    @deferred(timeout=10)
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_get(self):
         """Récupération de la valeur associée à une clé"""
@@ -108,7 +108,7 @@ class TestMemcachedConnection(unittest.TestCase):
         # On vérifie que la méthode get retourne bien 'value'.
         self.assertEqual(result, value)
 
-    @deferred(timeout=10)
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_delete(self):
         """Suppression d'une clé"""
@@ -133,7 +133,7 @@ class TestMemcachedConnection(unittest.TestCase):
         value = yield connection.get(key)
         self.assertEquals(None, value[-1])
 
-    @deferred(timeout=10)
+    @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_reconnection(self):
         """Reconnexion automatique à memcached"""

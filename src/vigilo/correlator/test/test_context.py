@@ -190,3 +190,89 @@ class TestApiFunctions(unittest.TestCase):
         foo = yield ctx2.getShared("foo")
         self.assertEquals(foo, None)
 
+    @deferred(timeout=30)
+    def test_get_unicode(self):
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        ctx._connection.get = Mock()
+        ctx._connection.get.side_effect = lambda *a: defer.succeed("x")
+        def check(x):
+            print repr(ctx._connection.get.call_args)
+            arg = ctx._connection.get.call_args[0][0]
+            self.assertFalse(isinstance(arg, unicode),
+                    "Toutes les clés doivent être des str, pas d'unicode")
+        d = ctx.get(u"é à è")
+        d.addCallback(check)
+        return d
+
+    @deferred(timeout=30)
+    def test_set_unicode(self):
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        def check(x):
+            for ctxkey in ctx._connection.data.keys():
+                print repr(ctxkey)
+                self.assertFalse(isinstance(ctxkey, unicode),
+                        "Toutes les clés doivent être des str, pas d'unicode")
+        d = ctx.set(u"é à è", "bar")
+        d.addCallback(check)
+        return d
+
+    @deferred(timeout=30)
+    def test_delete_unicode(self):
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        ctx._connection.delete = Mock()
+        ctx._connection.delete.side_effect = lambda *a: defer.succeed("x")
+        def check(x):
+            print repr(ctx._connection.delete.call_args)
+            arg = ctx._connection.delete.call_args[0][0]
+            self.assertFalse(isinstance(arg, unicode),
+                    "Toutes les clés doivent être des str, pas d'unicode")
+        d = ctx.delete(u"é à è")
+        d.addCallback(check)
+        return d
+
+    @deferred(timeout=30)
+    def test_getshared_unicode(self):
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        ctx._connection.get = Mock()
+        ctx._connection.get.side_effect = lambda *a: defer.succeed("x")
+        def check(x):
+            print repr(ctx._connection.get.call_args)
+            arg = ctx._connection.get.call_args[0][0]
+            self.assertFalse(isinstance(arg, unicode),
+                    "Toutes les clés doivent être des str, pas d'unicode")
+        d = ctx.getShared(u"é à è")
+        d.addCallback(check)
+        return d
+
+    @deferred(timeout=30)
+    def test_setShared_unicode(self):
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        def check(x):
+            for ctxkey in ctx._connection.data.keys():
+                print repr(ctxkey)
+                self.assertFalse(isinstance(ctxkey, unicode),
+                        "Toutes les clés doivent être des str, pas d'unicode")
+        d = ctx.setShared(u"é à è", "bar")
+        d.addCallback(check)
+        return d
+
+    @deferred(timeout=30)
+    def test_deleteshared_unicode(self):
+        ctx = Context(42)
+        ctx._connection = ConnectionStub()
+        ctx._connection.delete = Mock()
+        ctx._connection.delete.side_effect = lambda *a: defer.succeed("x")
+        def check(x):
+            print repr(ctx._connection.delete.call_args)
+            arg = ctx._connection.delete.call_args[0][0]
+            self.assertFalse(isinstance(arg, unicode),
+                    "Toutes les clés doivent être des str, pas d'unicode")
+        d = ctx.deleteShared(u"é à è")
+        d.addCallback(check)
+        return d
+

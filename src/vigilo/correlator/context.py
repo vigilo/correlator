@@ -126,10 +126,9 @@ class Context(object):
         if prop in ('topology', 'last_topology_update'):
             return object.__getattribute__(self, prop)
 
-        return self._connection.get(
-            'vigilo:%s:%s' % (prop, self._id),
-            self._transaction,
-        )
+        key = 'vigilo:%s:%s' % (prop, self._id)
+        return self._connection.get(key.encode("utf8"),
+                                    self._transaction)
 
     def set(self, prop, value):
         """
@@ -142,12 +141,9 @@ class Context(object):
             être sérialisable à l'aide du module C{pickle} de Python.
         @type value: C{mixed}
         """
-        return self._connection.set(
-            'vigilo:%s:%s' % (prop, self._id),
-            value,
-            self._transaction,
-            time=self._timeout,
-        )
+        key = 'vigilo:%s:%s' % (prop, self._id)
+        return self._connection.set(key.encode("utf8"), value,
+                        self._transaction, time=self._timeout)
 
     def delete(self, prop):
         """
@@ -157,10 +153,9 @@ class Context(object):
             est autorisé, sauf ceux dont le nom commence par '_'.
         @type prop: C{str}
         """
-        return self._connection.delete(
-            'vigilo:%s:%s' % (prop, self._id),
-            self._transaction,
-        )
+        key = 'vigilo:%s:%s' % (prop, self._id)
+        return self._connection.delete(key.encode("utf8"),
+                                       self._transaction)
 
     def getShared(self, prop):
         """
@@ -172,10 +167,9 @@ class Context(object):
         @return: Valeur de l'attribut partagé demandé.
         @rtype: C{mixed}
         """
-        return self._connection.get(
-            'shared:%s' % (prop, ),
-            self._transaction,
-        )
+        key = 'shared:%s' % prop
+        return self._connection.get(key.encode("utf8"),
+                                    self._transaction)
 
     def setShared(self, prop, value):
         """
@@ -188,12 +182,9 @@ class Context(object):
             être sérialisable à l'aide du module C{pickle} de Python.
         @type value: C{mixed}
         """
-        return self._connection.set(
-            'shared:%s' % (prop, ),
-            value,
-            self._transaction,
-            time=self._timeout,
-        )
+        key = 'shared:%s' % prop
+        return self._connection.set(key.encode("utf8"), value,
+                         self._transaction, time=self._timeout)
 
     def deleteShared(self, prop):
         """
@@ -203,8 +194,7 @@ class Context(object):
             est autorisé, sauf ceux dont le nom commence par '_'.
         @type prop: C{str}
         """
-        return self._connection.delete(
-            'shared:%s' % (prop, ),
-            self._transaction,
-        )
+        key = 'shared:%s' % prop
+        return self._connection.delete(key.encode("utf8"),
+                                       self._transaction)
 
