@@ -121,6 +121,8 @@ class ConnectionStub(object):
     data = {}
 
     def get(self, key, transaction=True):
+        # pylint: disable-msg=E0202
+        # An attribute inherited from TestApiFunctions hide this method (Mock)
         print "GETTING: %r = %r" % (key, self.data.get(key))
         return defer.succeed(self.data.get(key))
 
@@ -130,6 +132,8 @@ class ConnectionStub(object):
         return defer.succeed(None)
 
     def delete(self, key, transaction=True):
+        # pylint: disable-msg=E0202
+        # An attribute inherited from TestApiFunctions hide this method (Mock)
         del self.data[key]
         return defer.succeed(None)
 

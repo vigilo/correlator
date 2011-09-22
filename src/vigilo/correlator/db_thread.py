@@ -188,11 +188,16 @@ class DummyDatabaseWrapper(object):
             l'exécution de la fonction.
         @rtype: L{defer.Deferred}
         """
+        from vigilo.common.logging import get_logger
+        logger = get_logger(__name__)
+
         txn = kwargs.pop('transaction', True) and not self.disable_txn
         if txn:
             transaction.begin()
         try:
             res = func(*args, **kwargs)
+            if txn:
+                transaction.commit()
         except KeyboardInterrupt:
             raise
         except:
@@ -202,12 +207,6 @@ class DummyDatabaseWrapper(object):
             self.logger.error(res)
             return defer.fail(res)
         else:
-            if txn:
-                try:
-                    transaction.commit()
-                except:
-                    result = d.errback, Failure()
-                    logger.error(result[1])
             return defer.succeed(res)
 
     def shutdown(self):

@@ -1,12 +1,11 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
-# pylint: disable-msg=C0111,W0212,R0904
+# pylint: disable-msg=C0111,W0212,R0904,W0613,C0102
 # Copyright (C) 2006-2011 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
 """Tests sur l'API des contextes de corrélation."""
 
 import random
-import threading
 from datetime import datetime
 import unittest
 
@@ -15,11 +14,9 @@ from twisted.internet import defer
 
 from mock import Mock
 from helpers import setup_db, teardown_db, populate_statename
-from helpers import setup_mc, teardown_mc
 
 from vigilo.models.session import DBSession
-from vigilo.models.tables import Host, LowLevelService, StateName, \
-                                    Dependency, DependencyGroup
+from vigilo.models.tables import Host, Dependency, DependencyGroup
 from vigilo.correlator.topology import Topology
 from vigilo.correlator.context import Context
 from vigilo.correlator.test.helpers import ConnectionStub
