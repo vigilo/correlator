@@ -70,11 +70,13 @@ class Topology(nx.DiGraph):
             for item in self.predecessors(item_id):
                 # Pour chacun d'entre eux, on vérifie
                 # s'ils sont la cause d'un agrégat ouvert.
-                open_aggregate = get_open_aggregate(item, CorrEvent)
+                open_aggregate = get_open_aggregate(item, CorrEvent.idcorrevent)
                 # Si c'est le cas, l'agrégat est ajouté au résultat.
                 if open_aggregate:
                     if not open_aggregate in first_predecessors_aggregates:
-                        first_predecessors_aggregates.append(open_aggregate)
+                        first_predecessors_aggregates.append(
+                            open_aggregate.idcorrevent)
+
                 # Dans le cas contraire, on applique récursivement
                 # la méthode sur les prédécesseurs de ce prédécesseur.
                 else:
@@ -111,15 +113,16 @@ class Topology(nx.DiGraph):
 
         # On vérifie que l'item fait bien partie de la topologie
         if item_id in self.nodes():
-            # On parcourt la liste des successeurs de l'item donné.
-            for item in self.successors(item_id):
-                # Pour chacun d'entre eux, on vérifie
-                # s'ils sont la cause d'un agrégat ouvert.
-                open_aggregate = get_open_aggregate(item, CorrEvent)
-                # Si c'est le cas, l'agrégat est ajouté au résultat.
-                if open_aggregate:
-                    if not open_aggregate in first_successors_aggregates:
-                        first_successors_aggregates.append(open_aggregate)
+            # Pour chacun d'entre eux, on vérifie
+            # s'ils sont la cause d'un agrégat ouvert.
+            open_aggregate = get_open_aggregate(
+                self.successors(item_id),
+                CorrEvent.idcorrevent
+            )
+            # Si c'est le cas, l'agrégat est ajouté au résultat.
+            for aggregate in open_aggregate:
+                if not aggregate.idcorrevent in first_successors_aggregates:
+                    first_successors_aggregates.append(aggregate.idcorrevent)
         return first_successors_aggregates
 
 
@@ -136,14 +139,15 @@ def get_last_event(item_id, *args):
     return DBSession.query(
                         *args
                     ).filter(Event.idsupitem == item_id
-                    ).filter(not_(
-                                  or_(
-                                Event.current_state ==
-                                    StateName.statename_to_value('OK'),
-                                Event.current_state ==
-                                    StateName.statename_to_value('UP')
-                                ),
-                            )
+                    ).filter(
+                        not_(
+                              or_(
+                            Event.current_state ==
+                                StateName.statename_to_value('OK'),
+                            Event.current_state ==
+                                StateName.statename_to_value('UP')
+                            ),
+                        )
                     ).order_by(desc(Event.idevent)).first()
 
 def get_open_aggregate(item_id, *args):
@@ -160,7 +164,6 @@ def get_open_aggregate(item_id, *args):
                         *args
                     ).join(
                         (Event, CorrEvent.idcause == Event.idevent)
-                    ).filter(Event.idsupitem == item_id
                     ).filter(
                         not_(
                             and_(
@@ -174,5 +177,15 @@ def get_open_aggregate(item_id, *args):
                             )
                         )
                     ).filter(CorrEvent.timestamp_active != None
-                    ).first()
-    return aggregate
+                    )
+
+    multiple = isinstance(item_id, (list, set))
+    if multiple:
+        aggregate = aggregate.filter(Event.idsupitem.in_(item_id))
+    else:
+        aggregate = aggregate.filter(Event.idsupitem == item_id)
+    res = aggregate.all()
+
+    if multiple:
+        return aggregate.all()
+    return aggregate.first()

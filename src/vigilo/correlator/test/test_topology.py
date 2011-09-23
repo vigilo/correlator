@@ -247,25 +247,19 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         # On récupère les aggrégats dont dépend le service 1
         aggregates = self.topology.get_first_predecessors_aggregates(
                                                     self.service1.idservice)
-        aggregates_id = []
-        for aggregate in aggregates:
-            aggregates_id.append(aggregate.idcorrevent)
-        aggregates_id.sort()
+        aggregates.sort()
         aggregate_list = [self.events_aggregate1.idcorrevent,
                           self.events_aggregate2.idcorrevent]
         aggregate_list.sort()
         # On vérifie que le service 1 dépend bien des agrégats 1 et 2
-        self.assertEqual(aggregates_id, aggregate_list)
+        self.assertEqual(aggregates, aggregate_list)
 
         # On récupère les aggrégats dont dépend le service 2
         aggregates = self.topology.get_first_predecessors_aggregates(
                                                     self.service2.idservice)
-        aggregates_id = []
-        for aggregate in aggregates:
-            aggregates_id.append(aggregate.idcorrevent)
-        aggregates_id.sort()
+        aggregates.sort()
         # On vérifie que le service 2 dépend bien de l'agrégat 2
-        self.assertEqual(aggregates_id, [self.events_aggregate2.idcorrevent])
+        self.assertEqual(aggregates, [self.events_aggregate2.idcorrevent])
 
     def test_first_successors_aggregates(self):
         """Récupération des premiers agrégats dépendant d'une alerte brute"""
@@ -303,23 +297,17 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         # On récupère les aggrégats causés par le service 5
         aggregates = self.topology.get_first_successors_aggregates(
                                                     self.service5.idservice)
-        aggregates_id = []
-        for aggregate in aggregates:
-            aggregates_id.append(aggregate.idcorrevent)
-        aggregates_id.sort()
+        aggregates.sort()
         # On vérifie que le service 5 n'a causé aucun agrégat directement.
-        self.assertEqual(aggregates_id, [])
+        self.assertEqual(aggregates, [])
 
         # On récupère les aggrégats causés par le service 4
         aggregates = self.topology.get_first_successors_aggregates(
                                                     self.service4.idservice)
-        aggregates_id = []
-        for aggregate in aggregates:
-            aggregates_id.append(aggregate.idcorrevent)
-        aggregates_id.sort()
+        aggregates.sort()
         # On vérifie que le service 4 a bien causé l'agrégat 1
         # (Et uniquement l'agrégat 1).
-        self.assertEqual(aggregates_id, [self.events_aggregate1.idcorrevent])
+        self.assertEqual(aggregates, [self.events_aggregate1.idcorrevent])
 
 class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
     """
