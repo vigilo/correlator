@@ -126,30 +126,6 @@ class Topology(nx.DiGraph):
         return first_successors_aggregates
 
 
-def get_last_event(item_id, *args):
-    """
-    Récupère dans la BDD le dernier événement associé à l'item donné.
-
-    @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
-    @type item_id: C{int}
-    @return: Un événement.
-    @rtype: L{Event}
-    """
-
-    return DBSession.query(
-                        *args
-                    ).filter(Event.idsupitem == item_id
-                    ).filter(
-                        not_(
-                              or_(
-                            Event.current_state ==
-                                StateName.statename_to_value('OK'),
-                            Event.current_state ==
-                                StateName.statename_to_value('UP')
-                            ),
-                        )
-                    ).order_by(desc(Event.idevent)).first()
-
 def get_open_aggregate(item_id, *args):
     """
     Récupère dans la BDD l'agrégat ouvert causé par l'item donné.
