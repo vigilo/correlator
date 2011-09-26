@@ -3,13 +3,12 @@
 Ce module permet d'encapsuler les échanges avec la base de données
 de Vigilo dans un processus léger (thread) séparé.
 
-L'idée vient de http://markmail.org/message/22wlumhabfuh2plj#query:+page:1+mid:22wlumhabfuh2plj+state:results
-mais a été adaptée pour utiliser les outils spécifiques fournis par Twisted
-pour la gestion des processus léger.
+L'idée vient de http://markmail.org/message/22wlumhabfuh2plj
+mais a été adaptée pour utiliser les outils spécifiques
+fournis par Twisted pour la gestion des processus léger.
 """
 
 import Queue
-import threading
 
 from twisted.internet import reactor
 from twisted.internet import defer
@@ -120,12 +119,6 @@ class DatabaseWrapper(object):
             l'exécution de la fonction.
         @rtype: L{defer.Deferred}
         """
-        from vigilo.common.logging import get_logger
-        from vigilo.common.gettext import translate
-
-        logger = get_logger(__name__)
-        _ = translate(__name__)
-
         result = defer.Deferred()
         txn = kwargs.pop('transaction', True)
         self.queue.put((func, args, kwargs, result, txn))
@@ -215,4 +208,3 @@ class DummyDatabaseWrapper(object):
         pour respecter l'API de la classe L{DatabaseWrapper}.
         """
         pass
-
