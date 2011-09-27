@@ -9,10 +9,14 @@ Test de la fonction merge_aggregates.
 
 from datetime import datetime
 import unittest
+# ATTENTION: ne pas utiliser twisted.trial, car nose va ignorer les erreurs
+# produites par ce module !!!
+from nose.twistedtools import reactor, deferred
+from twisted.internet import defer
 
 from vigilo.correlator.db_insertion import merge_aggregates
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-from helpers import setup_db, teardown_db
+from helpers import setup_db, teardown_db, ContextStubFactory
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Event, CorrEvent
@@ -148,16 +152,23 @@ def create_topology_and_events():
 class TestMergeAggregateFunction(unittest.TestCase):
     """Suite de tests de la fonction"""
 
+    @deferred(timeout=30)
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
         setup_db()
+        self.context_factory = ContextStubFactory()
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
         DBSession.flush()
         DBSession.expunge_all()
         teardown_db()
+        self.context_factory.reset()
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def test_aggregates_merging(self):
         """Fusion de 2 agrégats"""
 
@@ -165,39 +176,43 @@ class TestMergeAggregateFunction(unittest.TestCase):
         # 4 événéments et 2 agrégats dans la BDD.
         (events_id, aggregates_id) = create_topology_and_events()
 
+        def _check(res, events_id):
+            aggregate1 = DBSession.query(CorrEvent
+                        ).filter(CorrEvent.idcorrevent == aggregates_id[0]
+                        ).first()
+
+            # On vérifie que l'agrégat 1 a bien été supprimé
+            self.assertTrue(aggregate1 is None)
+
+            aggregate2 = DBSession.query(CorrEvent
+                        ).filter(CorrEvent.idcorrevent == aggregates_id[1]
+                        ).first()
+
+            # On vérifie que la cause de l'agrégat 2 est toujours l'événement 4
+            self.assertTrue(aggregate2)
+            self.assertEqual(aggregate2.idcause, events_id[3])
+
+            events_id = []
+            for event in aggregate2.events:
+                events_id.append(event.idevent)
+            events_id.sort()
+
+            # On vérifie que l'agrégat 2 regroupe
+            # bien les événements 1, 2, 3 et 4
+            self.assertEqual(events_id,
+                [events_id[0], events_id[1], events_id[2], events_id[3]])
+
+            # On vérifie que le résultat retourné par la fonction
+            # merge_aggregates est bien la liste des ids des
+            # événements qui était auparavant rattachés à l'agrégat 1.
+            self.assertEqual(res, [events_id[0], events_id[1]])
+
         # On fusionne les 2 agrégats.
-        res = yield merge_aggregates(
+        d = merge_aggregates(
             aggregates_id[0],
             aggregates_id[1],
-            DummyDatabaseWrapper(True)
+            DummyDatabaseWrapper(True),
+            self.context_factory(42),
         )
-
-        aggregate1 = DBSession.query(CorrEvent
-                    ).filter(CorrEvent.idcorrevent == aggregates_id[0]
-                    ).first()
-
-        # On vérifie que l'agrégat 1 a bien été supprimé
-        self.assertTrue(aggregate1 is None)
-
-        aggregate2 = DBSession.query(CorrEvent
-                    ).filter(CorrEvent.idcorrevent == aggregates_id[1]
-                    ).first()
-
-        # On vérifie que la cause de l'agrégat 2 est toujours l'événement 4
-        self.assertTrue(aggregate2)
-        self.assertEqual(aggregate2.idcause, events_id[3])
-
-        events_id = []
-        for event in aggregate2.events:
-            events_id.append(event.idevent)
-        events_id.sort()
-
-        # On vérifie que l'agrégat 2 regroupe
-        # bien les événements 1, 2, 3 et 4
-        self.assertEqual(events_id,
-            [events_id[0], events_id[1], events_id[2], events_id[3]])
-
-        # On vérifie que le résultat retourné par la fonction
-        # merge_aggregates est bien la liste des ids des
-        # événements qui était auparavant rattachés à l'agrégat 1.
-        self.assertEqual(res, [events_id[0], events_id[1]])
+        d.addCallback(_check, events_id)
+        return d

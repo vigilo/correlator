@@ -204,7 +204,8 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                             events = yield merge_aggregates(
                                 int(succeeding_aggregate_id),
                                 int(predecessing_aggregate_id),
-                                database
+                                database,
+                                ctx
                             )
                             if not is_built_dependant_event_list:
                                 for event in events:
@@ -282,7 +283,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     # Le test évite de polluer la BDD avec des changements d'acquittement.
     if (not correvent.status is None) \
         and correvent.status != u'None' \
-        and state != "OK" and state != "UP":
+        and state not in ("OK", "UP"):
         correvent.timestamp_active = timestamp
         history = EventHistory(
             type_action=u'Acknowlegement change state',
@@ -295,6 +296,12 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
         )
         yield database.run(DBSession.add, history, transaction=False)
         correvent.status = u'None'
+
+    # Si l'événement a été marqué comme traité et que le nouveau état
+    # indique la résolution effective du problème, l'événement corrélé
+    # doit être fermé.
+    if correvent.status == u'AAClosed' and state in ("OK", "UP"):
+        ctx.setShared('open_aggr:%d' % item_id, 0)
 
     # On sauvegarde l'événement corrélé dans la base de données.
     yield database.run(DBSession.add, correvent, transaction=False)
@@ -371,7 +378,8 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
             events_id = yield merge_aggregates(
                 int(aggregate_id),
                 idcorrevent,
-                database
+                database,
+                ctx
             )
             if events_id:
                 event_id_list.extend(events_id)

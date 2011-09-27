@@ -240,7 +240,7 @@ def add_to_aggregate(idevent, aggregate, database):
     return database.run(add_event, idevent, transaction=False)
 
 
-def merge_aggregates(sourceaggregateid, destinationaggregateid, database):
+def merge_aggregates(sourceaggregateid, destinationaggregateid, database, ctx):
     """
     Fusionne deux agrégats. Renvoie la liste des identifiants
     des alertes brutes de l'agrégat source ainsi déplacées.
@@ -314,9 +314,10 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid, database):
                     destination_aggregate.events.append, event,
                     transaction=False,
                 ))
+                defs.append(ctx.setShared('open_aggr:%d' % event.idsupitem, 0))
                 event_id_list.append(event.idevent)
+
         d = defer.DeferredList(defs)
-        d.addCallback(flush)
         d.addCallback(delete, source_aggregate)
         d.addCallback(flush)
         d.addCallback(lambda res: event_id_list)

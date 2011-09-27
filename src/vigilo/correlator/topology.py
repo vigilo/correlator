@@ -5,10 +5,13 @@
 
 """Graphe topologique"""
 
+from twisted.internet import defer
+
 from vigilo.models.session import DBSession
 from sqlalchemy.sql.expression import not_, and_, or_, desc
 
 import networkx as nx
+import networkx.exception as nx_exc
 
 from vigilo.models.tables import Dependency, DependencyGroup
 from vigilo.models.tables import Event, CorrEvent, StateName
@@ -48,7 +51,7 @@ class Topology(nx.DiGraph):
         for dependency in dependencies:
             self.add_edge(dependency.idsupitem, dependency.iddependent)
 
-    def get_first_predecessors_aggregates(self, item_id):
+    def get_first_predecessors_aggregates(self, ctx, item_id):
         """
         Récupère les agrégats dont dépend l'item donné.
         La méthode cherche ainsi parmi les prédécesseurs de
@@ -61,42 +64,48 @@ class Topology(nx.DiGraph):
         @return: Liste de L{CorrEvent}.
         @rtype: List
         """
-
         first_predecessors_aggregates = []
 
-        # On vérifie que l'item fait bien partie de la topologie
-        if item_id in self.nodes():
+        def _check_result(result, ctx, pred_id):
+            # Aucun agrégat ouvert pour ce prédécesseur.
+            # On s'appelle récursivement pour aller voir plus loin.
+            if not result:
+                return self.get_first_predecessors_aggregates(ctx, pred_id)
+            return [result]
+
+        try:
             # On parcourt la liste des prédécesseurs de l'item donné.
-            for item in self.predecessors(item_id):
-                # Pour chacun d'entre eux, on vérifie
-                # s'ils sont la cause d'un agrégat ouvert.
-                open_aggregate = get_open_aggregate(item, CorrEvent.idcorrevent)
-                # Si c'est le cas, l'agrégat est ajouté au résultat.
-                if open_aggregate:
-                    if not open_aggregate in first_predecessors_aggregates:
-                        first_predecessors_aggregates.append(
-                            open_aggregate.idcorrevent)
+            predecessors = self.predecessors(item_id)
+        except nx_exc.NetworkXError:
+            # L'élément n'existait pas dans le graphe :
+            # il n'y a donc pas d'agrégat prédécesseur ouvert.
+            return defer.succeed([])
 
-                # Dans le cas contraire, on applique récursivement
-                # la méthode sur les prédécesseurs de ce prédécesseur.
-                else:
-                    open_aggregates = self.get_first_predecessors_aggregates(
-                                                                        item)
-                    for open_aggregate in open_aggregates:
-                        if not open_aggregate in first_predecessors_aggregates:
-                            first_predecessors_aggregates.append(
-                                                                open_aggregate)
+        if not predecessors:
+            return defer.succeed([])
 
-                    # Si on a trouvé au moins un chemin sans aggrégat,
-                    # alors on considère que la connectivité est toujours
-                    # fonctionnelle et que l'incident courant est isolé.
-                    # Du coup, on n'effectue pas de rattachement.
-                    if not open_aggregates:
-                        return []
+        for predecessor in predecessors:
+            # Pour chacun d'entre eux, on vérifie
+            # s'ils sont la cause d'un agrégat ouvert.
+            d = get_open_aggregate(ctx, predecessor)
+            d.addCallback(_check_result, ctx, predecessor)
+            first_predecessors_aggregates.append(d)
 
-        return first_predecessors_aggregates
+        def _format_results(results):
+            open_aggregates = set()
+            for (res, idcorrevents) in results:
+                if not res:
+                    continue
+                if not idcorrevents:
+                    return []
+                open_aggregates.update(set(idcorrevents))
+            return list(open_aggregates)
 
-    def get_first_successors_aggregates(self, item_id):
+        dl = defer.DeferredList(first_predecessors_aggregates)
+        dl.addCallback(_format_results)
+        return dl
+
+    def get_first_successors_aggregates(self, ctx, item_id):
         """
         Récupère les agrégats dépendant de l'item donné.
         La méthode cherche ainsi parmi les successeurs de l'item ceux qui
@@ -108,60 +117,83 @@ class Topology(nx.DiGraph):
         @return: Liste de L{CorrEvent}.
         @rtype: List
         """
-
         first_successors_aggregates = []
+        try:
+            for successor in self.successors(item_id):
+                # Pour chacun d'entre eux, on vérifie
+                # s'ils sont la cause d'un agrégat ouvert.
+                first_successors_aggregates.append(
+                    get_open_aggregate(ctx, successor)
+                )
 
-        # On vérifie que l'item fait bien partie de la topologie
-        if item_id in self.nodes():
-            # Pour chacun d'entre eux, on vérifie
-            # s'ils sont la cause d'un agrégat ouvert.
-            open_aggregate = get_open_aggregate(
-                self.successors(item_id),
-                CorrEvent.idcorrevent
-            )
-            # Si c'est le cas, l'agrégat est ajouté au résultat.
-            for aggregate in open_aggregate:
-                if not aggregate.idcorrevent in first_successors_aggregates:
-                    first_successors_aggregates.append(aggregate.idcorrevent)
-        return first_successors_aggregates
+        except nx_exc.NetworkXError:
+            # L'élément n'existait pas dans le graphe :
+            # il n'y a donc pas d'agrégat successeur ouvert.
+            return defer.succeed([])
+
+        def _filter_results(results):
+            open_aggregates = [idcorrevent for (res, idcorrevent) in results
+                                if res and idcorrevent]
+            # On retourne cette liste, privée des doublons.
+            return list(set(open_aggregates))
+
+        dl = defer.DeferredList(first_successors_aggregates)
+        dl.addCallback(_filter_results)
+        return dl
 
 
-def get_open_aggregate(item_id, *args):
+def get_open_aggregate(ctx, item_id):
     """
-    Récupère dans la BDD l'agrégat ouvert causé par l'item donné.
+    Récupère dans le cache ou dans la BDD l'identifiant de l'événement
+    corrélé (agrégat) ouvert et causé par l'élément supervisé donné.
 
-    @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
+    @param item_id: Identifiant de l'élément supervisé
+        sur lequel s'opère la recherche.
     @type  item_id: C{int}
-    @return: Un agrégat.
-    @rtype: L{CorrEvent}
+    @return: L'identifiant de l'agrégat ouvert ou None si aucun
+        agrégat n'a été trouvé.
+    @rtype: L{int} ou C{None}
     """
+    d = ctx.getShared('open_aggr:%d' % item_id)
 
-    aggregate = DBSession.query(
-                        *args
-                    ).join(
-                        (Event, CorrEvent.idcause == Event.idevent)
-                    ).filter(
-                        not_(
-                            and_(
-                                or_(
-                                Event.current_state ==
-                                    StateName.statename_to_value('OK'),
-                                Event.current_state ==
-                                    StateName.statename_to_value('UP')
-                                ),
-                                CorrEvent.status == u'AAClosed'
-                            )
-                        )
-                    ).filter(CorrEvent.timestamp_active != None
+    def _fetch_db(result):
+        # Si l'info se trouvait dans le cache,
+        # on utilise cette valeur là.
+        if result is not None:
+            # La valeur 0 est utilisée à la place de None
+            # dans le cache. On fait la conversion inverse ici.
+            if not result:
+                return None
+            return result
+
+        # Sinon on récupère l'information
+        # depuis la base de données...
+        aggregate = DBSession.query(
+                CorrEvent.idcorrevent
+            ).join(
+                (Event, CorrEvent.idcause == Event.idevent)
+            ).filter(
+                not_(
+                    and_(
+                        or_(
+                        Event.current_state ==
+                            StateName.statename_to_value('OK'),
+                        Event.current_state ==
+                            StateName.statename_to_value('UP')
+                        ),
+                        CorrEvent.status == u'AAClosed'
                     )
+                )
+            ).filter(CorrEvent.timestamp_active != None
+            ).filter(Event.idsupitem == item_id
+            ).scalar()
 
-    multiple = isinstance(item_id, (list, set))
-    if multiple:
-        aggregate = aggregate.filter(Event.idsupitem.in_(item_id))
-    else:
-        aggregate = aggregate.filter(Event.idsupitem == item_id)
-    res = aggregate.all()
+        # ...et on met à jour le cache avant de retourner l'ID.
+        # NB: la valeur 0 est utilisée à la place de None pour que
+        # le cache puisse réellement servir à l'appel suivant.
+        d2 = ctx.setShared('open_aggr:%d' % item_id, aggregate or 0)
+        d2.addCallback(lambda _dummy, aggr: aggr, aggregate)
+        return d2
 
-    if multiple:
-        return aggregate.all()
-    return aggregate.first()
+    d.addCallback(_fetch_db)
+    return d

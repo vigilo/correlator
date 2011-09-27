@@ -6,7 +6,9 @@
 """Suite de tests pour la classe 'Topology'"""
 from datetime import datetime
 import unittest
-import nose
+
+from nose.twistedtools import reactor, deferred
+from twisted.internet import defer
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, LowLevelService, \
@@ -14,9 +16,39 @@ from vigilo.models.tables import Host, LowLevelService, \
 from vigilo.models.tables import Event, CorrEvent, StateName
 
 from vigilo.correlator.topology import Topology
-from helpers import setup_db, teardown_db, populate_statename
+from helpers import setup_db, teardown_db, populate_statename, \
+                    ContextStubFactory
 
 class TopologyTestHelpers(object):
+    @deferred(timeout=30)
+    def setUp(self):
+        """Initialisation de la BDD préalable à chacun des tests"""
+        setup_db()
+        populate_statename()
+
+        # Création de 5 couples host/service
+        self.add_services()
+
+        # On ajoute quelques dépendances entre
+        # les services de bas niveau dans la BDD.
+        self.add_dependencies()
+
+        # On prépare la topology.
+        self.topology = Topology()
+        self.topology.generate()
+        self.context_factory = ContextStubFactory()
+        return defer.succeed(None)
+
+    @deferred(timeout=30)
+    def tearDown(self):
+        """Nettoyage de la BDD à la fin de chaque test"""
+        self.context_factory.reset()
+        DBSession.expunge_all()
+        DBSession.rollback()
+        DBSession.flush()
+        teardown_db()
+        return defer.succeed(None)
+
     def add_services(self):
         """Création de 5 couples host/service"""
         self.host1 = Host(
@@ -190,29 +222,6 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         DBSession.add(self.events_aggregate2)
         DBSession.flush()
 
-    def setUp(self):
-        """Initialisation de la BDD préalable à chacun des tests"""
-        setup_db()
-        populate_statename()
-
-        # Création de 5 couples host/service
-        self.add_services()
-
-        # On ajoute quelques dépendances entre
-        # les services de bas niveau dans la BDD.
-        self.add_dependencies()
-
-        # On prépare la topology.
-        self.topology = Topology()
-        self.topology.generate()
-
-    def tearDown(self):
-        """Nettoyage de la BDD à la fin de chaque test"""
-        DBSession.expunge_all()
-        DBSession.rollback()
-        DBSession.flush()
-        teardown_db()
-
     def test_instanciation(self):
         """Instanciation de la classe 'Topology'"""
         # On vérifie que les noeuds correspondent bien
@@ -239,14 +248,20 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         edge_list.sort()
         self.assertEqual(edges, edge_list)
 
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_first_predecessors_aggregates(self):
         """Récupération des premiers agrégats dont dépend une alerte brute"""
         # On ajoute quelques événements et agrégats
         self.add_events_and_aggregates()
+        ctx = self.context_factory(141)
 
         # On récupère les aggrégats dont dépend le service 1
-        aggregates = self.topology.get_first_predecessors_aggregates(
-                                                    self.service1.idservice)
+        print "First step"
+        aggregates = yield self.topology.get_first_predecessors_aggregates(
+            ctx,
+            self.service1.idservice
+        )
         aggregates.sort()
         aggregate_list = [self.events_aggregate1.idcorrevent,
                           self.events_aggregate2.idcorrevent]
@@ -255,12 +270,17 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         self.assertEqual(aggregates, aggregate_list)
 
         # On récupère les aggrégats dont dépend le service 2
-        aggregates = self.topology.get_first_predecessors_aggregates(
-                                                    self.service2.idservice)
+        print "Second step"
+        aggregates = yield self.topology.get_first_predecessors_aggregates(
+            ctx,
+            self.service2.idservice
+        )
         aggregates.sort()
         # On vérifie que le service 2 dépend bien de l'agrégat 2
         self.assertEqual(aggregates, [self.events_aggregate2.idcorrevent])
 
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_first_successors_aggregates(self):
         """Récupération des premiers agrégats dépendant d'une alerte brute"""
         # On ajoute quelques événements et agrégats
@@ -295,15 +315,22 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         DBSession.flush()
 
         # On récupère les aggrégats causés par le service 5
-        aggregates = self.topology.get_first_successors_aggregates(
-                                                    self.service5.idservice)
+        ctx = self.context_factory(142)
+        print "First step"
+        aggregates = yield self.topology.get_first_successors_aggregates(
+            ctx,
+            self.service5.idservice
+        )
         aggregates.sort()
         # On vérifie que le service 5 n'a causé aucun agrégat directement.
         self.assertEqual(aggregates, [])
 
         # On récupère les aggrégats causés par le service 4
-        aggregates = self.topology.get_first_successors_aggregates(
-                                                    self.service4.idservice)
+        print "Second step"
+        aggregates = yield self.topology.get_first_successors_aggregates(
+            ctx,
+            self.service4.idservice
+        )
         aggregates.sort()
         # On vérifie que le service 4 a bien causé l'agrégat 1
         # (Et uniquement l'agrégat 1).
@@ -340,39 +367,17 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
         DBSession.add(self.events_aggregate1)
         DBSession.flush()
 
-    def setUp(self):
-        """Initialisation de la BDD préalable à chacun des tests"""
-        setup_db()
-        populate_statename()
-
-        # Création de 5 couples host/service
-        self.add_services()
-
-        # On ajoute quelques dépendances entre
-        # les services de bas niveau dans la BDD.
-        self.add_dependencies()
-
-        # On prépare la topology.
-        self.topology = Topology()
-        self.topology.generate()
-
-    def tearDown(self):
-        """Nettoyage de la BDD à la fin de chaque test"""
-        DBSession.expunge_all()
-        DBSession.rollback()
-        DBSession.flush()
-        teardown_db()
-
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_first_predecessors_aggregates(self):
         """Pas d'agrégats prédecesseurs s'il existe un chemin "vivant"."""
         # On ajoute quelques événements et agrégats
         self.add_events_and_aggregates()
 
         # On récupère les aggrégats dont dépend le service 1
-        aggregates = self.topology.get_first_predecessors_aggregates(
-                                                    self.service1.idservice)
+        ctx = self.context_factory(143)
+        aggregates = yield self.topology.get_first_predecessors_aggregates(
+            ctx,
+            self.service1.idservice
+        )
         self.assertEquals([], aggregates)
-
-
-if __name__ == "__main__":
-    nose.main()

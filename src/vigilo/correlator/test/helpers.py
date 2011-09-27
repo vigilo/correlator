@@ -164,8 +164,11 @@ class ContextStubFactory(object):
         return self.contexts[idxmpp]
 
     def reset(self):
-        for context in self.contexts.values():
-            context._connection.data = {}
+        # On réinitialise les données de tous les contextes.
+        # On ne peut pas écraser le _connection.data de chaque
+        # contexte séparément car la modification ne serait vue
+        # que pour cette instance du contexte.
+        ConnectionStub.data = {}
 
 class RuleDispatcherStub():
     """Classe simulant le fonctionnement du RuleDispatcher"""
@@ -226,4 +229,3 @@ def populate_statename():
     DBSession.add(StateName(statename=u'DOWN', order=3))
     DBSession.add(StateName(statename=u'UNREACHABLE', order=1))
     DBSession.flush()
-
