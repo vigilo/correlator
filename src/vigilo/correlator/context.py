@@ -22,6 +22,16 @@ from vigilo.correlator.memcached_connection import MemcachedConnection
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
+__all__ = ('Context', )
+
+class NoTimeoutOverride(object):
+    """
+    Classe utilisée uniquement pour indiquer que le délai associé
+    à une donnée n'a pas été surchargé localement lors d'un appel
+    à L{Context.set} ou L{Context.setShared}.
+    """
+    pass
+
 class Context(object):
     """
     Un contexte de corrélation pouvant recevoir des attributs arbitraires.
@@ -130,7 +140,7 @@ class Context(object):
         return self._connection.get(key.encode("utf8"),
                                     self._transaction)
 
-    def set(self, prop, value):
+    def set(self, prop, value, timeout=NoTimeoutOverride):
         """
         Modification dynamique d'un des attributs du contexte.
 
@@ -140,10 +150,19 @@ class Context(object):
         @param value: Valeur à donner à l'attribut. La valeur doit
             être sérialisable à l'aide du module C{pickle} de Python.
         @type value: C{mixed}
+        @param timeout: Durée de rétention (en secondes) de la donnée.
+            Si omis, la durée de rétention globale associée au contexte
+            est utilisée.
+        @type timeout: C{float}
         """
         key = 'vigilo:%s:%s' % (prop, self._id)
-        return self._connection.set(key.encode("utf8"), value,
-                        self._transaction, time=self._timeout)
+        if timeout is NoTimeoutOverride:
+            timeout = self._timeout
+        return self._connection.set(
+            key.encode("utf8"),
+            value,
+            self._transaction,
+            time=timeout)
 
     def delete(self, prop):
         """
@@ -171,7 +190,7 @@ class Context(object):
         return self._connection.get(key.encode("utf8"),
                                     self._transaction)
 
-    def setShared(self, prop, value):
+    def setShared(self, prop, value, timeout=NoTimeoutOverride):
         """
         Modification dynamique d'un des attributs partagés du contexte.
 
@@ -181,10 +200,19 @@ class Context(object):
         @param value: Valeur à donner à l'attribut partagé. La valeur doit
             être sérialisable à l'aide du module C{pickle} de Python.
         @type value: C{mixed}
+        @param timeout: Durée de rétention (en secondes) de la donnée.
+            Si omis, la durée de rétention globale associée au contexte
+            est utilisée.
+        @type timeout: C{float}
         """
         key = 'shared:%s' % prop
-        return self._connection.set(key.encode("utf8"), value,
-                         self._transaction, time=self._timeout)
+        if timeout is NoTimeoutOverride:
+            timeout = self._timeout
+        return self._connection.set(
+            key.encode("utf8"),
+            value,
+            self._transaction,
+            time=timeout)
 
     def deleteShared(self, prop):
         """
@@ -197,4 +225,3 @@ class Context(object):
         key = 'shared:%s' % prop
         return self._connection.delete(key.encode("utf8"),
                                        self._transaction)
-
