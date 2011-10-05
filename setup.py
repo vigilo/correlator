@@ -32,7 +32,7 @@ def install_i18n(i18ndir, destdir):
     return data_files
 
 setup(name='vigilo-correlator',
-        version='2.0.7',
+        version='2.0.8',
         author='Vigilo Team',
         author_email='contact@projet-vigilo.org',
         url='http://www.projet-vigilo.org/',
