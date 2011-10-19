@@ -17,8 +17,8 @@ from helpers import settings, populate_statename
 from helpers import setup_db, teardown_db
 from helpers import ContextStubFactory, RuleDispatcherStub
 from vigilo.models.session import DBSession
-from vigilo.models.tables import LowLevelService, Host, StateName, \
-                            Event, Change, SupItem, State
+from vigilo.models.tables import LowLevelService, Host, \
+                                    Event, Change, SupItem, State
 
 from vigilo.pubsub.xml import NS_EVENT
 from vigilo.correlator.db_insertion import insert_event, insert_state

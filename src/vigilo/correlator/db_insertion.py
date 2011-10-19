@@ -9,14 +9,13 @@ Extends pubsub clients to compute Node message.
 from sqlalchemy import not_, and_
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
-from sqlalchemy.exc import InvalidRequestError, IntegrityError
 
 from twisted.internet import defer
 from datetime import datetime
 
 from vigilo.common.logging import get_logger
 from vigilo.models.session import DBSession
-from vigilo.models.tables import StateName, State, HLSHistory, SupItem
+from vigilo.models.tables import StateName, State, HLSHistory
 from vigilo.models.tables import Event, EventHistory, CorrEvent
 from vigilo.models.tables.secondary_tables import EVENTSAGGREGATE_TABLE
 from vigilo.common.gettext import translate

@@ -50,7 +50,6 @@ setup(name='vigilo-correlator',
             'vigilo-pubsub',
             'vigilo-connector',
             'networkx',
-            'ampoule',
             ],
         namespace_packages = [
             'vigilo',
@@ -78,4 +77,3 @@ setup(name='vigilo-correlator',
                     (os.path.join(localstatedir, "run/vigilo-correlator"), []),
                    ] + install_i18n("i18n", os.path.join(sys.prefix, 'share', 'locale')),
         )
-

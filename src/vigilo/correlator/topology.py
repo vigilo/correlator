@@ -8,7 +8,7 @@
 from twisted.internet import defer
 
 from vigilo.models.session import DBSession
-from sqlalchemy.sql.expression import not_, and_, or_, desc
+from sqlalchemy.sql.expression import not_, and_, or_
 
 import networkx as nx
 import networkx.exception as nx_exc
@@ -154,7 +154,9 @@ def get_open_aggregate(ctx, item_id):
         agrégat n'a été trouvé.
     @rtype: L{int} ou C{None}
     """
-    d = ctx.getShared('open_aggr:%d' % item_id)
+    d = defer.maybeDeferred(
+        ctx.getShared,
+        'open_aggr:%d' % item_id)
 
     def _fetch_db(result):
         # Si l'info se trouvait dans le cache,
@@ -191,7 +193,10 @@ def get_open_aggregate(ctx, item_id):
         # ...et on met à jour le cache avant de retourner l'ID.
         # NB: la valeur 0 est utilisée à la place de None pour que
         # le cache puisse réellement servir à l'appel suivant.
-        d2 = ctx.setShared('open_aggr:%d' % item_id, aggregate or 0)
+        d2 = defer.maybeDeferred(
+            ctx.setShared,
+            'open_aggr:%d' % item_id,
+            aggregate or 0)
         d2.addCallback(lambda _dummy, aggr: aggr, aggregate)
         return d2
 

@@ -8,9 +8,7 @@
 Tests portant sur les plugins du corrélateur.
 """
 import unittest
-
-from vigilo.common.conf import settings
-settings.load_module(__name__)
+from helpers import settings
 
 from vigilo.correlator.registry import get_registry
 
@@ -36,7 +34,7 @@ class TestRuleLoading(unittest.TestCase):
         registry = get_registry()
         registry.rules.clear()
         settings.reset()
-        settings.load_module(__name__)
+        settings.load_file('settings_tests.ini')
 
     def test_rules_loading(self):
         """Chargement des règles de corrélation avec dépendances."""
@@ -53,6 +51,7 @@ class TestRuleLoading(unittest.TestCase):
 
     def test_check_rule_loading_failure(self):
         """Échec du chargement d'une règle à cause d'une dépendance."""
+        settings.reset()
         self.assertRaises(RuntimeError, get_registry().rules.register,
             TestRuleWithDependency())
 
@@ -64,7 +63,7 @@ class TestRuleLoading(unittest.TestCase):
         self.assertEqual(r.confkey, "testname")
 
     def test_rule_dependencies(self):
-        """Les dépendances de la règle peut être données au constructeur"""
+        """Les dépendances de la règle peuvent être données au constructeur"""
         r = TestRule1(["TestRule2"])
         self.assertEqual(r.depends, ["TestRule2", ])
         r = TestRule1(depends=["TestRule2"])
@@ -111,4 +110,3 @@ class TestRuleLoading(unittest.TestCase):
         registry._load_from_settings()
         print registry.rules.keys()
         self.assertEquals(len(registry.rules), 1)
-

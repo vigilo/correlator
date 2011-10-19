@@ -13,7 +13,7 @@ from twisted.internet import defer
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, LowLevelService, \
                                     Dependency, DependencyGroup
-from vigilo.models.tables import Event, CorrEvent, StateName
+from vigilo.models.tables import Event, CorrEvent
 
 from vigilo.correlator.topology import Topology
 from helpers import setup_db, teardown_db, populate_statename, \
@@ -254,7 +254,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         """Récupération des premiers agrégats dont dépend une alerte brute"""
         # On ajoute quelques événements et agrégats
         self.add_events_and_aggregates()
-        ctx = self.context_factory(141)
+        ctx = self.context_factory(141, defer=True)
 
         # On récupère les aggrégats dont dépend le service 1
         print "First step"
@@ -315,7 +315,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         DBSession.flush()
 
         # On récupère les aggrégats causés par le service 5
-        ctx = self.context_factory(142)
+        ctx = self.context_factory(142, defer=True)
         print "First step"
         aggregates = yield self.topology.get_first_successors_aggregates(
             ctx,

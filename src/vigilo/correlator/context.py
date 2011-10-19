@@ -60,7 +60,7 @@ class Context(object):
         -   payload : message brut (XML sérialisé) de l'événement reçu (C{str}).
     """
 
-    def __init__(self, idxmpp, database=None, transaction=True, timeout=None):
+    def __init__(self, idxmpp, database, transaction=True, timeout=None):
         """
         Initialisation d'un contexte de corrélation (au moyen de MemcacheD).
 
@@ -68,8 +68,6 @@ class Context(object):
             reçue par le corrélateur.
         @type idxmpp: C{basestring}.
         """
-        if database is None:
-            database = DummyDatabaseWrapper(not transaction)
         self._connection = MemcachedConnection()
         self._database = database
         self._transaction = transaction
@@ -78,25 +76,26 @@ class Context(object):
             timeout = settings['correlator'].as_float('context_timeout')
         self._timeout = timeout
 
-    @property
-    @defer.inlineCallbacks
     def topology(self):
         """
         Récupère la topologie associée à ce contexte.
         @rtype: L{defer.Deferred}.
         """
-        topology = yield self._connection.get(
+        topology = self._connection.get(
             'vigilo:topology',
             self._transaction,
         )
 
-        if topology is None:
-            topology = Topology()
-            yield self._database.run(
-                topology.generate,
+        def _generate(topo):
+            LOGGER.debug("Re-generating the topology")
+            return self._database.run(
+                topo.generate,
                 transaction=self._transaction
             )
-            yield defer.DeferredList([
+
+        def _update_ctx(_dummy, topo):
+            LOGGER.debug("Updating the cache with the new topology")
+            dl = defer.DeferredList([
                 self._connection.set(
                     'vigilo:topology',
                     topology,
@@ -108,9 +107,21 @@ class Context(object):
                     transaction=self._transaction,
                 ),
             ])
-        defer.returnValue(topology)
+            dl.addCallback(lambda _dummy: topo)
+            return dl
 
-    @property
+        def _check_existence(topo):
+            LOGGER.debug("Current topology: %r", topo)
+            if topo is None:
+                topo = Topology()
+                d = _generate(topo)
+                d.addCallback(_update_ctx, topo)
+                return d
+            return topo
+
+        topology.addCallback(_check_existence)
+        return topology
+
     def last_topology_update(self):
         """
         Récupère la date de la dernière mise à jour de l'arbre topologique.

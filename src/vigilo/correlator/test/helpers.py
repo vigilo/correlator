@@ -13,7 +13,7 @@ import time
 import socket
 import nose
 
-from twisted.internet import defer
+from twisted.internet import defer, reactor
 
 from vigilo.common.conf import settings
 settings.load_file('settings_tests.ini')
@@ -120,30 +120,36 @@ class ConnectionStub(object):
     # Variable de classe (partagée). Penser à la réinitialiser en tearDown
     data = {}
 
+    def __init__(self, *args, **kwargs):
+        self._must_defer = kwargs.pop('must_defer', False)
+        super(ConnectionStub, self).__init__(*args, **kwargs)
+
     def get(self, key, transaction=True):
         # pylint: disable-msg=E0202
         # An attribute inherited from TestApiFunctions hide this method (Mock)
         print "GETTING: %r = %r" % (key, self.data.get(key))
-        return defer.succeed(self.data.get(key))
+        value = self.data.get(key)
+        return self._must_defer and defer.succeed(value) or value
 
     def set(self, key, value, transaction=True, **kwargs):
         print "SETTING: %r = %r" % (key, value)
         self.data[key] = value
-        return defer.succeed(None)
+        if self._must_defer:
+            return defer.succeed(None)
 
     def delete(self, key, transaction=True):
         # pylint: disable-msg=E0202
         # An attribute inherited from TestApiFunctions hide this method (Mock)
         del self.data[key]
-        return defer.succeed(None)
+        if self._must_defer:
+            return defer.succeed(None)
 
     def topology(self):
         topology = self.get('vigilo:topology')
-        return defer.succeed(None)
 
 class ContextStub(Context):
-    def __init__(self, idxmpp, timeout=None):
-        self._connection = ConnectionStub()
+    def __init__(self, idxmpp, timeout=None, must_defer=True):
+        self._connection = ConnectionStub(must_defer=must_defer)
         self._id = str(idxmpp)
         if timeout is None:
             timeout = 60.0
@@ -158,7 +164,8 @@ class ContextStubFactory(object):
     def __call__(self, idxmpp, timeout=None, *args, **kwargs):
         if idxmpp not in self.contexts:
             print "CREATING CONTEXT FOR", idxmpp
-            self.contexts[idxmpp] = ContextStub(idxmpp, timeout)
+            must_defer = kwargs.pop('must_defer', True)
+            self.contexts[idxmpp] = ContextStub(idxmpp, timeout, must_defer=must_defer)
         else:
             print "GETTING PREVIOUS CONTEXT FOR", idxmpp
         return self.contexts[idxmpp]
@@ -174,29 +181,15 @@ class RuleDispatcherStub():
     """Classe simulant le fonctionnement du RuleDispatcher"""
     def __init__(self):
         self.buffer = []
-    def sendItem(self, value):
+    def sendItem(self, item):
         """Simule l'écriture d'un message sur la file"""
-        LOGGER.info("Sending this payload to the bus: %r", value)
-        self.buffer.append(value)
+        LOGGER.info("Sending this payload to the bus: %r", item)
+        self.buffer.append(item)
     def clear(self):
         """Vide la file de messages"""
         self.buffer = []
-
-class RuleRunnerStub(object):
-    """
-    Classe simulant le fonctionnement du RuleRunner,
-    pour intercepter les messages générés par la règle.
-    """
-    def __init__(self):
-        """Initialisation"""
-        self.message = None
-    def callRemote(self, *args, **kwargs): # pylint: disable-msg=W0613
-        """Méthode appelée par la règle pour envoyer le message sur le bus"""
-        if 'item' in kwargs:
-            self.message = kwargs['item']
-    def clearMessage(self):
-        """Suppression du message stocké"""
-        self.message = None
+    def registerCallback(self, fn, *args, **kwargs):
+        pass
 
 @defer.inlineCallbacks
 def setup_context(factory, message_id, context_keys):

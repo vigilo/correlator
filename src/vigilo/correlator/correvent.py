@@ -8,7 +8,6 @@ Création des événements corrélés dans la BDD et transmission à pubsub.
 """
 
 from sqlalchemy import not_ , and_
-from datetime import datetime
 import logging
 
 from lxml import etree

@@ -10,14 +10,10 @@ try:
 except ImportError:
     import pickle
 
-import transaction
 from datetime import datetime
 import time
-from twisted.internet import task, defer, reactor, protocol
-from twisted.python.failure import Failure
+from twisted.internet import defer, reactor, protocol
 from twisted.protocols.memcache import MemCacheProtocol
-
-from sqlalchemy.exc import OperationalError
 
 from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
@@ -307,4 +303,3 @@ class MemcachedConnection(object):
         d = self._cache.getInstance()
         d.addCallback(lambda cache: cache.delete(key))
         return d
-

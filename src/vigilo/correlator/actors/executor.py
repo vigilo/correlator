@@ -40,6 +40,12 @@ class Executor(object):
         self.__dispatcher = dispatcher
         self._stats = {}
         self._stats_tmp = {}
+        self._runners = {}
+        reg = get_registry()
+        for rule_name in reg.rules.keys():
+            rule_obj = reg.rules.lookup(rule_name)
+            self._runners[rule_name] = \
+                rule_runner.RuleRunner(dispatcher, rule_name, rule_obj)
 
     def build_execution_tree(self):
         d = defer.Deferred()
@@ -57,7 +63,8 @@ class Executor(object):
         end = defer.DeferredList(
             subdeferreds,
             fireOnOneCallback=0,
-            fireOnOneErrback=0,
+            fireOnOneErrback=1,
+            consumeErrors=True,
         )
         return (d, end)
 
@@ -123,8 +130,7 @@ class Executor(object):
         def eb(failure, rule_name, *args):
             d.errback(failure)
 
-        work = self.__dispatcher.doWork(rule_runner.RuleCommand,
-            rule_name=rule_name, idxmpp=idxmpp)
+        work = self.__dispatcher.doWork(self._runners[rule_name].run, idxmpp)
         work.addCallback(cb, idxmpp)
         work.addErrback(eb, rule_name)
         return d

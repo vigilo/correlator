@@ -12,7 +12,6 @@ d'émettre de nouveaux messages XML à destination du bus (par exemple,
 des commandes pour Nagios).
 """
 
-import sys
 import time
 from datetime import datetime
 
@@ -20,8 +19,7 @@ import transaction
 from sqlalchemy import exc
 
 from twisted.internet import defer, reactor, error
-from twisted.protocols import amp
-from ampoule import pool
+from twisted.python import threadpool
 from wokkel.generic import parseXml
 from lxml import etree
 
@@ -38,16 +36,13 @@ from vigilo.models.tables import SupItem, Version
 
 from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, NS_TICKET, \
                                 NS_COMPUTATION_ORDER
-from vigilo.correlator.actors import rule_runner, executor
-from vigilo.correlator.memcached_connection import MemcachedConnection
+from vigilo.correlator.actors import executor
 from vigilo.correlator.context import Context
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                     insert_hls_history, OldStateReceived
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
-from vigilo.correlator.amp.correlator import Correlator
-from vigilo.correlator.amp.starter import ProcessStarter
 from vigilo.correlator import registry
 
 LOGGER = get_logger(__name__)
@@ -118,17 +113,10 @@ class RuleDispatcher(PubSubSender):
         except KeyError:
             max_idle = 20
 
-        self.rrp = pool.ProcessPool(
-            maxIdle=max_idle,
-            ampChild=rule_runner.RuleRunner,
-            ampParent=Correlator,
-            timeout=timeout,
-            name='RuleDispatcher',
-            min=min_runner,
-            max=max_runner,
-            ampChildArgs=(sys.argv[0], ),
-            starter=ProcessStarter(self, database),
-        )
+        # @TODO: #875: réimplémenter le timeout avec des threads.
+        self.rrp = threadpool.ThreadPool(min_runner, max_runner, "Rule runners")
+        LOGGER.debug("Starting rule runners")
+        self.rrp.start()
         self._executor = executor.Executor(self)
         self._tmp_correl_time = None
         self._correl_times = []
@@ -158,11 +146,20 @@ class RuleDispatcher(PubSubSender):
                 pass
         d.addErrback(no_database)
 
-    def doWork(self, *args, **kwargs):
+    def _putResultInDeferred(self, deferred, f, args, kwargs):
+        d = f(*args, **kwargs)
+        d.addCallbacks(
+            lambda res: reactor.callFromThread(deferred.callback, res),
+            lambda fail: reactor.callFromThread(deferred.errback, fail),
+        )
+
+    def doWork(self, f, *args, **kwargs):
         """
-        Délègue le travail aux processus dédiés à la corrélation.
+        Délègue le travail aux threads dédiés à la corrélation.
         """
-        return self.rrp.doWork(*args, **kwargs)
+        d = defer.Deferred()
+        self.rrp.callInThread(self._putResultInDeferred, d, f, args, kwargs)
+        return d
 
     def itemsReceived(self, event):
         """
@@ -368,6 +365,11 @@ class RuleDispatcher(PubSubSender):
                 xml, [exc.OperationalError],
                 insert_event, info_dictionary
             )
+
+        def commit(res):
+            transaction.commit()
+            return res
+        d.addCallback(commit)
         d.addCallback(self._do_correl, previous_state, info_dictionary,
                                        idxmpp, dom, xml, ctx)
         return d
@@ -387,15 +389,20 @@ class RuleDispatcher(PubSubSender):
 
         def start_correl(payload, defs):
             tree_start, self.tree_end = defs
+
+            def send(res):
+                sr = self._send_result(res, xml, info_dictionary)
+                sr.addErrback(self._send_result_eb, idxmpp, payload)
+                return sr
+
             # Gère les erreurs détectées à la fin du processus de corrélation,
             # ou émet l'alerte corrélée s'il n'y a pas eu de problème.
             self.tree_end.addCallbacks(
-                self._send_result,
+                send,
                 self._correlation_eb,
-                callbackArgs=[xml, info_dictionary],
                 errbackArgs=[idxmpp, payload],
             )
-            self.tree_end.addErrback(self._send_result_eb, idxmpp, payload)
+
             # On lance le processus de corrélation.
             self._tmp_correl_time = time.time()
             tree_start.callback(idxmpp)
@@ -525,17 +532,8 @@ class RuleDispatcher(PubSubSender):
         connexion sera rétablie (cf. connectionInitialized).
         """
         super(RuleDispatcher, self).connectionLost(reason)
-        LOGGER.debug(_(u'Connection lost'))
-
-        try:
-            self.rrp.stop()
-        except KeyError:
-            # Race condition: si on arrête le corrélateur trop rapidement
-            # après son lancement, les pipes pour l'intercommunication ne sont
-            # pas encore créés et on tente d'écrire dedans pour demander
-            # l'arrêt du pool ce qui lève une exception.
-            # On ignore l'erreur silencieusement ici.
-            pass
+        LOGGER.debug(_('Connection lost, stopping rule runners pool'))
+        self.rrp.stop()
 
     def sendItem(self, item):
         if not isinstance(item, etree.ElementBase):
@@ -600,3 +598,6 @@ class RuleDispatcher(PubSubSender):
         d = super(RuleDispatcher, self).getStats()
         d.addCallback(add_exec_stats)
         return d
+
+    def registerCallback(self, fn, idnt):
+        self.tree_end.addCallback(fn, self, self._database, idnt)

@@ -11,7 +11,6 @@ la plus importante reçue dans VigiBoard.
 """
 from __future__ import absolute_import
 
-from twisted.internet import defer
 from sqlalchemy import not_ , and_
 
 from vigilo.correlator.rule import Rule
@@ -31,7 +30,6 @@ class PriorityMaxRule(Rule):
 
     depends = ['PriorityRule']
 
-    @defer.inlineCallbacks
     def process(self, link, xmpp_id):
         """
         Traitement du message par la règle.
@@ -44,14 +42,13 @@ class PriorityMaxRule(Rule):
         @type xmpp_id: C{unicode}
         """
         ctx = self._get_context(xmpp_id)
-        hostname = yield ctx.get('hostname')
-        servicename = yield ctx.get('servicename')
-        priority = yield ctx.get('priority')
-        item_id = yield ctx.get('idsupitem')
+        priority = ctx.get('priority')
+        item_id = ctx.get('idsupitem')
 
         state_ok = StateName.statename_to_value(u'OK')
         state_up = StateName.statename_to_value(u'UP')
-        curr_priority = DBSession.query(
+        curr_priority = self._database.run(
+            DBSession.query(
                 CorrEvent.priority
             ).join(
                 (Event, CorrEvent.idcause == Event.idevent),
@@ -62,7 +59,7 @@ class PriorityMaxRule(Rule):
                 CorrEvent.status == u'AAClosed'
             ))
             ).filter(CorrEvent.timestamp_active != None
-            ).scalar()
+            ).scalar)
 
         if curr_priority is None:
             return
@@ -71,5 +68,4 @@ class PriorityMaxRule(Rule):
             priority = min(priority, curr_priority)
         else:
             priority = max(priority, curr_priority)
-        yield ctx.set('priority', priority)
-
+        ctx.set('priority', priority)

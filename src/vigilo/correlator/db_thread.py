@@ -80,9 +80,6 @@ class DatabaseWrapper(object):
 
         while True:
             op = self.queue.get()
-            #if isinstance(op, basestring):
-            #    logger.error("Got %s", op)
-            #    continue
             if op is None:
                 return
             else:
@@ -142,7 +139,7 @@ class DummyDatabaseWrapper(object):
     règles de corrélation).
     """
 
-    def __init__(self, disable_txn=False):
+    def __init__(self, disable_txn=False, async=True):
         """
         Créer le wrapper autour des accès.
 
@@ -160,6 +157,19 @@ class DummyDatabaseWrapper(object):
         self.logger = get_logger(__name__)
         self.gettext = translate(__name__)
         self.disable_txn = disable_txn
+        self.async = async
+
+    def _return(self, result):
+        if self.async:
+            if isinstance(result, Failure):
+                return defer.fail(result)
+            else:
+                return defer.succeed(result)
+        else:
+            if isinstance(result, Failure):
+                raise result.value
+            else:
+                return result
 
     def run(self, func, *args, **kwargs):
         """
@@ -198,9 +208,9 @@ class DummyDatabaseWrapper(object):
             if txn:
                 transaction.abort()
             self.logger.error(res)
-            return defer.fail(res)
+            return self._return(res)
         else:
-            return defer.succeed(res)
+            return self._return(res)
 
     def shutdown(self):
         """
