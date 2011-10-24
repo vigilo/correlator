@@ -262,8 +262,7 @@ class RuleDispatcher(PubSubSender):
                             "be handled properly."))
             return defer.succeed(None)
 
-        from vigilo.correlator_enterprise.rules.hls_deps.compute_hls_states \
-            import compute_hls_states
+        rule = registry.get_registry().rules.lookup('HighLevelServiceDepsRule')
 
         def eb(failure):
             if failure.check(defer.TimeoutError):
@@ -281,11 +280,19 @@ class RuleDispatcher(PubSubSender):
                 servicename = servicename.decode('utf-8')
             hls_names.add(servicename)
 
-        d = ctx.set('impacted_hls', list(hls_names))
+        hls_names = list(hls_names)
+        d = ctx.set('impacted_hls', hls_names)
         d.addCallback(lambda _dummy: ctx.set('hostname', None))
         d.addCallback(lambda _dummy: ctx.set('servicename', None))
         d.addErrback(eb)
-        d.addCallback(compute_hls_states, self, self._database, idxmpp)
+        d.addCallback(lambda _dummy: \
+            self.doWork(
+                rule.compute_hls_states,
+                self, idxmpp,
+                None, None,
+                hls_names
+            )
+        )
         return d
 
 

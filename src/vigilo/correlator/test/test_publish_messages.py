@@ -77,7 +77,6 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
             message = u'Ouch',
             warning_threshold = 300,
             critical_threshold = 150,
-            priority = 1,
         )
         DBSession.add(hls1)
         DBSession.flush()

@@ -57,7 +57,6 @@ class TestDbInsertion(unittest.TestCase):
             message=u'Ouch',
             warning_threshold=100,
             critical_threshold=80,
-            priority=1,
         ))
         DBSession.flush()
 

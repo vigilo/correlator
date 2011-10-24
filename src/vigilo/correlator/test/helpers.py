@@ -183,27 +183,30 @@ class ContextStubFactory(object):
         # que pour cette instance du contexte.
         ConnectionStub.data = {}
 
-class RuleDispatcherStub():
+class RuleDispatcherStub(RuleDispatcher):
     """Classe simulant le fonctionnement du RuleDispatcher"""
-    def __init__(self):
-        self.buffer = []
-    def sendItem(self, item):
-        """Simule l'écriture d'un message sur la file"""
-        LOGGER.info("Sending this payload to the bus: %r", item)
-        self.buffer.append(item)
-    def clear(self):
-        """Vide la file de messages"""
-        self.buffer = []
-    def registerCallback(self, fn, *args, **kwargs):
-        pass
-
-class TestableRuleDispatcher(RuleDispatcher):
     def __init__(self):
         PubSubSender.__init__(self)
         self.max_send_simult = 1
         self.tree_end = None
         self._database = DummyDatabaseWrapper(True)
         self._executor = Executor(self)
+        self.buffer = []
+
+    def sendItem(self, item):
+        """Simule l'écriture d'un message sur la file"""
+        LOGGER.info("Sending this payload to the bus: %r", item)
+        self.buffer.append(item)
+
+    def clear(self):
+        """Vide la file de messages"""
+        self.buffer = []
+
+    def registerCallback(self, fn, *args, **kwargs):
+        pass
+
+    def doWork(self, f, *args, **kwargs):
+        return defer.maybeDeferred(f, *args, **kwargs)
 
 @defer.inlineCallbacks
 def setup_context(factory, message_id, context_keys):

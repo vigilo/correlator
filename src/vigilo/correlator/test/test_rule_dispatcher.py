@@ -23,7 +23,7 @@ class RuleDispatcherTestCase(unittest.TestCase):
         helpers.populate_statename()
         self._insert_test_data()
         DBSession.flush()
-        self.rd = helpers.TestableRuleDispatcher()
+        self.rd = helpers.RuleDispatcherStub()
         return defer.succeed(None)
 
     @deferred(timeout=30)
@@ -54,7 +54,6 @@ class RuleDispatcherTestCase(unittest.TestCase):
             message=u'Ouch',
             warning_threshold=100,
             critical_threshold=80,
-            priority=1,
         ))
         DBSession.flush()
 
@@ -94,4 +93,3 @@ class RuleDispatcherTestCase(unittest.TestCase):
                 "La correlation ne doit pas avoir été lancée")
         d.addCallback(cb)
         return d
-
