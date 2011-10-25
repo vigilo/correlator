@@ -82,4 +82,4 @@ class Rule(Named):
         self._database = database
 
     def _get_context(self, xmpp_id, timeout=None):
-        return self._context_factory(xmpp_id, timeout, transaction=False)
+        return self._context_factory(xmpp_id, self._database, transaction=False, timeout=timeout)

@@ -98,7 +98,7 @@ class Context(object):
             dl = defer.DeferredList([
                 self._connection.set(
                     'vigilo:topology',
-                    topology,
+                    topo,
                     transaction=self._transaction,
                 ),
                 self._connection.set(

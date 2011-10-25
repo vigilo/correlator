@@ -64,11 +64,12 @@ class RegistryDict(object):
 
         for dep in item.depends:
             if dep not in self.__dict:
-                raise RuntimeError(_(u'The rule %(depended)r must be loaded '
-                                    'before %(dependent)r.') % {
-                                        'dependent': item.name,
-                                        'depended': dep,
-                                    })
+                LOGGER.error(_(u'The rule %(depended)r must be loaded '
+                                'before %(dependent)r.') % {
+                                    'dependent': item.name,
+                                    'depended': dep,
+                                })
+                raise RuntimeError()
             self.__graph.add_edge(item.name, dep)
 
         self.__dict[item.name] = item

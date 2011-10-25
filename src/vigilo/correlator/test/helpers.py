@@ -161,7 +161,7 @@ class ContextStubFactory(object):
     def __init__(self):
         self.contexts = {}
 
-    def __call__(self, idxmpp, timeout=None, *args, **kwargs):
+    def __call__(self, idxmpp, database=None, timeout=None, *args, **kwargs):
         if idxmpp not in self.contexts:
             print "CREATING CONTEXT FOR", idxmpp
             must_defer = kwargs.pop('must_defer', True)
