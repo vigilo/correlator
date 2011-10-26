@@ -20,17 +20,11 @@ class ThreadWrapper(object):
         else:
             self._obj = cls_or_obj
             self._cls = None
-        self._callable_objs = {}
 
     def __getattr__(self, attr):
-        if attr in self._callable_objs:
-            return self._callable_objs[attr]
-
         ret = getattr(self._obj, attr)
         if callable(ret):
-            wrapper = self.FunctionWrapper(self, ret)
-            self._callable_objs[attr] = wrapper
-            return wrapper
+            return self.FunctionWrapper(self, ret)
         return ret
 
     def __call__(self, *args, **kwargs):

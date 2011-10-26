@@ -208,9 +208,7 @@ class DummyDatabaseWrapper(object):
             if txn:
                 transaction.abort()
             self.logger.error(res)
-            return self._return(res)
-        else:
-            return self._return(res)
+        return self._return(res)
 
     def shutdown(self):
         """

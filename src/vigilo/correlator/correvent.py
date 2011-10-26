@@ -8,6 +8,7 @@ Création des événements corrélés dans la BDD et transmission à pubsub.
 """
 
 from sqlalchemy import not_ , and_
+from sqlalchemy.orm.exc import NoResultFound
 import logging
 
 from lxml import etree
@@ -177,15 +178,15 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
 
             # Pour chaque agrégat dont l'alerte dépend,
             for predecessing_aggregate_id in predecessing_aggregates_id:
-                predecessing_aggregate = yield database.run(
-                    DBSession.query(CorrEvent).filter(
-                        CorrEvent.idcorrevent ==
-                            int(predecessing_aggregate_id)
-                    ).one,
-                    transaction=False,
-                )
-
-                if predecessing_aggregate is None:
+                try:
+                    predecessing_aggregate = yield database.run(
+                        DBSession.query(CorrEvent).filter(
+                            CorrEvent.idcorrevent ==
+                                int(predecessing_aggregate_id)
+                        ).one,
+                        transaction=False,
+                    )
+                except NoResultFound:
                     LOGGER.error(_(u'Got a reference to a nonexistent '
                             'correlated event (%r), skipping this aggregate'),
                             int(predecessing_aggregate_id))

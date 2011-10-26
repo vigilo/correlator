@@ -16,6 +16,7 @@ from vigilo.models.tables import Host, LowLevelService, \
 from vigilo.models.tables import Event, CorrEvent
 
 from vigilo.correlator.topology import Topology
+from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from helpers import setup_db, teardown_db, populate_statename, \
                     ContextStubFactory
 
@@ -37,6 +38,7 @@ class TopologyTestHelpers(object):
         self.topology = Topology()
         self.topology.generate()
         self.context_factory = ContextStubFactory()
+        self.database = DummyDatabaseWrapper(True, async=False)
         return defer.succeed(None)
 
     @deferred(timeout=30)
@@ -255,11 +257,13 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         # On ajoute quelques événements et agrégats
         self.add_events_and_aggregates()
         ctx = self.context_factory(141, defer=True)
+        ctx._connection._must_defer = False
 
         # On récupère les aggrégats dont dépend le service 1
         print "First step"
         aggregates = yield self.topology.get_first_predecessors_aggregates(
             ctx,
+            self.database,
             self.service1.idservice
         )
         aggregates.sort()
@@ -273,6 +277,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         print "Second step"
         aggregates = yield self.topology.get_first_predecessors_aggregates(
             ctx,
+            self.database,
             self.service2.idservice
         )
         aggregates.sort()
@@ -316,9 +321,11 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
         # On récupère les aggrégats causés par le service 5
         ctx = self.context_factory(142, defer=True)
+        ctx._connection._must_defer = False
         print "First step"
         aggregates = yield self.topology.get_first_successors_aggregates(
             ctx,
+            self.database,
             self.service5.idservice
         )
         aggregates.sort()
@@ -329,6 +336,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         print "Second step"
         aggregates = yield self.topology.get_first_successors_aggregates(
             ctx,
+            self.database,
             self.service4.idservice
         )
         aggregates.sort()
@@ -376,8 +384,10 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
 
         # On récupère les aggrégats dont dépend le service 1
         ctx = self.context_factory(143)
+        ctx._connection._must_defer = False
         aggregates = yield self.topology.get_first_predecessors_aggregates(
             ctx,
+            self.database,
             self.service1.idservice
         )
         self.assertEquals([], aggregates)

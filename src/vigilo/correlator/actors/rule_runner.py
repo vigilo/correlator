@@ -28,21 +28,19 @@ class RuleRunner(object):
         logger.debug('Rule runner: process begins for rule "%s" (msgid=%r)',
                     self._name, idxmpp)
 
-        def abort_transaction(res):
-            transaction.abort()
+        def commit(res):
+            transaction.commit()
             return res
 
-        def log_errors(failure):
+        def abort(fail):
             logger.error(_('Got an exception while running rule ''"%(rule)s". '
                             'Running the correlator in the foreground '
                             '(service vigilo-correlator debug) may help '
                             'troubleshooting'), {
                                 'rule': self._name,
                             })
-            return failure
-
-        def return_to_amp(res):
-            return {}
+            transaction.abort()
+            return fail
 
         def log_end(res):
             logger.debug('Rule runner: process ends for rule "%s"', self._name)
@@ -53,7 +51,7 @@ class RuleRunner(object):
             self._rule.process,
             self._dispatcher,
             idxmpp)
-        d.addErrback(abort_transaction)
-        d.addCallbacks(return_to_amp, log_errors)
+        d.addCallback(commit)
+        d.addErrback(abort)
         d.addBoth(log_end)
         return d
