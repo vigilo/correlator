@@ -52,7 +52,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
         - VIGILO_EXIG_VIGILO_COR_0040,
         - VIGILO_EXIG_VIGILO_COR_0060.
     """
-    ctx = context_factory(idnt, database, transaction=False)
+    ctx = context_factory(idnt, transaction=False)
     raw_event_id = yield ctx.get('raw_event_id')
 
     # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :
