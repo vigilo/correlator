@@ -60,7 +60,7 @@ class Context(object):
         -   payload : message brut (XML sérialisé) de l'événement reçu (C{str}).
     """
 
-    def __init__(self, idxmpp, database, transaction=True, timeout=None):
+    def __init__(self, idxmpp, transaction=True, timeout=None):
         """
         Initialisation d'un contexte de corrélation (au moyen de MemcacheD).
 
@@ -69,12 +69,14 @@ class Context(object):
         @type idxmpp: C{basestring}.
         """
         self._connection = MemcachedConnection()
-        self._database = database
         self._transaction = transaction
         self._id = str(idxmpp)
         if timeout is None:
             timeout = settings['correlator'].as_float('context_timeout')
         self._timeout = timeout
+        # Les accès à la bdd ne doivent pas être wrappés, le contexte est déjà
+        # lui-même dans un ThreadWrapper
+        self._database = DummyDatabaseWrapper()
 
     def topology(self):
         """

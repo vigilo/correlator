@@ -46,7 +46,7 @@ class TestApiFunctions(unittest.TestCase):
     def test_contexts(self):
         """Création d'un contexte associé à un nom quelconque"""
         name = str(random.random())
-        ctx = Context(name, database=DummyDatabaseWrapper())
+        ctx = Context(name)
         assert ctx
 
     @deferred(timeout=30)
@@ -93,7 +93,7 @@ class TestApiFunctions(unittest.TestCase):
         DBSession.flush()
 
         # Création d'un contexte
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = Mock()
         ctx._connection.get.side_effect = lambda *a: defer.succeed(None)
         ctx._connection.set.side_effect = lambda *a, **kw: defer.succeed(None)
@@ -131,7 +131,7 @@ class TestApiFunctions(unittest.TestCase):
     @defer.inlineCallbacks
     def test_set_get(self):
         """set/get"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         yield ctx.set("foo", "bar")
         foo = yield ctx.get("foo")
@@ -144,10 +144,10 @@ class TestApiFunctions(unittest.TestCase):
         L'attribut classique est spécifique au contexte
         donc sa valeur n'est pas vue par les autres contextes.
         """
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         yield ctx.set("foo", "bar")
-        ctx2 = Context(43, database=DummyDatabaseWrapper())
+        ctx2 = Context(43)
         ctx2._connection = ConnectionStub()
         foo = yield ctx2.get("foo")
         self.assertEquals(foo, None)
@@ -156,7 +156,7 @@ class TestApiFunctions(unittest.TestCase):
     @defer.inlineCallbacks
     def test_delete(self):
         """La suppression doit fonctionner correctement"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         yield ctx.set("foo", "bar")
         yield ctx.delete("foo")
@@ -167,7 +167,7 @@ class TestApiFunctions(unittest.TestCase):
     @defer.inlineCallbacks
     def test_shared_set_get(self):
         """set/get d'un attribut partagé"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         yield ctx.setShared("foo", "bar")
         foo = yield ctx.getShared("foo")
@@ -177,10 +177,10 @@ class TestApiFunctions(unittest.TestCase):
     @defer.inlineCallbacks
     def test_shared_visibility(self):
         """Visibilité des attributs partagés"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         yield ctx.setShared("foo", "bar")
-        ctx2 = Context(43, database=DummyDatabaseWrapper())
+        ctx2 = Context(43)
         ctx2._connection = ConnectionStub()
         foo = yield ctx2.getShared("foo")
         self.assertEquals(foo, "bar")
@@ -191,7 +191,7 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def test_get_unicode(self):
         """Get sur le contexte (support d'unicode)"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         ctx._connection.get = Mock()
         ctx._connection.get.side_effect = lambda *a: defer.succeed("x")
@@ -207,7 +207,7 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def test_set_unicode(self):
         """Set sur le contexte (support d'unicode)"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         ctx._connection._must_defer = True
         def check(x):
@@ -222,7 +222,7 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def test_delete_unicode(self):
         """Delete sur le contexte (support d'unicode)"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         ctx._connection.delete = Mock()
         ctx._connection.delete.side_effect = lambda *a: defer.succeed("x")
@@ -238,7 +238,7 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def test_getshared_unicode(self):
         """Get partagé sur le contexte (support d'unicode)"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         ctx._connection.get = Mock()
         ctx._connection.get.side_effect = lambda *a: defer.succeed("x")
@@ -254,7 +254,7 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def test_setShared_unicode(self):
         """Set partagé sur le contexte (support d'unicode)"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         ctx._connection._must_defer = True
         def check(x):
@@ -269,7 +269,7 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def test_deleteshared_unicode(self):
         """Delete partagé sur le contexte (support d'unicode)"""
-        ctx = Context(42, database=DummyDatabaseWrapper())
+        ctx = Context(42)
         ctx._connection = ConnectionStub()
         ctx._connection.delete = Mock()
         ctx._connection.delete.side_effect = lambda *a: defer.succeed("x")

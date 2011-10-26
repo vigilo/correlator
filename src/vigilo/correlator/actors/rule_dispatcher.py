@@ -273,7 +273,7 @@ class RuleDispatcher(PubSubSender):
                 return # Provoque le retraitement du message.
             return failure
 
-        ctx = self._context_factory(idxmpp, self._database)
+        ctx = self._context_factory(idxmpp)
         hls_names = set()
         for child in dom[0].iterchildren():
             servicename = child.text
@@ -295,7 +295,7 @@ class RuleDispatcher(PubSubSender):
 
         # On initialise le contexte et on y insère
         # les informations sur l'alerte traitée.
-        ctx = self._context_factory(idxmpp, self._database)
+        ctx = self._context_factory(idxmpp)
 
         attrs = {
             'hostname': 'host',

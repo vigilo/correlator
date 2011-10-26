@@ -52,7 +52,7 @@ NAGIOS_MESSAGE = """
 @defer.inlineCallbacks
 def on_host_down(result, forwarder, database, idnt, ctx=None):
     if ctx is None: # pour les tests unitaires
-        ctx = Context(idnt, database=database)
+        ctx = Context(idnt)
     hostname = yield ctx.get("hostname")
     timestamp = yield ctx.get('timestamp')
     message = _("Host is down")
