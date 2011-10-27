@@ -14,32 +14,25 @@ from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                     add_to_aggregate, OldStateReceived
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.pubsub.xml import NS_EVENT
-from helpers import setup_db, teardown_db, populate_statename
+import helpers
 
 from vigilo.models.tables import State, StateName, Event, SupItem, \
                             LowLevelService, HighLevelService, Host, \
                             CorrEvent
 from vigilo.models.session import DBSession
 
-from vigilo.common.conf import settings
-settings.load_module(__name__)
-
 class TestDbInsertion(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""
 
     def setUp(self):
         print "setting up the database"
-        setup_db()
-        populate_statename()
-        DBSession.flush()
+        helpers.setup_db()
+        helpers.populate_statename()
 
     def tearDown(self):
         print "tearing down the database"
         # Évite que d'anciennes instances viennent perturber le test suivant.
-        DBSession.rollback()
-        DBSession.expunge_all()
-        DBSession.flush()
-        teardown_db()
+        helpers.teardown_db()
 
     def make_dependencies(self):
         """Création de quelques dépendances dans la BDD."""
@@ -141,7 +134,10 @@ class TestDbInsertion(unittest.TestCase):
     <service>Load</service>
     <state>WARNING</state>
     <message>WARNING: Load average is above 4 (4.5)</message>
-</event>""" % {'xmlns': NS_EVENT, 'hls_host': settings['correlator']['nagios_hls_host']}
+</event>""" % {
+            'xmlns': NS_EVENT,
+            'hls_host': helpers.settings['correlator']['nagios_hls_host'],
+        }
 
         # Extraction des informations du messages
         info_dictionary = extract_information(etree.fromstring(xml))
@@ -397,4 +393,3 @@ class TestDbInsertion(unittest.TestCase):
         self.assertTrue(isinstance(result, OldStateReceived))
         supitem = DBSession.query(SupItem).get(idsupitem)
         self.assertEqual(supitem.state.timestamp, ts_recent_dt)
-

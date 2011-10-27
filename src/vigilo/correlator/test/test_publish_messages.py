@@ -12,8 +12,6 @@ import unittest
 from vigilo.correlator.publish_messages import publish_aggregate, \
                                             delete_published_aggregates, \
                                             publish_state
-from helpers import setup_db, teardown_db, populate_statename
-from helpers import RuleDispatcherStub
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, HighLevelService, LowLevelService
@@ -21,16 +19,14 @@ from vigilo.models.tables import State, StateName
 
 from datetime import datetime
 from time import mktime
-
-from vigilo.common.conf import settings
-settings.load_module(__name__)
+import helpers
 
 class TestAggregatesHandlerFunctions(unittest.TestCase):
     """Suite de tests du module publish_messages"""
 
     def setUp(self):
         """Initialisation d'une réplique du RuleDispatcher."""
-        self.forwarder = RuleDispatcherStub()
+        self.forwarder = helpers.RuleDispatcherStub()
 
     def test_publish_aggregate(self):
         """Publication XMPP d'alertes à ajouter à des évènements corrélés"""
@@ -57,10 +53,10 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         """Publication XMPP de l'état d'un item"""
 
         # Initialisation de la BDD
-        setup_db()
+        helpers.setup_db()
 
         # Ajout des noms d'états dans la BDD
-        populate_statename()
+        helpers.populate_statename()
 
         # Ajout d'un hôte dans la BDD
         host1 = Host(
@@ -140,7 +136,8 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         state2 = DBSession.merge(state2)
         DBSession.flush()
 
-        info_dictionary = {"host": settings['correlator']['nagios_hls_host'],
+        info_dictionary = {"host":
+                            helpers.settings['correlator']['nagios_hls_host'],
                            "service": "Connexion",
                            "timestamp": state2.timestamp,
                            "state": StateName.value_to_statename(state2.state),
@@ -151,7 +148,9 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
 
         message = [u"<state xmlns='http://www.projet-vigilo.org/xmlns/state1'>"
             "<timestamp>" + str(int_timestamp) + "</timestamp>"
-            "<host>" + settings['correlator']['nagios_hls_host'] + "</host>"
+            "<host>" +
+                helpers.settings['correlator']['nagios_hls_host'] +
+            "</host>"
             "<service>Connexion</service>"
             "<state>UNKNOWN</state>"
             "<message>UNKNOWN: Connection is in an unknown state</message>"
@@ -194,6 +193,4 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         # l'état du lls1 est bien celui attendu.
         self.assertEqual(self.forwarder.buffer, message)
 
-        DBSession.flush()
-        DBSession.expunge_all()
-        teardown_db()
+        helpers.teardown_db()

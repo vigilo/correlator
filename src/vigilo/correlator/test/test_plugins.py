@@ -11,7 +11,6 @@ import unittest
 from helpers import settings
 
 from vigilo.correlator.registry import get_registry
-
 from vigilo.correlator.rule import Rule
 
 class TestRuleWithNoDependencies(Rule):

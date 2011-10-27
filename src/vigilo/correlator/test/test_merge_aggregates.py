@@ -16,7 +16,7 @@ from twisted.internet import defer
 
 from vigilo.correlator.db_insertion import merge_aggregates
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-from helpers import setup_db, teardown_db, ContextStubFactory
+import helpers
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Event, CorrEvent
@@ -155,16 +155,14 @@ class TestMergeAggregateFunction(unittest.TestCase):
     @deferred(timeout=30)
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
-        setup_db()
-        self.context_factory = ContextStubFactory()
+        helpers.setup_db()
+        self.context_factory = helpers.ContextStubFactory()
         return defer.succeed(None)
 
     @deferred(timeout=30)
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
-        DBSession.flush()
-        DBSession.expunge_all()
-        teardown_db()
+        helpers.teardown_db()
         self.context_factory.reset()
         return defer.succeed(None)
 

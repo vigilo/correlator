@@ -14,7 +14,7 @@ from twisted.internet import defer
 from lxml import etree
 
 from mock import Mock
-from helpers import setup_db, teardown_db, populate_statename
+import helpers
 from vigilo.correlator.test.helpers import ContextStubFactory, \
                                             RuleDispatcherStub
 
@@ -32,8 +32,8 @@ class TestCorrevents(unittest.TestCase):
     def setUp(self):
         """Initialise MemcacheD et la BDD au début de chaque test."""
         super(TestCorrevents, self).setUp()
-        setup_db()
-        populate_statename()
+        helpers.setup_db()
+        helpers.populate_statename()
         self.forwarder = RuleDispatcherStub()
         self.context_factory = ContextStubFactory()
         self.make_deps()
@@ -43,10 +43,7 @@ class TestCorrevents(unittest.TestCase):
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
         super(TestCorrevents, self).tearDown()
-        DBSession.flush()
-        # Évite que d'anciennes instances viennent perturber le test suivant.
-        DBSession.expunge_all()
-        teardown_db()
+        helpers.teardown_db()
         return defer.succeed(None)
 
     def make_deps(self):
@@ -150,4 +147,3 @@ class TestCorrevents(unittest.TestCase):
         LOGGER.debug("Event's state: %r", state)
         self.assertEquals(u'UP', state)
         defer.returnValue(None)
-

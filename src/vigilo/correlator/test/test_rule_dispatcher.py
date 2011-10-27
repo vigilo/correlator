@@ -13,41 +13,22 @@ from mock import Mock
 from vigilo.models import tables
 from vigilo.models.session import DBSession
 from vigilo.pubsub.xml import NS_EVENT
-from vigilo.connector.forwarder import PubSubSender
-
-from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
-from vigilo.correlator.db_thread import DummyDatabaseWrapper
-from vigilo.correlator.actors.executor import Executor
-
-from helpers import setup_db, teardown_db, populate_statename, settings
-
-
-class TestableRuleDispatcher(RuleDispatcher):
-    def __init__(self):
-        PubSubSender.__init__(self)
-        self.max_send_simult = 1
-        self.tree_end = None
-        self._database = DummyDatabaseWrapper(True)
-        self._executor = Executor(self)
+import helpers
 
 class RuleDispatcherTestCase(unittest.TestCase):
 
     @deferred(timeout=30)
     def setUp(self):
-        setup_db()
-        populate_statename()
+        helpers.setup_db()
+        helpers.populate_statename()
         self._insert_test_data()
         DBSession.flush()
-        self.rd = TestableRuleDispatcher()
+        self.rd = helpers.TestableRuleDispatcher()
         return defer.succeed(None)
 
     @deferred(timeout=30)
     def tearDown(self):
-        # Évite que d'anciennes instances viennent perturber le test suivant.
-        DBSession.rollback()
-        DBSession.expunge_all()
-        DBSession.flush()
-        teardown_db()
+        helpers.teardown_db()
         return defer.succeed(None)
 
     def _insert_test_data(self):

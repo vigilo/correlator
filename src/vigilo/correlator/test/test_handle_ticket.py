@@ -10,12 +10,12 @@ import unittest
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, Event, EventHistory, CorrEvent, StateName
 
-from vigilo.correlator.handle_ticket import handle_ticket 
-from helpers import setup_db, teardown_db
-    
+from vigilo.correlator.handle_ticket import handle_ticket
+import helpers
+
 class TestHandleTicket(unittest.TestCase):
     """Test des méthodes du module 'handle_ticket'"""
-    
+
     def add_data(self):
         """Ajout des données dans la base avant les tests"""
         DBSession.add(StateName(statename=u'OK', order=1))
@@ -32,17 +32,17 @@ class TestHandleTicket(unittest.TestCase):
         )
         DBSession.add(self.host)
         DBSession.flush()
-        
+
         self.event = Event(
-            idsupitem = self.host.idhost, 
+            idsupitem = self.host.idhost,
             current_state = 2,
             message = 'WARNING',
             timestamp = datetime.now(),
         )
         DBSession.add(self.event)
         DBSession.flush()
-        
-        self.events_aggregate = CorrEvent( 
+
+        self.events_aggregate = CorrEvent(
             idcause = self.event.idevent,
             impact = 1,
             priority = 1,
@@ -54,18 +54,15 @@ class TestHandleTicket(unittest.TestCase):
         self.events_aggregate.events.append(self.event)
         DBSession.add(self.events_aggregate)
         DBSession.flush()
-    
+
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
-        setup_db()
+        helpers.setup_db()
         self.add_data()
-        
+
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
-        DBSession.expunge_all()
-        DBSession.rollback()
-        DBSession.flush()
-        teardown_db()
+        helpers.teardown_db()
 
     def test_message_reception(self):
         """
@@ -73,32 +70,31 @@ class TestHandleTicket(unittest.TestCase):
         """
         # On vérifie que la table EventHistory est bien vide.
         self.assertEqual(DBSession.query(EventHistory.idhistory).count(), 0)
-        
+
         # On initialise les données du message.
         info_dictionary = {
-            'timestamp': datetime.now(), 
+            'timestamp': datetime.now(),
             'impacted_HLS': '',
-            'ticket_id': u'azerty1234', 
+            'ticket_id': u'azerty1234',
             'acknowledgement_status': 'foo',
-            'message': 'bar',                  
+            'message': 'bar',
         }
-        
+
         # On traite le message.
         handle_ticket(info_dictionary)
-        
+
         # On vérifie que la table EventHistory
         # contient bien un enregistrement.
         self.assertEqual(DBSession.query(EventHistory.idhistory).count(), 1)
-        
+
         # On vérifie que les données de cet
         # enregistrement sont bien celles attendues.
         history = DBSession.query(EventHistory).one()
         self.assertEqual(history.type_action, u'Ticket change notification')
         self.assertEqual(history.idevent, self.events_aggregate.idcorrevent)
-        self.assertEqual(history.text, '%r;%r;%r' % 
-                            (info_dictionary['acknowledgement_status'], 
-                             info_dictionary['message'], 
+        self.assertEqual(history.text, '%r;%r;%r' %
+                            (info_dictionary['acknowledgement_status'],
+                             info_dictionary['message'],
                              info_dictionary['impacted_HLS']))
         self.assertEqual(history.timestamp, info_dictionary['timestamp'])
         self.assertFalse(history.username)
-

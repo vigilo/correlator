@@ -13,9 +13,7 @@ from datetime import datetime
 from lxml import etree
 import logging
 
-from helpers import settings, populate_statename
-from helpers import setup_db, teardown_db
-from helpers import ContextStubFactory, RuleDispatcherStub
+import helpers
 from vigilo.models.session import DBSession
 from vigilo.models.tables import LowLevelService, Host, \
                                     Event, Change, SupItem, State
@@ -96,7 +94,7 @@ class TestLogging(unittest.TestCase):
         if host_name:
             infos['host'] = host_name
         else:
-            infos['host'] = settings['correlator']['nagios_hls_host']
+            infos['host'] = helpers.settings['correlator']['nagios_hls_host']
 
         payload = """
 <event xmlns="%(xmlns)s">
@@ -141,7 +139,7 @@ class TestLogging(unittest.TestCase):
 
         # On force le traitement du message, par la fonction make_correvent,
         # comme s'il avait été traité au préalable par le rule_dispatcher.
-        rd = RuleDispatcherStub()
+        rd = helpers.RuleDispatcherStub()
 
         LOGGER.info('Creating a new correlated event')
         yield make_correvent(rd, DummyDatabaseWrapper(True), item,
@@ -156,7 +154,7 @@ class TestLogging(unittest.TestCase):
         """
 
         # Ajout d'états dans la BDD.
-        populate_statename()
+        helpers.populate_statename()
 
         # Ajout de la date de dernière
         # modification de la topologie dans la BDD.
@@ -193,8 +191,8 @@ class TestLogging(unittest.TestCase):
         """Initialisation des tests"""
 
         # On prépare la base de données et le serveur MemcacheD.
-        setup_db()
-        self.context_factory = ContextStubFactory()
+        helpers.setup_db()
+        self.context_factory = helpers.ContextStubFactory()
 
         # On récupère le logger 'vigilo.correlator.syslog'
         # défini dans les settings.
@@ -223,11 +221,7 @@ class TestLogging(unittest.TestCase):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
         # On dissocie le handler du logger.
         self.logger.removeHandler(self.handler)
-
-        DBSession.flush()
-        # Évite que d'anciennes instances viennent perturber le test suivant.
-        DBSession.expunge_all()
-        teardown_db()
+        helpers.teardown_db()
         return defer.succeed(None)
 
     @deferred(timeout=30)

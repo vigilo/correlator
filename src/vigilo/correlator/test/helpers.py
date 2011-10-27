@@ -24,9 +24,12 @@ configure_db(settings['database'], 'sqlalchemy_')
 from vigilo.models.session import metadata, DBSession
 from vigilo.models.tables import StateName
 
+from vigilo.connector.forwarder import PubSubSender
 from vigilo.correlator.context import Context
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
+from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
+from vigilo.correlator.actors.executor import Executor
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
@@ -112,6 +115,9 @@ def setup_db():
 #Teardown that database
 def teardown_db():
     """Supprime toutes les tables du modèle de la BDD."""
+    DBSession.expunge_all()
+    DBSession.rollback()
+    DBSession.flush()
     metadata.drop_all()
 
 
@@ -190,6 +196,14 @@ class RuleDispatcherStub():
         self.buffer = []
     def registerCallback(self, fn, *args, **kwargs):
         pass
+
+class TestableRuleDispatcher(RuleDispatcher):
+    def __init__(self):
+        PubSubSender.__init__(self)
+        self.max_send_simult = 1
+        self.tree_end = None
+        self._database = DummyDatabaseWrapper(True)
+        self._executor = Executor(self)
 
 @defer.inlineCallbacks
 def setup_context(factory, message_id, context_keys):

@@ -17,15 +17,14 @@ from vigilo.models.tables import Event, CorrEvent
 
 from vigilo.correlator.topology import Topology
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-from helpers import setup_db, teardown_db, populate_statename, \
-                    ContextStubFactory
+import helpers
 
 class TopologyTestHelpers(object):
     @deferred(timeout=30)
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
-        setup_db()
-        populate_statename()
+        helpers.setup_db()
+        helpers.populate_statename()
 
         # Création de 5 couples host/service
         self.add_services()
@@ -37,7 +36,7 @@ class TopologyTestHelpers(object):
         # On prépare la topology.
         self.topology = Topology()
         self.topology.generate()
-        self.context_factory = ContextStubFactory()
+        self.context_factory = helpers.ContextStubFactory()
         self.database = DummyDatabaseWrapper(True, async=False)
         return defer.succeed(None)
 
@@ -45,10 +44,7 @@ class TopologyTestHelpers(object):
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
         self.context_factory.reset()
-        DBSession.expunge_all()
-        DBSession.rollback()
-        DBSession.flush()
-        teardown_db()
+        helpers.teardown_db()
         return defer.succeed(None)
 
     def add_services(self):

@@ -16,9 +16,7 @@ try:
 except ImportError:
     import pickle
 
-from helpers import settings
-from helpers import setup_mc, teardown_mc
-from helpers import setup_db, teardown_db
+import helpers
 from vigilo.correlator.memcached_connection import MemcachedConnection
 
 from vigilo.common.logging import get_logger
@@ -35,8 +33,8 @@ class TestMemcachedConnection(unittest.TestCase):
     @deferred(timeout=30)
     def setUp(self):
         super(TestMemcachedConnection, self).setUp()
-        setup_db()
-        setup_mc()
+        helpers.setup_db()
+        helpers.setup_mc()
         self.cache = MemcachedConnection()
         return defer.succeed(None)
 
@@ -45,8 +43,8 @@ class TestMemcachedConnection(unittest.TestCase):
         """Arrêt du serveur Memcached à la fin de chaque test."""
         super(TestMemcachedConnection, self).tearDown()
         self.cache = None
-        teardown_mc()
-        teardown_db()
+        helpers.teardown_mc()
+        helpers.teardown_db()
         return defer.succeed(None)
 
     @deferred(timeout=10)
@@ -73,8 +71,8 @@ class TestMemcachedConnection(unittest.TestCase):
 
         # On vérifie que la clé a bien été ajoutée
         # et qu'elle est bien associée à la valeur 'value'.
-        host = settings['correlator']['memcached_host']
-        port = settings['correlator'].as_int('memcached_port')
+        host = helpers.settings['correlator']['memcached_host']
+        port = helpers.settings['correlator'].as_int('memcached_port')
         connection = yield protocol.ClientCreator(
                 reactor, MemCacheProtocol
             ).connectTCP(host, port)
@@ -93,8 +91,8 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_get"
 
         # On associe la valeur 'value' à la clé 'key'.
-        host = settings['correlator']['memcached_host']
-        port = settings['correlator'].as_int('memcached_port')
+        host = helpers.settings['correlator']['memcached_host']
+        port = helpers.settings['correlator'].as_int('memcached_port')
         connection = yield protocol.ClientCreator(
                 reactor, MemCacheProtocol
             ).connectTCP(host, port)
@@ -118,8 +116,8 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_delete"
 
         # On ajoute la clé 'key'.
-        host = settings['correlator']['memcached_host']
-        port = settings['correlator'].as_int('memcached_port')
+        host = helpers.settings['correlator']['memcached_host']
+        port = helpers.settings['correlator'].as_int('memcached_port')
         connection = yield protocol.ClientCreator(
                 reactor, MemCacheProtocol
             ).connectTCP(host, port)
@@ -158,4 +156,3 @@ class TestMemcachedConnection(unittest.TestCase):
         # entre temps (reconnexion automatique).
         value = yield self.cache.get("test")
         self.assertEquals(42, value)
-
