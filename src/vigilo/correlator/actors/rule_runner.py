@@ -36,8 +36,9 @@ class RuleRunner(object):
             logger.error(_('Got an exception while running rule ''"%(rule)s". '
                             'Running the correlator in the foreground '
                             '(service vigilo-correlator debug) may help '
-                            'troubleshooting'), {
+                            'troubleshooting (%(error)s)'), {
                                 'rule': self._name,
+                                'error': fail.getErrorMessage(),
                             })
             transaction.abort()
             return fail
