@@ -58,6 +58,14 @@ class TestMemcachedConnection(unittest.TestCase):
         self.assertEqual(conn, self.cache)
         return defer.succeed(None)
 
+    def _connect(self):
+        host = helpers.settings['correlator']['memcached_host']
+        port = helpers.settings['correlator'].as_int('memcached_port')
+        d_connection = protocol.ClientCreator(
+                reactor, MemCacheProtocol
+            ).connectTCP(host, port)
+        return d_connection
+
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_set(self):
@@ -71,12 +79,8 @@ class TestMemcachedConnection(unittest.TestCase):
 
         # On vérifie que la clé a bien été ajoutée
         # et qu'elle est bien associée à la valeur 'value'.
-        host = helpers.settings['correlator']['memcached_host']
-        port = helpers.settings['correlator'].as_int('memcached_port')
-        connection = yield protocol.ClientCreator(
-                reactor, MemCacheProtocol
-            ).connectTCP(host, port)
-        LOGGER.info("Connected to %s:%d using %r", host, port, connection)
+        connection = yield self._connect()
+        LOGGER.info("Connected using %r", connection)
         received = yield connection.get(key)
         LOGGER.info("Received: %r", received)
         self.assertEqual(pickle.loads(received[-1]), value)
@@ -91,12 +95,8 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_get"
 
         # On associe la valeur 'value' à la clé 'key'.
-        host = helpers.settings['correlator']['memcached_host']
-        port = helpers.settings['correlator'].as_int('memcached_port')
-        connection = yield protocol.ClientCreator(
-                reactor, MemCacheProtocol
-            ).connectTCP(host, port)
-        LOGGER.info("Connected to %s:%d using %r", host, port, connection)
+        connection = yield self._connect()
+        LOGGER.info("Connected using %r", connection)
         res = yield connection.set(key, pickle.dumps(value))
         LOGGER.info("Success? %r", res)
 
@@ -116,12 +116,8 @@ class TestMemcachedConnection(unittest.TestCase):
         value = "test_delete"
 
         # On ajoute la clé 'key'.
-        host = helpers.settings['correlator']['memcached_host']
-        port = helpers.settings['correlator'].as_int('memcached_port')
-        connection = yield protocol.ClientCreator(
-                reactor, MemCacheProtocol
-            ).connectTCP(host, port)
-        LOGGER.info("Connected to %s:%d using %r", host, port, connection)
+        connection = yield self._connect()
+        LOGGER.info("Connected using %r", connection)
         yield connection.set(key, value)
 
         # On tente à nouveau de supprimer la clé 'key'
@@ -130,6 +126,21 @@ class TestMemcachedConnection(unittest.TestCase):
         # On s'assure que la clé a bien été supprimée
         value = yield connection.get(key)
         self.assertEquals(None, value[-1])
+
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
+    def test_key_spaces(self):
+        """Gestion des espaces dans une clé"""
+        # On initialise le nom de la clé et de la valeur associée
+        key = "vigilo test espace"
+        value = "test_espace"
+
+        set_value = yield self.cache.set(key, value)
+        LOGGER.info("'%s' set to '%s'", key, set_value)
+        get_value = yield self.cache.get(key, value)
+        LOGGER.info("'%s' value is '%s'", key, get_value)
+        yield self.cache.delete(key)
+        LOGGER.info("'%s' deleted", key)
 
     @deferred(timeout=30)
     @defer.inlineCallbacks

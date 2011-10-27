@@ -12,6 +12,7 @@ except ImportError:
 
 from datetime import datetime
 import time
+import urllib
 from twisted.internet import defer, reactor, protocol
 from twisted.protocols.memcache import MemCacheProtocol
 
@@ -231,6 +232,7 @@ class MemcachedConnection(object):
                         'txn': transaction,
                     })
 
+        key = urllib.quote_plus(key)
         # On sérialise la valeur avant son enregistrement
         pick_value = pickle.dumps(value)
         exp_time = self.__convert_to_datetime(kwargs.pop('time', None))
@@ -278,6 +280,7 @@ class MemcachedConnection(object):
                 return None
             return pickle.loads(str(result[-1]))
 
+        key = urllib.quote_plus(key)
         d = self._cache.getInstance()
         d.addCallback(lambda cache: cache.get(key))
         d.addCallback(_check_result, key, transaction, flags)
@@ -300,6 +303,7 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
+        key = urllib.quote_plus(key)
         d = self._cache.getInstance()
         d.addCallback(lambda cache: cache.delete(key))
         return d
