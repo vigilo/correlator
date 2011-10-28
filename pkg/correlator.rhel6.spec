@@ -86,6 +86,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_sysconfdir}/vigilo/
 %dir %{_sysconfdir}/vigilo/%{module}
 %attr(640,root,%{name}) %config(noreplace) %{_sysconfdir}/vigilo/%{module}/settings.ini
+%dir %{_sysconfdir}/vigilo/%{module}/plugins
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %{python_sitelib}/vigilo*
 %{python_sitelib}/twisted*

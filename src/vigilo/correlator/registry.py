@@ -7,6 +7,7 @@ Un module permettant de gérer les règles de corrélation
 ainsi que les dépendances entre ces règles.
 """
 
+import sys
 import networkx
 import pkg_resources
 
@@ -168,6 +169,12 @@ class Registry(object):
 
     def _load_from_settings(self):
         """Charge le registre depuis le fichier de settings"""
+
+        # permet de placer les règles directement dans le dossier de plugins
+        plugins_path = settings["correlator"].get("pluginsdir",
+                                "/etc/vigilo/correlator/plugins")
+        sys.path.append(plugins_path)
+
         for rule_name, rule_class in settings.get('rules', {}).iteritems():
             try:
                 ep = pkg_resources.EntryPoint.parse('%s = %s'
@@ -184,6 +191,8 @@ class Registry(object):
                 continue
 
             self.rules.register(rule(confkey=rule_name))
+
+        del sys.path[-1]
 
     @property
     def rules(self):

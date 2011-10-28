@@ -73,6 +73,7 @@ setup(name='vigilo-correlator',
         data_files=[
                     (os.path.join(sysconfdir, "vigilo/correlator"),
                         ["settings.ini"]),
+                    (os.path.join(sysconfdir, "vigilo/correlator/plugins"), []),
                     (os.path.join(localstatedir, "lib/vigilo/correlator"), []),
                     (os.path.join(localstatedir, "run/vigilo-correlator"), []),
                    ] + install_i18n("i18n", os.path.join(sys.prefix, 'share', 'locale')),
