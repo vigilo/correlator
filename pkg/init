@@ -54,7 +54,7 @@ start() {
     fi
     [ -n "$NUM" ] && SERVICENAME="--name ${NAME}${NUM}"
 
-    echo -n "Starting $NAME: "
+    echo -n "Starting ${NAME}${NUM}: "
     su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE $TWISTD_OPTIONS $TAPNAME $SERVICENAME $OPTIONS $OUTPUT"
     RETVAL=$?
     [ "$1" = "debug" ] && return
@@ -79,7 +79,7 @@ start() {
 }
 
 stop() {
-    echo -n "Shutting down $NAME: "
+    echo -n "Shutting down ${NAME}${NUM}: "
     killproc -p $PID_FILE $NAME
     RETVAL=$?
     echo
@@ -87,7 +87,7 @@ stop() {
 }
 
 reload() {
-    echo -n "Reloading $NAME: "
+    echo -n "Reloading ${NAME}${NUM}: "
     killproc -p $PID_FILE $NAME -HUP
     RETVAL=$?
     echo
@@ -103,7 +103,7 @@ case "$1" in
         stop
     ;;
     status)
-        status -p $PID_FILE $NAME
+        status -p $PID_FILE ${NAME}${NUM}
     ;;
     reload)
         reload
