@@ -15,8 +15,6 @@ from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
-from vigilo.correlator.topology import Topology
-from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.correlator.memcached_connection import MemcachedConnection
 
 LOGGER = get_logger(__name__)
@@ -40,8 +38,6 @@ class Context(object):
     pour alimenter la base de données.
 
     Les attributs prédéfinis sont :
-        -   last_topology_update : date de dernière mise à jour
-            de l'arbre topologique (L{datetime}).
         -   raw_event_id : identifiant de l'événement brut (C{int}).
         -   successors_aggregates : liste des identifiants des agrégats
             qui doivent être fusionnés avec celui de l'événement courant
@@ -56,8 +52,9 @@ class Context(object):
             niveau impactés par l'événement (C{list} of C{int}).
         -   occurrences_count : nombre d'occurrences de l'alerte (C{int}).
         -   priority : priorité de l'événement corrélé (C{int}).
-        -   no_alert : empêche la génération d'une alerte corrélée.
+        -   no_alert : empêche la génération d'une alerte corrélée (C{bool}).
         -   payload : message brut (XML sérialisé) de l'événement reçu (C{str}).
+        -   idsupitem : identifiant de l'élément supervisé impacté (C{int}).
     """
 
     def __init__(self, idxmpp, transaction=True, timeout=None):
@@ -74,65 +71,6 @@ class Context(object):
         if timeout is None:
             timeout = settings['correlator'].as_float('context_timeout')
         self._timeout = timeout
-        # Les accès à la bdd ne doivent pas être wrappés, le contexte est déjà
-        # lui-même dans un ThreadWrapper
-        self._database = DummyDatabaseWrapper()
-
-    def topology(self):
-        """
-        Récupère la topologie associée à ce contexte.
-        @rtype: L{defer.Deferred}.
-        """
-        topology = self._connection.get(
-            'vigilo:topology',
-            self._transaction,
-        )
-
-        def _generate(topo):
-            LOGGER.debug("Re-generating the topology")
-            return self._database.run(
-                topo.generate,
-                transaction=self._transaction
-            )
-
-        def _update_ctx(_dummy, topo):
-            LOGGER.debug("Updating the cache with the new topology")
-            dl = defer.DeferredList([
-                self._connection.set(
-                    'vigilo:topology',
-                    topo,
-                    transaction=self._transaction,
-                ),
-                self._connection.set(
-                    'vigilo:last_topology_update',
-                    datetime.now(),
-                    transaction=self._transaction,
-                ),
-            ])
-            dl.addCallback(lambda _dummy: topo)
-            return dl
-
-        def _check_existence(topo):
-            LOGGER.debug("Current topology: %r", topo)
-            if topo is None:
-                topo = Topology()
-                d = _generate(topo)
-                d.addCallback(_update_ctx, topo)
-                return d
-            return topo
-
-        topology.addCallback(_check_existence)
-        return topology
-
-    def last_topology_update(self):
-        """
-        Récupère la date de la dernière mise à jour de l'arbre topologique.
-        @rtype: L{datetime}.
-        """
-        return self._connection.get(
-            'vigilo:last_topology_update',
-            self._transaction,
-        )
 
     def get(self, prop):
         """
