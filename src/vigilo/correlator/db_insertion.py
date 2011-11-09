@@ -37,6 +37,8 @@ class OldStateReceived(object):
         self.current = current
         self.received = received
 
+class NoProblemException(Exception):
+    pass
 
 def insert_event(info_dictionary):
     """
@@ -98,7 +100,7 @@ def insert_event(info_dictionary):
             LOGGER.info(_(u'Ignoring request to create a new event '
                             'with state "%s" (nothing alarming here)'),
                             info_dictionary['state'])
-            return None
+            raise NoProblemException(info_dictionary.copy())
         # Sinon, il s'agit d'un nouvel incident, on le prépare.
         event = Event()
         event.idsupitem = info_dictionary['idsupitem']
@@ -124,13 +126,8 @@ def insert_event(info_dictionary):
     event.current_state = new_state_value
     event.message = info_dictionary['message']
 
-    # Vaudra None pour un nouvel événement tant qu'on
-    # a pas fait un DBSession.add() + DBSession.flush().
-    event_id = event.idevent
-
     # Sauvegarde de l'évènement.
     DBSession.add(event)
-    DBSession.flush()
 
     if add_history:
         history = EventHistory()
@@ -143,8 +140,10 @@ def insert_event(info_dictionary):
         history.text = info_dictionary['message']
         history.timestamp = info_dictionary['timestamp']
         history.username = None
-        history.idevent = event.idevent
+        history.event = event
         DBSession.add(history)
+
+    DBSession.flush()
     return event.idevent
 
 def insert_hls_history(info_dictionary):

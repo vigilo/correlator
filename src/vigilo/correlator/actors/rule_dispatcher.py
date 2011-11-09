@@ -40,7 +40,8 @@ from vigilo.correlator.actors import executor
 from vigilo.correlator.context import Context
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-                                    insert_hls_history, OldStateReceived
+                                    insert_hls_history, OldStateReceived, \
+                                    NoProblemException
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
 from vigilo.correlator import registry
@@ -187,15 +188,15 @@ class RuleDispatcher(PubSubSender):
                 continue
             self.forwardMessage(xml)
 
+    def _processException(self, failure):
+        if not failure.check(KeyboardInterrupt):
+            LOGGER.error(_('Unexpected error: %s'), failure.getErrorMessage())
+        return failure
+
     def processMessage(self, xml):
-        try:
-            return self._processMessage(xml)
-        except KeyboardInterrupt:
-            raise
-        except:
-            # L'exception est loggée, mais le message est ignoré
-            # afin de ne pas bloquer le corrélateur.
-            LOGGER.exception("Runtime exception")
+        res = defer.maybeDeferred(self._processMessage, xml)
+        res.addErrback(self._processException)
+        return res
 
     def _processMessage(self, xml):
         """
@@ -379,6 +380,18 @@ class RuleDispatcher(PubSubSender):
         d.addCallback(commit)
         d.addCallback(self._do_correl, previous_state, info_dictionary,
                                        idxmpp, dom, xml, ctx)
+
+        def no_problem(fail):
+            """
+            Court-circuite l'exécution des règles de corrélation
+            lorsqu'aucun événement corrélé n'existe en base de données
+            et qu'on reçoit un message indiquant un état nominal (OK/UP).
+            """
+            if fail.check(NoProblemException):
+                self._messages_sent += 1
+                return None
+            return fail
+        d.addErrback(no_problem)
         return d
 
     def _do_correl(self, raw_event_id, previous_state, info_dictionary,
@@ -583,9 +596,6 @@ class RuleDispatcher(PubSubSender):
                     error_desc)
                 self.queue.append(xml)
                 return failure
-
-            LOGGER.error(_('Unexpected error: %s'),
-                failure.getErrorMessage())
             return failure
 
         d = self._database.run(func, *args, **kwargs)

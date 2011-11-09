@@ -11,7 +11,8 @@ from lxml import etree
 
 from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-                                    add_to_aggregate, OldStateReceived
+                                    add_to_aggregate, OldStateReceived, \
+                                    NoProblemException
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.pubsub.xml import NS_EVENT
 import helpers
@@ -392,3 +393,23 @@ class TestDbInsertion(unittest.TestCase):
         self.assertTrue(isinstance(result, OldStateReceived))
         supitem = DBSession.query(SupItem).get(idsupitem)
         self.assertEqual(supitem.state.timestamp, ts_recent_dt)
+
+    def test_no_problem_exception(self):
+        """Exception à réception d'une alerte n'indiquant aucun problème."""
+        self.make_dependencies()
+        xml = """
+<event xmlns="%(xmlns)s">
+    <timestamp>%(ts)s</timestamp>
+    <host>server.example.com</host>
+    <service>Load</service>
+    <state>OK</state>
+    <message>No problem here</message>
+</event>""" % {'xmlns': NS_EVENT, "ts": int(time.time())}
+
+        # Extraction des informations du messages
+        info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary['idsupitem'] = SupItem.get_supitem(
+            info_dictionary['host'],
+            info_dictionary['service']
+        )
+        self.assertRaises(NoProblemException, insert_event, info_dictionary)

@@ -95,7 +95,6 @@ class DatabaseWrapper(object):
                 if txn:
                     transaction.abort()
                 result = d.errback, Failure()
-                logger.error(result[1])
             self.queue.task_done()
             reactor.callFromThread(*result)
 
