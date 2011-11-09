@@ -225,9 +225,12 @@ class MemcachedConnection(object):
         @return: Un entier non nul si l'enregistrement a réussi.
         @rtype: C{int}
         """
+        if isinstance(key, unicode):
+            key = key.encode('utf-8')
+
         LOGGER.debug(_("Trying to set value '%(value)s' for key '%(key)s' "
                         "(transaction=%(txn)r)."), {
-                        'key': key,
+                        'key': key.decode('utf-8', 'replace'),
                         'value': value,
                         'txn': transaction,
                     })
@@ -265,10 +268,12 @@ class MemcachedConnection(object):
         @return: La valeur associée à la clé 'key', ou None.
         @rtype: C{str} || None
         """
+        if isinstance(key, unicode):
+            key = key.encode('utf-8')
 
         LOGGER.debug(_("Trying to get the value of the key '%(key)s'"
                         " (transaction=%(txn)r)."), {
-                            'key': key,
+                            'key': key.decode('utf-8', 'replace'),
                             'txn': transaction,
                         })
 
@@ -296,10 +301,12 @@ class MemcachedConnection(object):
         @return: Un entier non nul si la suppression a réussi.
         @rtype: C{int}
         """
+        if isinstance(key, unicode):
+            key = key.encode('utf-8')
 
         LOGGER.debug(_("Trying to delete the key '%(key)s' "
                         "(transaction=%(txn)r)."), {
-                            'key': key,
+                            'key': key.decode('utf-8', 'replace'),
                             'txn': transaction,
                         })
 

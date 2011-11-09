@@ -88,8 +88,7 @@ class Context(object):
             return object.__getattribute__(self, prop)
 
         key = 'vigilo:%s:%s' % (prop, self._id)
-        return self._connection.get(key.encode("utf8"),
-                                    self._transaction)
+        return self._connection.get(key, self._transaction)
 
     def set(self, prop, value, timeout=NoTimeoutOverride):
         """
@@ -110,7 +109,7 @@ class Context(object):
         if timeout is NoTimeoutOverride:
             timeout = self._timeout
         return self._connection.set(
-            key.encode("utf8"),
+            key,
             value,
             self._transaction,
             time=timeout)
@@ -124,8 +123,7 @@ class Context(object):
         @type prop: C{str}
         """
         key = 'vigilo:%s:%s' % (prop, self._id)
-        return self._connection.delete(key.encode("utf8"),
-                                       self._transaction)
+        return self._connection.delete(key, self._transaction)
 
     def getShared(self, prop):
         """
@@ -138,8 +136,7 @@ class Context(object):
         @rtype: C{mixed}
         """
         key = 'shared:%s' % prop
-        return self._connection.get(key.encode("utf8"),
-                                    self._transaction)
+        return self._connection.get(key, self._transaction)
 
     def setShared(self, prop, value, timeout=NoTimeoutOverride):
         """
@@ -160,7 +157,7 @@ class Context(object):
         if timeout is NoTimeoutOverride:
             timeout = self._timeout
         return self._connection.set(
-            key.encode("utf8"),
+            key,
             value,
             self._transaction,
             time=timeout)
@@ -174,5 +171,4 @@ class Context(object):
         @type prop: C{str}
         """
         key = 'shared:%s' % prop
-        return self._connection.delete(key.encode("utf8"),
-                                       self._transaction)
+        return self._connection.delete(key, self._transaction)

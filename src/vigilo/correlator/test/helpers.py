@@ -14,6 +14,7 @@ import socket
 import nose
 
 from twisted.internet import defer, reactor
+from mock import Mock
 
 from vigilo.common.conf import settings
 settings.load_file('settings_tests.ini')
@@ -207,6 +208,35 @@ class RuleDispatcherStub(RuleDispatcher):
 
     def doWork(self, f, *args, **kwargs):
         return defer.maybeDeferred(f, *args, **kwargs)
+
+
+class MemcachedStub(object):
+    def _get(self, *a):
+        LOGGER.debug("Memcached GET: %r", a)
+        # La 2ème valeur correspond à la chaîne  "bar" en pickle.
+        return defer.succeed( (1, "S'bar'\np1\n.") )
+
+    def _set(self, *a):
+        LOGGER.debug("Memcached SET: %r", a)
+        return defer.succeed(True)
+
+    def _delete(self, *a):
+        LOGGER.debug("Memcached DELETE: %r", a)
+        return defer.succeed(True)
+
+    get = Mock(side_effect=_get)
+    set = Mock(side_effect=_set)
+    delete = Mock(side_effect=_delete)
+
+    @classmethod
+    def getInstance(cls):
+        return defer.succeed(cls())
+
+class MemcachedConnectionStub(MemcachedConnection):
+    def __new__(cls, *args, **kwargs):
+        cls.instance = object.__new__(cls)
+        cls.instance._cache = MemcachedStub()
+        return cls.instance
 
 @defer.inlineCallbacks
 def setup_context(factory, message_id, context_keys):

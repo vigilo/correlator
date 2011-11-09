@@ -25,8 +25,8 @@ class RuleRunner(object):
 
     def run(self, idxmpp):
         logger = get_logger(__name__)
-        logger.debug('Rule runner: process begins for rule "%s" (msgid=%r)',
-                    self._name, idxmpp)
+        logger.debug(u'Rule runner: process begins for rule "%s" (msgid=%r)',
+                     self._name, idxmpp)
 
         def commit(res):
             transaction.commit()
@@ -44,7 +44,7 @@ class RuleRunner(object):
             return fail
 
         def log_end(res):
-            logger.debug('Rule runner: process ends for rule "%s"', self._name)
+            logger.debug(u'Rule runner: process ends for rule "%s"', self._name)
             return res
 
         transaction.begin()

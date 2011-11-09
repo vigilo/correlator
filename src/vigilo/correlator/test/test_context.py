@@ -19,9 +19,12 @@ from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, Dependency, DependencyGroup
 from vigilo.correlator.topology import Topology
 from vigilo.correlator.context import Context
-from vigilo.correlator.test.helpers import ConnectionStub
+from vigilo.correlator.test.helpers import ConnectionStub, \
+                                            MemcachedConnectionStub
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
+from vigilo.common.logging import get_logger
+LOGGER = get_logger(__name__)
 
 class TestApiFunctions(unittest.TestCase):
     """
@@ -114,14 +117,13 @@ class TestApiFunctions(unittest.TestCase):
     def test_get_unicode(self):
         """Get sur le contexte (support d'unicode)"""
         ctx = Context(42)
-        ctx._connection = ConnectionStub()
-        ctx._connection.get = Mock()
-        ctx._connection.get.side_effect = lambda *a: defer.succeed("x")
+        ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection.get.call_args)
-            arg = ctx._connection.get.call_args[0][0]
-            self.assertFalse(isinstance(arg, unicode),
-                    "Toutes les clés doivent être des str, pas d'unicode")
+            print repr(ctx._connection._cache.get.call_args)
+            key = ctx._connection._cache.get.call_args[0][0]
+            self.assertTrue(isinstance(key, str),
+                    "Toutes les clés doivent être des str")
+            self.assertEquals('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
         d = ctx.get(u"é à è")
         d.addCallback(check)
         return d
@@ -130,13 +132,13 @@ class TestApiFunctions(unittest.TestCase):
     def test_set_unicode(self):
         """Set sur le contexte (support d'unicode)"""
         ctx = Context(42)
-        ctx._connection = ConnectionStub()
-        ctx._connection._must_defer = True
+        ctx._connection = MemcachedConnectionStub()
         def check(x):
-            for ctxkey in ctx._connection.data.keys():
-                print repr(ctxkey)
-                self.assertFalse(isinstance(ctxkey, unicode),
-                        "Toutes les clés doivent être des str, pas d'unicode")
+            print repr(ctx._connection._cache.set.call_args)
+            key = ctx._connection._cache.set.call_args[0][0]
+            self.assertFalse(isinstance(key, unicode),
+                    "Toutes les clés doivent être des str")
+            self.assertEquals('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
         d = ctx.set(u"é à è", "bar")
         d.addCallback(check)
         return d
@@ -145,14 +147,14 @@ class TestApiFunctions(unittest.TestCase):
     def test_delete_unicode(self):
         """Delete sur le contexte (support d'unicode)"""
         ctx = Context(42)
-        ctx._connection = ConnectionStub()
-        ctx._connection.delete = Mock()
-        ctx._connection.delete.side_effect = lambda *a: defer.succeed("x")
+        ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection.delete.call_args)
-            arg = ctx._connection.delete.call_args[0][0]
-            self.assertFalse(isinstance(arg, unicode),
-                    "Toutes les clés doivent être des str, pas d'unicode")
+            print repr(ctx._connection._cache.delete.call_args)
+            key = ctx._connection._cache.delete.call_args[0][0]
+            self.assertTrue(
+                isinstance(key, str),
+                "Toutes les clés doivent être des str")
+            self.assertEquals('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
         d = ctx.delete(u"é à è")
         d.addCallback(check)
         return d
@@ -161,14 +163,14 @@ class TestApiFunctions(unittest.TestCase):
     def test_getshared_unicode(self):
         """Get partagé sur le contexte (support d'unicode)"""
         ctx = Context(42)
-        ctx._connection = ConnectionStub()
-        ctx._connection.get = Mock()
-        ctx._connection.get.side_effect = lambda *a: defer.succeed("x")
+        ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection.get.call_args)
-            arg = ctx._connection.get.call_args[0][0]
-            self.assertFalse(isinstance(arg, unicode),
-                    "Toutes les clés doivent être des str, pas d'unicode")
+            print repr(ctx._connection._cache.get.call_args)
+            key = ctx._connection._cache.get.call_args[0][0]
+            self.assertTrue(
+                isinstance(key, str),
+                "Toutes les clés doivent être des str")
+            self.assertEquals('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
         d = ctx.getShared(u"é à è")
         d.addCallback(check)
         return d
@@ -177,13 +179,14 @@ class TestApiFunctions(unittest.TestCase):
     def test_setShared_unicode(self):
         """Set partagé sur le contexte (support d'unicode)"""
         ctx = Context(42)
-        ctx._connection = ConnectionStub()
-        ctx._connection._must_defer = True
+        ctx._connection = MemcachedConnectionStub()
         def check(x):
-            for ctxkey in ctx._connection.data.keys():
-                print repr(ctxkey)
-                self.assertFalse(isinstance(ctxkey, unicode),
-                        "Toutes les clés doivent être des str, pas d'unicode")
+            print repr(ctx._connection._cache.set.call_args)
+            key = ctx._connection._cache.set.call_args[0][0]
+            self.assertTrue(
+                isinstance(key, str),
+                "Toutes les clés doivent être des str")
+            self.assertEquals('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
         d = ctx.setShared(u"é à è", "bar")
         d.addCallback(check)
         return d
@@ -192,14 +195,14 @@ class TestApiFunctions(unittest.TestCase):
     def test_deleteshared_unicode(self):
         """Delete partagé sur le contexte (support d'unicode)"""
         ctx = Context(42)
-        ctx._connection = ConnectionStub()
-        ctx._connection.delete = Mock()
-        ctx._connection.delete.side_effect = lambda *a: defer.succeed("x")
+        ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection.delete.call_args)
-            arg = ctx._connection.delete.call_args[0][0]
-            self.assertFalse(isinstance(arg, unicode),
-                    "Toutes les clés doivent être des str, pas d'unicode")
+            print repr(ctx._connection._cache.delete.call_args)
+            key = ctx._connection._cache.delete.call_args[0][0]
+            self.assertTrue(
+                isinstance(key, str),
+                "Toutes les clés doivent être des str, pas d'unicode")
+            self.assertEquals('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
         d = ctx.deleteShared(u"é à è")
         d.addCallback(check)
         return d
