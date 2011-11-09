@@ -112,6 +112,8 @@ rm -rf $RPM_BUILD_ROOT
 %{python_sitelib}/twisted*
 %dir %{_localstatedir}/lib/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/lib/vigilo/%{module}
+%dir %{_localstatedir}/log/vigilo
+%attr(-,%{name},%{name}) %{_localstatedir}/log/vigilo/%{module}
 %attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
 
 

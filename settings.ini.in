@@ -127,10 +127,10 @@ command = /vigilo/command
 perf = /vigilo/perf
 
 [loggers]
-keys = root,twisted,multiprocessing,correlation
+keys = root,twisted,correlation
 
 [handlers]
-keys = console,syslog,correlation
+keys = console,syslog,correlation,errors
 
 [formatters]
 keys = consoleFormatter,syslogFormatter,correlationFormatter
@@ -145,12 +145,6 @@ qualname = twisted
 propagate = 0
 handlers = syslog,console
 
-[logger_multiprocessing]
-level = INFO
-qualname = multiprocessing
-propagate = 1
-handlers = syslog,console
-
 [logger_correlation]
 level = INFO
 qualname = vigilo.correlator.syslog
@@ -159,13 +153,13 @@ handlers = correlation,console
 
 [handler_console]
 class = StreamHandler
-level = DEBUG
+level = NOTSET
 formatter = consoleFormatter
 args = (sys.stdout, )
 
 [handler_syslog]
 class = handlers.SysLogHandler
-level = DEBUG
+level = NOTSET
 formatter = syslogFormatter
 # Le premier argument correspond à l'emplacement du syslog.
 # Il peut s'agir d'un fichier (ex : socket Unix, '/dev/log')
@@ -177,9 +171,15 @@ formatter = syslogFormatter
 # des facilities).
 args = '/dev/log', 'daemon'
 
+[handler_errors]
+level = ERROR
+class = handlers.RotatingFileHandler
+args = ('@LOCALSTATEDIR@/log/vigilo/correlator/error.log', 'a', 1024*1024*10, 5)
+formatter = consoleFormatter
+
 [handler_correlation]
 class = handlers.SysLogHandler
-level = DEBUG
+level = NOTSET
 formatter = correlationFormatter
 # Le premier argument correspond à l'emplacement du syslog.
 # Il peut s'agir d'un fichier (ex : socket Unix, '/dev/log')
@@ -197,7 +197,6 @@ datefmt =
 class = vigilo.common.logging.VigiloFormatter
 
 [formatter_syslogFormatter]
-#format = %(processName)s[%(process)d]: [%(multiprocessName)s] %(levelname)s::%(name)s::%(message)s
 format = %(processName)s[%(process)d]: %(levelname)s::%(message)s
 datefmt =
 class = vigilo.common.logging.VigiloFormatter
