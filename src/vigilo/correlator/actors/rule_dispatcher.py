@@ -148,7 +148,7 @@ class RuleDispatcher(PubSubSender):
         d.addErrback(no_database)
 
     def _putResultInDeferred(self, deferred, f, args, kwargs):
-        d = f(*args, **kwargs)
+        d = defer.maybeDeferred(f, *args, **kwargs)
         d.addCallbacks(
             lambda res: reactor.callFromThread(deferred.callback, res),
             lambda fail: reactor.callFromThread(deferred.errback, fail),
