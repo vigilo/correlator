@@ -294,6 +294,9 @@ class RuleDispatcher(PubSubSender):
                 hls_names
             )
         )
+        def inc_messages(result):
+            self._messages_sent += 1
+        d.addCallback(inc_messages)
         return d
 
 
