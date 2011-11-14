@@ -137,13 +137,13 @@ keys = consoleFormatter,syslogFormatter,correlationFormatter
 
 [logger_root]
 level = INFO
-handlers = syslog,console
+handlers = syslog,console,errors
 
 [logger_twisted]
 level = WARNING
 qualname = twisted
 propagate = 0
-handlers = syslog,console
+handlers = syslog,console,errors
 
 [logger_correlation]
 level = INFO
