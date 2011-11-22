@@ -74,11 +74,11 @@ class CorrelatorServiceMaker(object):
         else:
             settings.load_module('vigilo.correlator')
 
-        # Configuration de l'accès à la base de données.
-        database = DatabaseWrapper(settings['database'])
-
         from vigilo.common.logging import get_logger
         LOGGER = get_logger('vigilo.correlator')
+
+        # Configuration de l'accès à la base de données.
+        database = DatabaseWrapper(settings['database'])
 
         from vigilo.common.conf import setup_plugins_path
         from vigilo.connector import client

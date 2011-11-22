@@ -479,10 +479,15 @@ class RuleDispatcher(PubSubSender):
         def cb(result, *args, **kwargs):
             return make_correvent(self, self._database, *args, **kwargs)
         def eb(failure, xml):
+            try:
+                error_message = unicode(failure)
+            except UnicodeDecodeError:
+                error_message = unicode(str(failure), 'utf-8', 'replace')
+
             LOGGER.info(_(
                 'Error while saving the correlated event (%s). '
                 'The message will be handled once more.'),
-                str(failure).decode('utf-8')
+                error_message
             )
             self.queue.append(xml)
             return None
