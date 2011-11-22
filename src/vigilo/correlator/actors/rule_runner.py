@@ -33,12 +33,17 @@ class RuleRunner(object):
             return res
 
         def abort(fail):
+            error_message = fail.getErrorMessage()
+
+            if not isinstance(error_message, unicode):
+                error_message = unicode(error_message, 'utf-8', 'replace')
+
             logger.error(_('Got an exception while running rule ''"%(rule)s". '
                             'Running the correlator in the foreground '
                             '(service vigilo-correlator debug) may help '
                             'troubleshooting (%(error)s)'), {
                                 'rule': self._name,
-                                'error': fail.getErrorMessage(),
+                                'error': error_message,
                             })
             transaction.abort()
             return fail
