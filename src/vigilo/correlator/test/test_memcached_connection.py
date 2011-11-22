@@ -9,7 +9,6 @@ import unittest
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer, reactor, protocol
 from twisted.protocols.memcache import MemCacheProtocol
-from nose.plugins.skip import SkipTest
 
 try:
     import cPickle as pickle

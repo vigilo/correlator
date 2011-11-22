@@ -18,6 +18,7 @@ from vigilo.models.session import DBSession
 from vigilo.models.tables import StateName, State, HLSHistory
 from vigilo.models.tables import Event, EventHistory, CorrEvent
 from vigilo.models.tables.secondary_tables import EVENTSAGGREGATE_TABLE
+from vigilo.models.tables.eventsaggregate import EventsAggregate
 from vigilo.common.gettext import translate
 
 _ = translate(__name__)
@@ -54,12 +55,12 @@ def insert_event(info_dictionary):
 
     # S'il s'agit d'un événement concernant un HLS.
     if not info_dictionary["host"]:
-        LOGGER.error(_(u'Received request to add an event on HLS "%s"'),
+        LOGGER.error(_('Received request to add an event on HLS "%s"'),
                             info_dictionary["service"])
         return None
 
     if not info_dictionary['idsupitem']:
-        LOGGER.error(_(u'Got a reference to a non configured item '
+        LOGGER.error(_('Got a reference to a non configured item '
                        '(%(host)r, %(service)r), skipping event'), {
                             "host": info_dictionary["host"],
                             "service": info_dictionary["service"],
@@ -175,7 +176,7 @@ def insert_hls_history(info_dictionary):
     """
 
     if not info_dictionary['idsupitem']:
-        LOGGER.error(_(u'Got a reference to a non configured high-level '
+        LOGGER.error(_('Got a reference to a non configured high-level '
                         'service (%(service)r)'), {
                             "service": info_dictionary["service"],
                         })
@@ -202,7 +203,7 @@ def insert_state(info_dictionary):
     """
 
     if not info_dictionary['idsupitem']:
-        LOGGER.error(_(u'Got a reference to a non configured item '
+        LOGGER.error(_('Got a reference to a non configured item '
                        '(%(host)r, %(service)r), skipping state'), {
                             "host": info_dictionary["host"],
                             "service": info_dictionary["service"],
@@ -230,31 +231,86 @@ def insert_state(info_dictionary):
     return previous_state
 
 
-def add_to_aggregate(idevent, aggregate, database):
+def add_to_aggregate(idevent, idcorrevent, database, ctx, idsupitem, merging):
     """
     Ajoute un événement brut à un événement corrélé.
 
     @param idevent: Identifiant de l'événement brut à ajouter.
     @type idevent: C{int}
-    @param aggregate: Agrégat vers lequel se fait l'ajout.
-    @type aggregate: L{CorrEvent}
+    @param idcorrevent: Identifiant de l'agrégat auquel ajouter l'événement.
+    @type idcorrevent: C{int}
+    @param database: Objet qui encapsule les échanges avec la base de données.
+    @type database: L{DatabaseWrapper}
+    @param ctx: Contexte de corrélation.
+    @type ctx: L{Context}
+    @param idsupitem: Identifiant de l'élément supervisé (L{SupItem})
+        sur lequel porte l'événement à ajouter à l'agrégat.
+    @type idsupitem: C{int}
+    @param merging: Indique si l'ajout a lieu au cours d'une fusion ou bien
+        si l'ajout est le fait de la création d'un nouvel agrégat.
+    @type merging: C{bool}
+
+    @return: C{Deferred} qui sera appelé lorsque l'événement aura été
+        ajouté à l'agrégat.
+    @rtype: C{Deferred}
     """
-    LOGGER.debug(_('Adding event #%(event)d to aggregate #%(aggregate)d'), {
-                    'event': idevent,
-                    'aggregate': aggregate.idcorrevent,
-                })
+    entry = database.run(
+        DBSession.query(
+            EVENTSAGGREGATE_TABLE
+        ).filter(EVENTSAGGREGATE_TABLE.c.idevent == idevent
+        ).filter(EVENTSAGGREGATE_TABLE.c.idcorrevent == idcorrevent
+        ).first,
+        transaction=False
+    )
 
-    def add_event(idevent):
-        event = DBSession.query(Event).get(idevent)
+    def _update_cache(result):
+        """
+        Met à jour l'entrée dans memcached qui indique l'événement corrélé
+        ouvert qui impacte cet élément supervisé.
+        """
+        # Si on est en train de fusionner l'événement brut dans un événement
+        # correlé ouvert plus général, alors il n'est pas la cause de cet
+        # événement corrélé et n'a donc plus d'entrée associée.
+        if merging:
+            new_idcorrevent = 0
 
-        if not event:
-            raise ValueError, idevent
+        # Sinon, il s'agit de la cause, donc on remplit le cache.
+        else:
+            new_idcorrevent = idcorrevent
 
-        if not event in aggregate.events:
-            aggregate.events.append(event)
-            DBSession.flush()
-    return database.run(add_event, idevent, transaction=False)
+        d = ctx.setShared('open_aggr:%d' % idsupitem, new_idcorrevent)
+        return d
 
+    def _insert():
+        LOGGER.debug(_('Adding event #%(event)d (supitem #%(supitem)d) '
+                        'to aggregate #%(aggregate)d'), {
+                        'event': idevent,
+                        'supitem': idsupitem,
+                        'aggregate': idcorrevent,
+                    })
+
+        DBSession.add(EventsAggregate(idevent=idevent, idcorrevent=idcorrevent))
+        DBSession.flush()
+
+    def _add_if_absent(entry):
+        """
+        Ajoute l'association entre l'événement brut et l'événement corrélé
+        si aucune association de ce type n'existe pour le moment.
+        """
+        if entry:
+            LOGGER.debug(_('Event #%(event)d already belongs to aggregate '
+                            '#%(aggregate)d, refusing to add it twice'), {
+                            'event': idevent,
+                            'aggregate': idcorrevent,
+                        })
+            return
+
+        d = database.run(_insert, transaction=False)
+        d.addCallback(_update_cache)
+        return d
+
+    entry.addCallback(_add_if_absent)
+    return entry
 
 def merge_aggregates(sourceaggregateid, destinationaggregateid, database, ctx):
     """
@@ -265,12 +321,17 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid, database, ctx):
     @type sourceaggregateid: C{int}
     @param destinationaggregateid: Identifiant de l'agrégat destination.
     @type destinationaggregateid: C{int}
+    @param database: Objet qui encapsule les échanges avec la base de données.
+    @type database: L{DatabaseWrapper}
+    @param ctx: Contexte de corrélation.
+    @type ctx: L{Context}
 
     @return: Liste des ids des alertes brutes déplacées.
     @rtype: Liste de C{int}
     """
     sourceaggregateid = int(sourceaggregateid)
-    LOGGER.debug(_(u'Merging aggregate #%(src)d with aggregate #%(dest)d'), {
+    destinationaggregateid = int(destinationaggregateid)
+    LOGGER.debug(_( 'Merging aggregate #%(src)d into aggregate #%(dest)d'), {
                     'src': sourceaggregateid,
                     'dest': destinationaggregateid,
                 })
@@ -278,66 +339,100 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid, database, ctx):
     d = defer.DeferredList(
         [
             database.run(
-                DBSession.query(CorrEvent).filter(
-                    CorrEvent.idcorrevent == sourceaggregateid).one,
+                DBSession.query(
+                    Event.idsupitem,
+                    EVENTSAGGREGATE_TABLE.c.idevent
+                ).join(
+                    (EVENTSAGGREGATE_TABLE, Event.idevent ==
+                        EVENTSAGGREGATE_TABLE.c.idevent),
+                ).filter(
+                    EVENTSAGGREGATE_TABLE.c.idcorrevent == sourceaggregateid
+                ).all,
                 transaction=False
             ),
             database.run(
-                DBSession.query(CorrEvent).filter(
-                    CorrEvent.idcorrevent == destinationaggregateid).one,
+                DBSession.query(EVENTSAGGREGATE_TABLE.c.idevent).filter(
+                EVENTSAGGREGATE_TABLE.c.idcorrevent == destinationaggregateid).all,
                 transaction=False
             ),
         ],
         consumeErrors=True,
     )
 
-    def eb(failure):
-        if failure.check(NoResultFound):
-            LOGGER.exception(_('Got a reference to a nonexistent aggregate, '
-                                'aborting'))
-            return
-        return failure
+    def _swap():
+        """
+        Déplace les événements bruts autrefois rattachés à l'événement
+        corrélé source vers l'événement corrélé destination.
 
-    def delete(result, source_aggregate):
-        # Supprime l'agrégat source de la BDD.
-        return database.run(DBSession.delete, source_aggregate,
-            transaction=False)
+        Il n'y a pas de doublons possibles (un événement brut ne peut pas
+        appartenir plusieurs fois au même événement corrélé).
+        """
+        # Bascule des événements de l'ancien agrégat vers le nouveau.
+        # On utilise une sous-requête afin d'exclure les événements qui font
+        # déjà partie de l'agrégat destination (pas de doublons possibles:
+        # il y a une contrainte d'unicité).
+        sub_select = DBSession.query(EventsAggregate.idevent).filter(
+            EventsAggregate.idcorrevent == destinationaggregateid)
 
-    def flush(result):
-        return database.run(DBSession.flush, transaction=False)
+        DBSession.query(
+                EventsAggregate
+            ).filter(EventsAggregate.idcorrevent == sourceaggregateid
+            ).filter(not_(EventsAggregate.idevent.in_(sub_select))
+            ).update({"idcorrevent": destinationaggregateid})
+        DBSession.flush()
 
-    def merge(result):
+    def _delete(result):
+        """Supprime l'agrégat source de la base de données."""
+        return database.run(
+            DBSession.query(CorrEvent).filter(
+                CorrEvent.idcorrevent == sourceaggregateid).delete,
+            transaction=False
+        )
+
+    def _merge(result):
+        """
+        Effectue la fusion à proprement parler:
+        -   Le cache des agrégats ouverts est mis à jour.
+        -   Les événements rattachés à l'ancien agrégat passent sur le nouveau.
+        -   L'ancien agrégat est supprimé.
+        """
         source, dest = result
 
-        # Si l'aggrégat source n'a pas pu être trouvé.
-        if not source[0]:
-            return source[1]
+        # S'il n'y a aucun événement dans l'aggrégat source,
+        # c'est qu'il y a un problème.
+        if not source[0] or not source[1]:
+            LOGGER.warning(_('Got a reference to a nonexistent aggregate, '
+                            'aborting'))
+            return
         # Idem pour l'agrégat de destination.
-        if not dest[0]:
-            return dest[1]
-
-        source_aggregate = source[1]
-        destination_aggregate = dest[1]
+        if not dest[0] or not dest[1]:
+            LOGGER.warning(_('Got a reference to a nonexistent aggregate, '
+                            'aborting'))
+            return
 
         # Déplace les événements depuis l'agrégat source
         # vers l'agrégat destination.
         event_id_list = []
         defs = []
 
-        for event in source_aggregate.events:
-            if not event in destination_aggregate.events:
-                defs.append(database.run(
-                    destination_aggregate.events.append, event,
-                    transaction=False,
-                ))
-                defs.append(ctx.setShared('open_aggr:%d' % event.idsupitem, 0))
-                event_id_list.append(event.idevent)
+        # Mise à jour de l'agrégat ouvert associé au supitem dans memcached.
+        for event in source[1]:
+            defs.append(ctx.setShared('open_aggr:%d' % event.idsupitem, 0))
+            LOGGER.debug(_("Event #%(event)d (supitem #%(supitem)d) will be "
+                            "merged into aggregate #%(aggregate)d"), {
+                            'event': event.idevent,
+                            'supitem': event.idsupitem,
+                            'aggregate': destinationaggregateid,
+                        })
+            event_id_list.append(event.idevent)
 
+        defs.append(database.run(_swap, transaction=False))
         d = defer.DeferredList(defs)
-        d.addCallback(delete, source_aggregate)
-        d.addCallback(flush)
+
+        # Suppression de l'ancien agrégat.
+        d.addCallback(_delete)
         d.addCallback(lambda res: event_id_list)
         return d
 
-    d.addCallbacks(merge, eb)
+    d.addCallback(_merge)
     return d

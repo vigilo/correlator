@@ -147,6 +147,7 @@ class ConnectionStub(object):
     def delete(self, key, transaction=True):
         # pylint: disable-msg=E0202
         # An attribute inherited from TestApiFunctions hide this method (Mock)
+        print "DELETING: %r = %r" % (key, self.data[key])
         del self.data[key]
         if self._must_defer:
             return defer.succeed(None)
@@ -182,6 +183,7 @@ class ContextStubFactory(object):
         # On ne peut pas écraser le _connection.data de chaque
         # contexte séparément car la modification ne serait vue
         # que pour cette instance du contexte.
+        print "CLEARING CONTEXTS"
         ConnectionStub.data = {}
 
 class RuleDispatcherStub(RuleDispatcher):

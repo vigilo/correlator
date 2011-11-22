@@ -6,18 +6,14 @@
 """Tests sur l'API des contextes de corrélation."""
 
 import random
-from datetime import datetime
 import unittest
 
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
-from mock import Mock
-from helpers import setup_db, teardown_db, populate_statename
+import helpers
 
 from vigilo.models.session import DBSession
-from vigilo.models.tables import Host, Dependency, DependencyGroup
-from vigilo.correlator.topology import Topology
 from vigilo.correlator.context import Context
 from vigilo.correlator.test.helpers import ConnectionStub, \
                                             MemcachedConnectionStub
@@ -37,13 +33,13 @@ class TestApiFunctions(unittest.TestCase):
     @deferred(timeout=30)
     def setUp(self):
         """Initialisation d'un contexte préalable à chacun des tests."""
-        setup_db()
+        helpers.setup_db()
         return defer.succeed(None)
 
     @deferred(timeout=30)
     def tearDown(self):
         """Nettoyage du contexte à la fin de chaque test."""
-        teardown_db()
+        helpers.teardown_db()
         return defer.succeed(None)
 
     def test_contexts(self):

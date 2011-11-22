@@ -9,6 +9,9 @@ import unittest
 import time
 from lxml import etree
 
+from nose.twistedtools import reactor, deferred
+from twisted.internet import defer
+
 from vigilo.correlator.db_insertion import add_to_aggregate
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 import helpers
@@ -21,15 +24,21 @@ from vigilo.models.session import DBSession
 class TestDbInsertion2(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""
 
+    @deferred(timeout=30)
     def setUp(self):
         super(TestDbInsertion2, self).setUp()
         helpers.setup_db()
         helpers.populate_statename()
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
     def tearDown(self):
         helpers.teardown_db()
         super(TestDbInsertion2, self).tearDown()
+        return defer.succeed(None)
 
+    @deferred(timeout=30)
+    @defer.inlineCallbacks
     def test_add_to_agregate(self):
         """Ajout d'un événement brut à un évènement corrélé déjà existant"""
         # On crée 2 couples host/service.
@@ -97,11 +106,20 @@ class TestDbInsertion2(unittest.TestCase):
         DBSession.flush()
 
         # On ajoute ce nouvel événement à l'agrégat existant.
-        add_to_aggregate(
+        ctx = helpers.ContextStub(42)
+        yield add_to_aggregate(
             event1.idevent,
-            events_aggregate1,
-            DummyDatabaseWrapper(True)
+            events_aggregate1.idcorrevent,
+            DummyDatabaseWrapper(True),
+            ctx,
+            123,
+            False
         )
+        DBSession.flush()
 
         # On vérifie que l'événement a bien été ajouté à l'agrégat.
-        self.assertTrue(event1 in events_aggregate1.events )
+        DBSession.refresh(events_aggregate1)
+        expected = sorted([event1.idevent, event2.idevent])
+        actual = sorted([event.idevent for event in events_aggregate1.events])
+        print "actual = %r, expected = %r" % (actual, expected)
+        self.assertEquals(actual, expected)

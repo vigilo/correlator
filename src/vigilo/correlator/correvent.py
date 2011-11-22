@@ -194,8 +194,14 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                 else:
                     # D'abord on rattache l'alerte
                     # courante à cet agrégat dans la BDD.
-                    add_to_aggregate(raw_event_id, predecessing_aggregate, database)
-                    yield database.run(DBSession.flush, transaction=False)
+                    yield add_to_aggregate(
+                        raw_event_id,
+                        predecessing_aggregate_id,
+                        database,
+                        ctx,
+                        item_id,
+                        merging=True
+                    )
 
                     # Ensuite on fusionne les éventuels agrégats
                     # dépendant de l'alerte courante avec cet agrégat.
@@ -307,11 +313,25 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     yield database.run(DBSession.add, correvent, transaction=False)
     yield database.run(DBSession.flush, transaction=False)
 
-    # Ajout de l'alerte brute dans l'agrégat.
-    add_to_aggregate(raw_event_id, correvent, database)
-
     # Récupération de l'identifiant de l'agrégat pour plus tard.
+    # Doit être fait via db_thread. En pratique, cela signifie qu'on
+    # doit faire un merge() pour fetcher à nouveau tous les attributs
+    # avant de pouvoir y accéder depuis le thread principal.
+    correvent = yield database.run(
+        DBSession.merge,
+        correvent,
+        transaction=False)
     idcorrevent = correvent.idcorrevent
+
+    # Ajout de l'alerte brute dans l'agrégat.
+    yield add_to_aggregate(
+        raw_event_id,
+        idcorrevent,
+        database,
+        ctx,
+        item_id,
+        merging=False
+    )
 
     # Identifiant de l'événement corrélé à mettre à jour.
     if not update_id is None:

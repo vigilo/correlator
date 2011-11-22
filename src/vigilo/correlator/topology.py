@@ -63,7 +63,8 @@ class Topology(nx.DiGraph):
         @param database: Container d'abstraction des accès à la base de données,
             encapsulé dans un objet C{ThreadWrapper}
         @type database: C{ThreadWrapper}
-        @param item_id: Identifiant de l'item sur lequel s'opère la recherche.
+        @param item_id: Identifiant de l'élément supervisé sur lequel
+            s'opère la recherche.
         @type item_id: C{int}
         @return: Liste de L{CorrEvent}.
         @rtype: List
