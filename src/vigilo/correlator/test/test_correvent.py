@@ -44,6 +44,7 @@ class TestCorrevents(unittest.TestCase):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
         super(TestCorrevents, self).tearDown()
         helpers.teardown_db()
+        self.context_factory.reset()
         return defer.succeed(None)
 
     def make_deps(self):
