@@ -6,7 +6,7 @@
 Extends pubsub clients to compute Node message.
 """
 
-from sqlalchemy import not_, and_
+from sqlalchemy import not_, and_, or_
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -66,49 +66,67 @@ def insert_event(info_dictionary):
                         })
         return None
 
-    try:
-        # On recherche un éventuel évènement concernant
-        # l'item faisant partie d'agrégats ouverts.
-        cause_event = aliased(Event)
-        current_event = aliased(Event)
-        event = DBSession.query(
-                    current_event
-                ).join((EVENTSAGGREGATE_TABLE,
-                        EVENTSAGGREGATE_TABLE.c.idevent ==
-                            current_event.idevent)
-                ).join((CorrEvent,
-                        CorrEvent.idcorrevent ==
-                            EVENTSAGGREGATE_TABLE.c.idcorrevent)
-                ).join((cause_event,
-                        cause_event.idevent == CorrEvent.idcause)
-                ).filter(current_event.idsupitem == info_dictionary['idsupitem']
-                ).filter(not_(and_(
-                    cause_event.current_state.in_([
-                        StateName.statename_to_value(u'OK'),
-                        StateName.statename_to_value(u'UP')
-                    ]),
-                    CorrEvent.status == u'AAClosed'
-                ))
-                ).filter(CorrEvent.timestamp_active != None
-                ).distinct().one()
-        LOGGER.debug(_(u'Updating event %r'), event.idevent)
+    # On recherche un éventuel évènement brut concernant cet item.
+    # L'événement doit être associé à un événement corrélé ouvert
+    # ou bien ne pas être à rattaché à un événement corrélé du tout.
+    cause_event = aliased(Event)
+    current_event = aliased(Event)
+    event = DBSession.query(
+                current_event
+            ).outerjoin(
+                (EVENTSAGGREGATE_TABLE, EVENTSAGGREGATE_TABLE.c.idevent ==
+                    current_event.idevent),
+                (CorrEvent, CorrEvent.idcorrevent ==
+                    EVENTSAGGREGATE_TABLE.c.idcorrevent),
+                (cause_event, cause_event.idevent == CorrEvent.idcause),
+            ).filter(current_event.idsupitem == info_dictionary['idsupitem']
+            ).filter(
+                or_(
+                    # Soit l'événement brut n'est pas
+                    # rattaché à un événement corrélé.
+                    CorrEvent.idcorrevent == None,
+
+                    # Soit l'événement corrélé auquel
+                    # il est rattaché est toujours ouvert.
+                    and_(
+                        not_(
+                            and_(
+                                cause_event.current_state.in_([
+                                    StateName.statename_to_value(u'OK'),
+                                    StateName.statename_to_value(u'UP')
+                                ]),
+                                CorrEvent.status == u'AAClosed'
+                            )
+                        ),
+                        CorrEvent.timestamp_active != None
+                    )
+                )
+            # On privilégie les événements bruts
+            # associés à un événement corrélé.
+            ).order_by((CorrEvent.idcorrevent != None).desc()
+            ).distinct().limit(2).all()
+
     # Si aucun événement correpondant à cet item ne figure dans la base
-    except NoResultFound:
+    if not event:
         # Si l'état de cette alerte est 'OK', on l'ignore
         if info_dictionary["state"] == "OK" or \
             info_dictionary["state"] == "UP":
-            LOGGER.info(_(u'Ignoring request to create a new event '
+            LOGGER.info(_('Ignoring request to create a new event '
                             'with state "%s" (nothing alarming here)'),
                             info_dictionary['state'])
             raise NoProblemException(info_dictionary.copy())
         # Sinon, il s'agit d'un nouvel incident, on le prépare.
         event = Event()
         event.idsupitem = info_dictionary['idsupitem']
-        LOGGER.debug(_(u'Creating new event'))
-    except MultipleResultsFound:
-        # Si plusieurs événements ont été trouvés
-        LOGGER.error(_(u'Multiple matching events found, skipping.'))
-        return None
+        LOGGER.debug(_('Creating new event'))
+
+    # Si plusieurs événements ont été trouvés
+    else:
+        if len(event) > 1:
+            LOGGER.warning(_('Multiple raw events found, '
+                             'using the first one available.'))
+        event = event[0]
+        LOGGER.debug(_('Updating event %r'), event.idevent)
 
     # Nouvel état.
     new_state_value = StateName.statename_to_value(info_dictionary['state'])

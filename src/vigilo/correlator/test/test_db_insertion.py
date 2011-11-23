@@ -11,8 +11,7 @@ from lxml import etree
 
 from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-                                    add_to_aggregate, OldStateReceived, \
-                                    NoProblemException
+                                    OldStateReceived, NoProblemException
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.pubsub.xml import NS_EVENT
 import helpers
@@ -26,14 +25,13 @@ class TestDbInsertion(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""
 
     def setUp(self):
-        print "setting up the database"
+        super(TestDbInsertion, self).setUp()
         helpers.setup_db()
         helpers.populate_statename()
 
     def tearDown(self):
-        print "tearing down the database"
-        # Évite que d'anciennes instances viennent perturber le test suivant.
         helpers.teardown_db()
+        super(TestDbInsertion, self).tearDown()
 
     def make_dependencies(self):
         """Création de quelques dépendances dans la BDD."""
@@ -284,83 +282,6 @@ class TestDbInsertion(unittest.TestCase):
 #        history = DBSession.query(EventHistory).all()
 #        self.assertEquals(3, len(history),
 #            "Expected 3 entries in history, got %d" % len(history))
-
-    def test_add_to_agregate(self):
-        """Ajout d'un événement brut à un évènement corrélé déjà existant"""
-        # On crée 2 couples host/service.
-        host1 = Host(
-            name = u'messagerie',
-            checkhostcmd = u'check11',
-            snmpcommunity = u'com11',
-            hosttpl = u'tpl11',
-            address = u'192.168.0.11',
-            snmpport = 11,
-            weight = 42,
-        )
-        DBSession.add(host1)
-        DBSession.flush()
-
-        service1 = LowLevelService(
-            servicename = u'Processes',
-            host = host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(service1)
-        DBSession.flush()
-
-        service2 = LowLevelService(
-            servicename = u'CPU',
-            host = host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(service2)
-        DBSession.flush()
-
-        # On ajoute 1 couple événement/agrégat à la BDD.
-        event2 = Event(
-            idsupitem = service2.idservice,
-            current_state = 2,
-            message = 'WARNING: CPU is overloaded',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(event2)
-        DBSession.flush()
-
-        events_aggregate1 = CorrEvent(
-            idcause = event2.idevent,
-            impact = 1,
-            priority = 1,
-            trouble_ticket = u'azerty1234',
-            status = u'None',
-            occurrence = 1,
-            timestamp_active = datetime.now(),
-        )
-        events_aggregate1.events.append(event2)
-        DBSession.add(events_aggregate1)
-        DBSession.flush()
-
-        # On ajoute un nouvel événement à la BDD.
-        event1 = Event(
-            idsupitem = service1.idservice,
-            current_state = 2,
-            message = 'WARNING: Processes are not responding',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(event1)
-        DBSession.flush()
-
-        # On ajoute ce nouvel événement à l'agrégat existant.
-        add_to_aggregate(
-            event1.idevent,
-            events_aggregate1,
-            DummyDatabaseWrapper(True)
-        )
-
-        # On vérifie que l'événement a bien été ajouté à l'agrégat.
-        self.assertTrue(event1 in events_aggregate1.events )
-
 
     def test_insert_old_state(self):
         """Abandon de l'insertion d'un état ancien"""
