@@ -72,8 +72,12 @@ def insert_event(info_dictionary):
     # ou bien ne pas être à rattaché à un événement corrélé du tout.
     cause_event = aliased(Event)
     current_event = aliased(Event)
+    # On privilégie les événements bruts associés à un événement corrélé.
+    order_clause = (CorrEvent.idcorrevent != None)
     event = DBSession.query(
-                current_event
+                current_event,
+                order_clause,   # Doit être présent dans le SELECT
+                                # pour satisfaire PostgreSQL.
             ).outerjoin(
                 (EVENTSAGGREGATE_TABLE, EVENTSAGGREGATE_TABLE.c.idevent ==
                     current_event.idevent),
@@ -102,9 +106,7 @@ def insert_event(info_dictionary):
                         CorrEvent.timestamp_active != None
                     )
                 )
-            # On privilégie les événements bruts
-            # associés à un événement corrélé.
-            ).order_by((CorrEvent.idcorrevent != None).desc()
+            ).order_by(order_clause.desc()
             ).distinct().limit(2).all()
 
     # Si aucun événement correpondant à cet item ne figure dans la base
@@ -126,7 +128,9 @@ def insert_event(info_dictionary):
         if len(event) > 1:
             LOGGER.warning(_('Multiple raw events found, '
                              'using the first one available.'))
-        event = event[0]
+        # On sélectionne le premier Event parmi la liste
+        # des tuples (Event, CorrEvent.idcorrevent != None).
+        event = event[0][0]
         LOGGER.debug(_('Updating event %r'), event.idevent)
 
     # Nouvel état.
