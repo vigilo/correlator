@@ -151,6 +151,11 @@ qualname = vigilo.correlator.syslog
 propagate = 0
 handlers = correlation,console
 
+[logger_db_ops]
+level = DEBUG
+qualname = vigilo.correlator.db_insertion
+handlers = syslog
+
 [handler_console]
 class = StreamHandler
 level = NOTSET
