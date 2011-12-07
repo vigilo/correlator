@@ -285,29 +285,29 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     if correvent.timestamp_active is None:
         correvent.timestamp_active = timestamp
 
-    # On repasse l'événement dans l'état non-acquitté.
-    # Le test évite de polluer la BDD avec des changements d'acquittement.
-    if (not correvent.status is None) \
-        and correvent.status != u'None' \
-        and state not in ("OK", "UP"):
-        correvent.timestamp_active = timestamp
-        history = EventHistory(
-            type_action=u'Acknowlegement change state',
-            idevent=correvent.idcause,
-            value=u'None',
-            text=u'System forced treatment to None. ' \
-                'Reason: Event was reactivated due to new outage',
-            timestamp=timestamp,
-            username=None,
-        )
-        yield database.run(DBSession.add, history, transaction=False)
-        correvent.status = u'None'
+    if correvent.status == u'AAClosed':
+        # On repasse l'événement dans l'état non-acquitté si un nouvel état
+        # en erreur arrive et que le ticket avait été marqué comme "acquitté"
+        # ou "acquitté et clos".
+        if state not in ("OK", "UP"):
+            correvent.timestamp_active = timestamp
+            history = EventHistory(
+                type_action=u'Acknowlegement change state',
+                idevent=correvent.idcause,
+                value=u'None',
+                text=u'System forced treatment to None. ' \
+                    'Reason: Event was reactivated due to new outage',
+                timestamp=timestamp,
+                username=None,
+            )
+            yield database.run(DBSession.add, history, transaction=False)
+            correvent.status = u'None'
 
-    # Si l'événement a été marqué comme traité et que le nouveau état
-    # indique la résolution effective du problème, l'événement corrélé
-    # doit être fermé.
-    if correvent.status == u'AAClosed' and state in ("OK", "UP"):
-        ctx.setShared('open_aggr:%d' % item_id, 0)
+        # Si l'événement a été marqué comme traité et que le nouveau état
+        # indique la résolution effective du problème, l'événement corrélé
+        # doit être fermé.
+        else:
+            ctx.setShared('open_aggr:%d' % item_id, 0)
 
     # On sauvegarde l'événement corrélé dans la base de données.
     yield database.run(DBSession.add, correvent, transaction=False)
