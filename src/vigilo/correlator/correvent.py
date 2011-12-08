@@ -157,8 +157,8 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     if correvent is None:
         data_log[DATA_LOG_TYPE] = 'NEW'
 
-        # Si l'état de l'alerte brute est 'OK' ou bien 'UP', on ne fait rien
-        if state == "OK" or state == "UP":
+        # Si l'état de l'alerte brute est 'OK' ou 'UP', on ne fait rien.
+        if state in ("OK", "UP"):
             LOGGER.info(_(u'Raw event ignored. Reason: status = %r'), state)
             defer.returnValue(None)
 
