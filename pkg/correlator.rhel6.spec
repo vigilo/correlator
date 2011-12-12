@@ -22,7 +22,6 @@ Requires:   vigilo-models
 Requires:   python-lxml
 Requires:   python-memcached
 Requires:   python-twisted-words
-Requires:   python-networkx
 
 # Init
 Requires(pre): shadow-utils

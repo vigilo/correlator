@@ -49,7 +49,6 @@ setup(name='vigilo-correlator',
             'vigilo-models',
             'vigilo-pubsub',
             'vigilo-connector',
-            'networkx',
             ],
         namespace_packages = [
             'vigilo',
