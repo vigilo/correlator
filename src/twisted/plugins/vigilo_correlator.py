@@ -9,8 +9,6 @@ from zope.interface import implements
 from twisted.plugin import IPlugin
 from twisted.application import service
 
-# ATTENTION: interdit d'importer le reactor ici, sinon les sous-process ampoule
-# quittent en erreur avec "reactor already installed"
 from vigilo.common.gettext import translate
 _ = translate('vigilo.correlator')
 

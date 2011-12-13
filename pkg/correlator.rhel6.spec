@@ -23,7 +23,6 @@ Requires:   python-lxml
 Requires:   python-memcached
 Requires:   python-twisted-words
 Requires:   python-networkx
-Requires:   python-ampoule
 
 # Init
 Requires(pre): shadow-utils

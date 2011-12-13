@@ -24,13 +24,11 @@ Requires:   python-lxml
 Requires:   python-memcached
 Requires:   python-twisted-words
 Requires:   python-networkx
-Requires:   python-ampoule
 ######### Dependance from python dependance tree ########
 Requires:   vigilo-common
 Requires:   vigilo-connector
 Requires:   vigilo-pubsub
 Requires:   vigilo-models
-Requires:   python-ampoule
 Requires:   python-networkx
 Requires:   python-memcached
 Requires:   python-lxml

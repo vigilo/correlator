@@ -29,7 +29,6 @@ Requires:   python26-lxml
 Requires:   python26-memcached
 Requires:   python26-twisted-words
 Requires:   python26-networkx
-Requires:   python26-ampoule
 
 # Init
 Requires(pre): shadow-utils

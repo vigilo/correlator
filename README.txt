@@ -29,10 +29,6 @@ Le corrélateur VigiRules a besoin des modules Python suivants :
 - lxml
 - memcached
 - networkx
-- ampoule (à être patché)
-
-Un patch est nécessaire pour le module ampoule, il se trouve dans le dossier
-"patches".
 
 
 Installation
