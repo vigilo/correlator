@@ -23,10 +23,10 @@ class RuleRunner(object):
         self._rule.set_database(ThreadWrapper(dispatcher._database))
         self._dispatcher = ThreadWrapper(dispatcher)
 
-    def run(self, idxmpp):
+    def run(self, msgid):
         logger = get_logger(__name__)
         logger.debug(u'Rule runner: process begins for rule "%s" (msgid=%r)',
-                     self._name, idxmpp)
+                     self._name, msgid)
 
         def commit(res):
             transaction.commit()
@@ -56,7 +56,7 @@ class RuleRunner(object):
         d = defer.maybeDeferred(
             self._rule.process,
             self._dispatcher,
-            idxmpp)
+            msgid)
         d.addCallback(commit)
         d.addErrback(abort)
         d.addBoth(log_end)

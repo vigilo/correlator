@@ -47,7 +47,7 @@ setup(name='vigilo-correlator',
             'lxml',
             'python-memcached',
             'vigilo-models',
-            'vigilo-pubsub',
+            #'vigilo-pubsub',
             'vigilo-connector',
             ],
         namespace_packages = [

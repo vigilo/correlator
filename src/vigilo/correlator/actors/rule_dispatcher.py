@@ -15,33 +15,33 @@ des commandes pour Nagios).
 import time
 from datetime import datetime
 
+from zope.interface import implements
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
 import transaction
 from sqlalchemy import exc
 
 from twisted.internet import defer, reactor, error
+from twisted.internet.interfaces import IPushProducer
 from twisted.python import threadpool
-from wokkel.generic import parseXml
-from lxml import etree
-
-from vigilo.common.conf import settings
 
 from vigilo.common.logging import get_logger, get_error_message
 from vigilo.common.gettext import translate
 
-from vigilo.connector.forwarder import PubSubSender
-from vigilo.connector import MESSAGEONETOONE
-
 from vigilo.models.session import DBSession
 from vigilo.models.tables import SupItem, Version
 
-from vigilo.pubsub.xml import namespaced_tag, NS_EVENT, NS_TICKET, \
-                                NS_COMPUTATION_ORDER
+from vigilo.connector.handlers import MessageHandler
+
 from vigilo.correlator.actors import executor
 from vigilo.correlator.context import Context
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-                                    insert_hls_history, OldStateReceived, \
-                                    NoProblemException
+        insert_hls_history, OldStateReceived, NoProblemException
 from vigilo.correlator.publish_messages import publish_state
 from vigilo.correlator.correvent import make_correvent
 from vigilo.correlator import registry
@@ -49,78 +49,35 @@ from vigilo.correlator import registry
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
-def extract_information(payload):
+
+
+class RuleDispatcher(MessageHandler):
     """
-    Extrait les informations d'un message, en le parcourant
-    une seule fois afin d'optimiser les performances.
-    """
-
-    info_dictionary = {"host": None,
-                       "service": None,
-                       "state": None,
-                       "timestamp": None,
-                       "message": None,
-                       "impacted_HLS": None,
-                       "ticket_id": None,
-                       "acknowledgement_status": None,}
-
-    # @TODO: spécifier explicitement le(s) XMLNS au(x)quel(s) on s'attend.
-    # Récupération du namespace utilisé
-    namespace = payload.nsmap[payload.prefix]
-
-    for element in payload.getchildren():
-        for tag in info_dictionary.keys():
-            if element.tag == namespaced_tag(namespace, tag):
-                if not element.text is None:
-                    if element.tag == namespaced_tag(namespace, "timestamp"):
-                        try:
-                            info_dictionary["timestamp"] = \
-                                datetime.fromtimestamp(int(element.text))
-                        except ValueError:
-                            info_dictionary["timestamp"] = datetime.now()
-                    else:
-                        info_dictionary[tag] = u'' + element.text
-
-    if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
-        info_dictionary["host"] = None
-
-    return info_dictionary
-
-class RuleDispatcher(PubSubSender):
-    """
-    Cette classe corrèle les messages reçus depuis le bus XMPP
+    Cette classe corrèle les messages reçus depuis le bus
     et envoie ensuite les résultats sur le bus.
     """
 
+    implements(IPushProducer)
     _context_factory = Context
 
-    def __init__(self, database):
+
+    def __init__(self, database, nagios_hls_host, timeout, min_runner,
+                 max_runner, max_idle):
         super(RuleDispatcher, self).__init__()
         self.max_send_simult = 1
         self._process_as_domish = False
         self.tree_end = None
         self._database = database
-
-        # Préparation du pool d'exécuteurs de règles.
-        timeout = settings['correlator'].as_int('rules_timeout')
-        if timeout <= 0:
-            timeout = None
-
-        min_runner = settings['correlator'].as_int('min_rule_runners')
-        max_runner = settings['correlator'].as_int('max_rule_runners')
-
-        try:
-            max_idle = settings['correlator'].as_int('rule_runners_max_idle')
-        except KeyError:
-            max_idle = 20
+        self.nagios_hls_host = nagios_hls_host
+        self.timeout = timeout
 
         # @TODO: #875: réimplémenter le timeout avec des threads.
         self.rrp = threadpool.ThreadPool(min_runner, max_runner, "Rule runners")
-        LOGGER.debug("Starting rule runners")
-        self.rrp.start()
         self._executor = executor.Executor(self)
+        self.consumer = None # expéditeur des résultats sur le bus
         self._tmp_correl_time = None
         self._correl_times = []
+
 
     def check_database_connectivity(self):
         def _db_request():
@@ -147,12 +104,22 @@ class RuleDispatcher(PubSubSender):
                 pass
         d.addErrback(no_database)
 
+
+    def startService(self):
+        LOGGER.debug("Starting rule runners")
+        return self.rrp.start()
+
+    def stopService(self):
+        return self.rrp.stop()
+
+
     def _putResultInDeferred(self, deferred, f, args, kwargs):
         d = defer.maybeDeferred(f, *args, **kwargs)
         d.addCallbacks(
             lambda res: reactor.callFromThread(deferred.callback, res),
             lambda fail: reactor.callFromThread(deferred.errback, fail),
         )
+
 
     def doWork(self, f, *args, **kwargs):
         """
@@ -162,31 +129,21 @@ class RuleDispatcher(PubSubSender):
         self.rrp.callInThread(self._putResultInDeferred, d, f, args, kwargs)
         return d
 
-    def itemsReceived(self, event):
-        """
-        Méthode appelée lorsque des éléments ont été reçus depuis
-        le bus XMPP.
 
-        @param event: Événement XMPP reçu.
-        @type event: C{twisted.words.xish.domish.Element}
-        """
-        for item in event.items:
-            # Item is a domish.IElement and a domish.Element
-            # Serialize as XML before queueing,
-            # or we get harmless stderr pollution  × 5 lines:
-            # Exception RuntimeError: 'maximum recursion depth exceeded in
-            # __subclasscheck__' in <type 'exceptions.AttributeError'> ignored
-            #
-            # stderr pollution caused by http://bugs.python.org/issue5508
-            # and some touchiness on domish attribute access.
-            xml = item.toXml()
-            if item.name != 'item':
-                # The alternative is 'retract', which we silently ignore
-                # We receive retractations in FIFO order,
-                # ejabberd keeps 10 items before retracting old items.
-                LOGGER.debug(_(u'Skipping unrecognized item (%s)'), item.name)
-                continue
-            self.forwardMessage(xml)
+    def write(self, msg):
+        content = json.loads(msg.content.body)
+        msgid = msg.fields[1]
+        if msgid is None:
+            LOGGER.error(_("Received invalid item ID (None)"))
+            return defer.succeed(None)
+        msg["id"] = msgid
+        d = defer.maybeDeferred(self.processMessage, content)
+        d.addCallbacks(self.processingSucceeded, self.processingFailed,
+                       callbackArgs=(msg, ))
+        if self.keepProducing:
+            d.addBoth(lambda _x: self.producer.resumeProducing())
+        return d
+
 
     def _processException(self, failure):
         if not failure.check(KeyboardInterrupt):
@@ -194,68 +151,48 @@ class RuleDispatcher(PubSubSender):
                 get_error_message(failure.getErrorMessage()))
         return failure
 
-    def processMessage(self, xml):
-        res = defer.maybeDeferred(self._processMessage, xml)
+
+    def processMessage(self, msg):
+        res = defer.maybeDeferred(self._processMessage, msg)
         res.addErrback(self._processException)
         return res
 
-    def _processMessage(self, xml):
-        """
-        Transfère un message XML sérialisé vers la file.
 
-        @param xml: message XML à transférer.
-        @type xml: C{str}
-        @return: Un objet C{Deferred} correspondant au traitement
-            du message par les règles de corrélation ou C{None} si
-            le message n'a pas pu être traité (ex: message invalide).
-        @rtype: C{twisted.internet.defer.Deferred} ou C{None}
-        """
-        dom = etree.fromstring(xml)
-
-        # Extraction de l'id XMPP.
-        # Note: dom['id'] ne fonctionne pas dans lxml, dommage.
-        idxmpp = dom.get('id')
-        if idxmpp is None:
-            LOGGER.error(_("Received invalid XMPP item ID (None)"))
-            return defer.succeed(None)
+    def _processMessage(self, msg):
 
         # Ordre de calcul de l'état d'un service de haut niveau.
-        if dom[0].tag == namespaced_tag(NS_COMPUTATION_ORDER,
-                                        'computation_order'):
-            return self._computation_order(dom, xml, idxmpp)
+        if msg["type"] == "computation_order":
+            return self._computation_order(msg)
 
         # Extraction des informations du message
-        info_dictionary = extract_information(dom[0])
+        info_dictionary = self.extract_information(msg)
 
         # S'il s'agit d'un message concernant un ticket d'incident :
-        if dom[0].tag == namespaced_tag(NS_TICKET, 'ticket'):
+        if msg["type"] == "ticket":
             d = self._do_in_transaction(
                 _("Error while modifying the ticket"),
-                xml, [exc.OperationalError],
+                [exc.OperationalError],
                 handle_ticket, info_dictionary,
             )
             return d
 
         # Sinon, s'il ne s'agit pas d'un message d'événement (c'est-à-dire
         # un message d'alerte de changement d'état), on ne le traite pas.
-        if dom[0].tag != namespaced_tag(NS_EVENT, 'event'):
+        if msg["type"] != "event":
             return defer.succeed(None)
 
         idsupitem = self._do_in_transaction(
             _("Error while retrieving supervised item ID"),
-            xml, [exc.OperationalError],
+            [exc.OperationalError],
             SupItem.get_supitem,
             info_dictionary['host'],
             info_dictionary['service']
         )
-        idsupitem.addCallback(self._finalizeInfo,
-            idxmpp,
-            dom, xml,
-            info_dictionary
-        )
+        idsupitem.addCallback(self._finalizeInfo, info_dictionary)
         return idsupitem
 
-    def _computation_order(self, dom, xml, idxmpp):
+
+    def _computation_order(self, msg):
         if 'HighLevelServiceDepsRule' not in \
             registry.get_registry().rules.keys():
             LOGGER.warning(_("The rule 'vigilo.correlator_enterprise."
@@ -270,14 +207,14 @@ class RuleDispatcher(PubSubSender):
             if failure.check(defer.TimeoutError):
                 LOGGER.info(_("The connection to memcached timed out. "
                                 "The message will be handled once more."))
-                self.queue.append(xml)
-                return # Provoque le retraitement du message.
-            return failure
+                return failure # Provoque le retraitement du message.
+            LOGGER.warning(failure.getErrorMessage())
+            return None # on passe au suivant
 
-        ctx = self._context_factory(idxmpp)
+        ctx = self._context_factory(msg["id"])
+
         hls_names = set()
-        for child in dom[0].iterchildren():
-            servicename = child.text
+        for servicename in msg["children"]: # TODO: adapter l'envoi
             if not isinstance(servicename, unicode):
                 servicename = servicename.decode('utf-8')
             hls_names.add(servicename)
@@ -290,7 +227,7 @@ class RuleDispatcher(PubSubSender):
         d.addCallback(lambda _dummy: \
             self.doWork(
                 rule.compute_hls_states,
-                self, idxmpp,
+                self, msg["id"],
                 None, None,
                 hls_names
             )
@@ -301,13 +238,42 @@ class RuleDispatcher(PubSubSender):
         return d
 
 
-    def _finalizeInfo(self, idsupitem, idxmpp, dom, xml, info_dictionary):
+    def extract_information(self, msg):
+        """
+        Extrait les informations d'un message
+        """
+
+        info_dictionary = {"host": None,
+                           "service": None,
+                           "state": None,
+                           "message": None,
+                           "impacted_HLS": None,
+                           "ticket_id": None,
+                           "acknowledgement_status": None,}
+        for key, value in msg.iteritems():
+            if value is not None:
+                info_dictionary[key] = unicode(value)
+
+        if "timestamp" in msg:
+            try:
+                info_dictionary["timestamp"] = datetime.fromtimestamp(
+                        int(msg["timestamp"]))
+            except ValueError:
+                info_dictionary["timestamp"] = datetime.now()
+
+        if info_dictionary["host"] == self.nagios_hls_host:
+            info_dictionary["host"] = None
+
+        return info_dictionary
+
+
+    def _finalizeInfo(self, idsupitem, info_dictionary):
         # Ajoute l'identifiant du SupItem aux informations.
         info_dictionary['idsupitem'] = idsupitem
 
         # On initialise le contexte et on y insère
         # les informations sur l'alerte traitée.
-        ctx = self._context_factory(idxmpp)
+        ctx = self._context_factory(info_dictionary["id"])
 
         attrs = {
             'hostname': 'host',
@@ -325,9 +291,9 @@ class RuleDispatcher(PubSubSender):
             if failure.check(defer.TimeoutError):
                 LOGGER.info(_("The connection to memcached timed out. "
                                 "The message will be handled once more."))
-                self.queue.append(xml)
-                return # Provoque le retraitement du message.
-            return failure
+                return failure # Provoque le retraitement du message.
+            LOGGER.warning(failure.getErrorMessage())
+            return None # on passe au suivant
 
         for ctx_name, info_name in attrs.iteritems():
             d.addCallback(prepare_ctx, ctx_name, info_dictionary[info_name])
@@ -336,22 +302,24 @@ class RuleDispatcher(PubSubSender):
         # - On enregistre l'état correspondant à l'événement.
         # - On insère une entrée d'historique pour l'événement.
         # - On réalise la corrélation.
-        d.addCallback(self._insert_state, info_dictionary, xml)
-        d.addCallback(self._insert_history, info_dictionary, idxmpp, dom, ctx, xml)
+        d.addCallback(self._insert_state, info_dictionary)
+        d.addCallback(self._insert_history, info_dictionary, ctx)
         d.addErrback(eb)
         d.callback(None)
         return d
 
-    def _insert_state(self, result, info_dictionary, xml):
+
+    def _insert_state(self, result, info_dictionary):
         LOGGER.debug(_('Inserting state'))
         d = self._do_in_transaction(
             _("Error while saving state"),
-            xml, [exc.OperationalError],
+            [exc.OperationalError],
             insert_state, info_dictionary
         )
         return d
 
-    def _insert_history(self, previous_state, info_dictionary, idxmpp, dom, ctx, xml):
+
+    def _insert_history(self, previous_state, info_dictionary, ctx):
         if isinstance(previous_state, OldStateReceived):
             LOGGER.debug("Ignoring old state for host %(host)s and service "
                          "%(srv)s (current is %(cur)s, received %(recv)s)"
@@ -367,14 +335,14 @@ class RuleDispatcher(PubSubSender):
             LOGGER.debug(_('Inserting an entry in the HLS history'))
             d = self._do_in_transaction(
                 _("Error while adding an entry in the HLS history"),
-                xml, [exc.OperationalError],
+                [exc.OperationalError],
                 insert_hls_history, info_dictionary
             )
         else:
             LOGGER.debug(_('Inserting an entry in the history'))
             d = self._do_in_transaction(
                 _("Error while adding an entry in the history"),
-                xml, [exc.OperationalError],
+                [exc.OperationalError],
                 insert_event, info_dictionary
             )
 
@@ -382,8 +350,7 @@ class RuleDispatcher(PubSubSender):
             transaction.commit()
             return res
         d.addCallback(commit)
-        d.addCallback(self._do_correl, previous_state, info_dictionary,
-                                       idxmpp, dom, xml, ctx)
+        d.addCallback(self._do_correl, previous_state, info_dictionary, ctx)
 
         def no_problem(fail):
             """
@@ -398,25 +365,23 @@ class RuleDispatcher(PubSubSender):
         d.addErrback(no_problem)
         return d
 
-    def _do_correl(self, raw_event_id, previous_state, info_dictionary,
-                   idxmpp, dom, xml, ctx):
+
+    def _do_correl(self, raw_event_id, previous_state, info_dictionary, ctx):
         LOGGER.debug(_('Actual correlation'))
 
         d = defer.Deferred()
-        d.addCallback(lambda result: ctx.set('payload', xml))
+        d.addCallback(lambda result: ctx.set('payload', info_dictionary))
         d.addCallback(lambda result: ctx.set('previous_state', previous_state))
 
         if raw_event_id:
             d.addCallback(lambda result: ctx.set('raw_event_id', raw_event_id))
 
-        d.addCallback(lambda result: etree.tostring(dom[0]))
-
-        def start_correl(payload, defs):
+        def start_correl(_ignored, defs):
             tree_start, self.tree_end = defs
 
             def send(res):
-                sr = self._send_result(res, xml, info_dictionary)
-                sr.addErrback(self._send_result_eb, idxmpp, payload)
+                sr = self._send_result(res, info_dictionary)
+                sr.addErrback(self._send_result_eb, info_dictionary)
                 return sr
 
             # Gère les erreurs détectées à la fin du processus de corrélation,
@@ -424,12 +389,12 @@ class RuleDispatcher(PubSubSender):
             self.tree_end.addCallbacks(
                 send,
                 self._correlation_eb,
-                errbackArgs=[idxmpp, payload],
+                errbackArgs=[info_dictionary],
             )
 
             # On lance le processus de corrélation.
             self._tmp_correl_time = time.time()
-            tree_start.callback(idxmpp)
+            tree_start.callback(info_dictionary["id"])
             return self.tree_end
         d.addCallback(start_correl, self._executor.build_execution_tree())
 
@@ -442,7 +407,8 @@ class RuleDispatcher(PubSubSender):
         d.callback(None)
         return d
 
-    def _send_result(self, result, xml, info_dictionary):
+
+    def _send_result(self, result, info_dictionary):
         """
         Traite le résultat de l'exécution de TOUTES les règles
         de corrélation.
@@ -467,19 +433,17 @@ class RuleDispatcher(PubSubSender):
             self._messages_sent += 1
         d.addCallback(inc_messages)
 
-        dom = etree.fromstring(xml)
-        idnt = dom.get('id')
+        idnt = info_dictionary["id"]
 
         # Pour les services de haut niveau, on s'arrête ici,
         # on NE DOIT PAS générer d'événement corrélé.
-        if info_dictionary["host"] == settings['correlator']['nagios_hls_host']:
+        if info_dictionary["host"] == self.nagios_hls_host:
             d.callback(None)
             return d
 
-        dom = dom[0]
         def cb(result, *args, **kwargs):
             return make_correvent(self, self._database, *args, **kwargs)
-        def eb(failure, xml):
+        def eb(failure):
             try:
                 error_message = unicode(failure)
             except UnicodeDecodeError:
@@ -490,19 +454,19 @@ class RuleDispatcher(PubSubSender):
                 'The message will be handled once more.'),
                 error_message
             )
-            self.queue.append(xml)
-            return None
+            return failure
         d.addCallback(lambda res: self._database.run(
             transaction.begin, transaction=False))
-        d.addCallback(cb, dom, idnt, info_dictionary)
+        d.addCallback(cb, idnt, info_dictionary)
         d.addCallback(lambda res: self._database.run(
             transaction.commit, transaction=False))
-        d.addErrback(eb, xml)
+        d.addErrback(eb)
 
         d.callback(None)
         return d
 
-    def _correlation_eb(self, failure, idxmpp, payload):
+
+    def _correlation_eb(self, failure, msg):
         """
         Cette méthode est appelée lorsque la corrélation échoue.
         Elle se contente d'afficher un message d'erreur.
@@ -518,12 +482,13 @@ class RuleDispatcher(PubSubSender):
         """
         LOGGER.error(_('Correlation failed for '
                         'message #%(id)s (%(payload)s)'), {
-            'id': idxmpp,
-            'payload': payload,
+            'id': msg["id"],
+            'payload': msg,
         })
         return failure
 
-    def _send_result_eb(self, failure, idxmpp, payload):
+
+    def _send_result_eb(self, failure, msg):
         """
         Cette méthode est appelée lorsque la corrélation
         s'est bien déroulée mais que le traitement des résultats
@@ -539,42 +504,13 @@ class RuleDispatcher(PubSubSender):
         """
         LOGGER.error(_('Unable to store correlated alert for '
                         'message #%(id)s (%(payload)s) : %(error)s'), {
-            'id': idxmpp,
-            'payload': payload,
+            'id': msg["id"],
+            'payload': msg,
             'error': str(failure).decode('utf-8'),
         })
 
-    def connectionInitialized(self):
-        """
-        Cette méthode est appelée lorsque la connexion avec le bus XMPP
-        est prête.
-        """
-        super(RuleDispatcher, self).connectionInitialized()
-        self.rrp.start()
 
-    def connectionLost(self, reason):
-        """
-        Cette méthode est appelée lorsque la connexion avec le bus XMPP
-        est perdue. Dans ce cas, on arrête les tentatives de renvois de
-        messages et on arrête le pool de rule runners.
-        Le renvoi de messages et le pool seront relancés lorsque la
-        connexion sera rétablie (cf. connectionInitialized).
-        """
-        super(RuleDispatcher, self).connectionLost(reason)
-        LOGGER.debug(_('Connection lost, stopping rule runners pool'))
-        self.rrp.stop()
-
-    def sendItem(self, item):
-        if not isinstance(item, etree.ElementBase):
-            item = parseXml(item.encode('utf-8'))
-        if item.name == MESSAGEONETOONE:
-            self.sendOneToOneXml(item)
-            return defer.succeed(None)
-        else:
-            result = self.publishXml(item)
-            return result
-
-    def _do_in_transaction(self, error_desc, xml, ex, func, *args, **kwargs):
+    def _do_in_transaction(self, error_desc, ex, func, *args, **kwargs):
         """
         Encapsule une opération nécessitant d'accéder à la base de données
         dans une transaction.
@@ -603,13 +539,14 @@ class RuleDispatcher(PubSubSender):
             if failure.check(*ex):
                 LOGGER.info(_('%s. The message will be handled once more.'),
                     error_desc)
-                self.queue.append(xml)
                 return failure
-            return failure
+            LOGGER.warning(failure.getErrorMessage())
+            return None
 
         d = self._database.run(func, *args, **kwargs)
         d.addErrback(eb)
         return d
+
 
     def getStats(self):
         """Récupère des métriques de fonctionnement du corrélateur"""
@@ -625,5 +562,43 @@ class RuleDispatcher(PubSubSender):
         d.addCallback(add_exec_stats)
         return d
 
+
     def registerCallback(self, fn, idnt):
         self.tree_end.addCallback(fn, self, self._database, idnt)
+
+
+    # Envoi des résultats sur le bus
+
+    def sendItem(self, msg):
+        if self.consumer is not None:
+            return self.consumer.write(msg)
+
+    def pauseProducing(self):
+        pass
+    def resumeProducing(self):
+        pass
+
+
+
+def ruledispatcher_factory(settings, database, client):
+    nagios_hls_host = settings['correlator']['nagios_hls_host']
+
+    timeout = settings['correlator'].as_int('rules_timeout')
+    if timeout <= 0:
+        timeout = None
+
+    min_runner = settings['correlator'].as_int('min_rule_runners')
+    max_runner = settings['correlator'].as_int('max_rule_runners')
+
+    try:
+        max_idle = settings['correlator'].as_int('rule_runners_max_idle')
+    except KeyError:
+        max_idle = 20
+
+    msg_handler = RuleDispatcher(database, nagios_hls_host, timeout,
+                                 min_runner, max_runner, max_idle)
+    msg_handler.check_database_connectivity()
+    msg_handler.setClient(client)
+    msg_handler.subscribe(settings["bus"]["queue"])
+
+    return msg_handler
