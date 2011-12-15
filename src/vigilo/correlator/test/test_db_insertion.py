@@ -7,14 +7,11 @@
 from datetime import datetime
 import unittest
 import time
-from lxml import etree
 
-from vigilo.correlator.actors.rule_dispatcher import extract_information
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                     OldStateReceived, NoProblemException
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-from vigilo.pubsub.xml import NS_EVENT
-import helpers
+from vigilo.correlator.test import helpers
 
 from vigilo.models.demo import functions
 from vigilo.models.tables import State, StateName, Event, SupItem, \
@@ -22,8 +19,11 @@ from vigilo.models.tables import State, StateName, Event, SupItem, \
                             CorrEvent
 from vigilo.models.session import DBSession
 
+
+
 class TestDbInsertion(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""
+
 
     def setUp(self):
         super(TestDbInsertion, self).setUp()
@@ -33,6 +33,7 @@ class TestDbInsertion(unittest.TestCase):
     def tearDown(self):
         helpers.teardown_db()
         super(TestDbInsertion, self).tearDown()
+
 
     def make_dependencies(self):
         """Création de quelques dépendances dans la BDD."""
@@ -46,17 +47,14 @@ class TestDbInsertion(unittest.TestCase):
         self.make_dependencies()
 
         # Création d'un message d'événement portant sur un SBN.
-        xml = """
-<event xmlns="%(xmlns)s">
-    <timestamp>1239104006</timestamp>
-    <host>server.example.com</host>
-    <service>Load</service>
-    <state>WARNING</state>
-    <message>WARNING: Load average is above 4 (4.5)</message>
-</event>""" % {'xmlns': NS_EVENT}
-
-        # Extraction des informations du messages
-        info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary = {
+                "type": "event",
+                "timestamp": datetime.fromtimestamp(1239104006),
+                "host": "server.example.com",
+                "service": "Load",
+                "state": u"WARNING",
+                "message": u"WARNING: Load average is above 4 (4.5)",
+                }
         info_dictionary['idsupitem'] = SupItem.get_supitem(
             info_dictionary['host'],
             info_dictionary['service']
@@ -105,20 +103,14 @@ class TestDbInsertion(unittest.TestCase):
         self.make_dependencies()
 
         # Création d'un message d'événement portant sur un SHN.
-        xml = """
-<event xmlns="%(xmlns)s">
-    <timestamp>1239104006</timestamp>
-    <host>%(hls_host)s</host>
-    <service>Load</service>
-    <state>WARNING</state>
-    <message>WARNING: Load average is above 4 (4.5)</message>
-</event>""" % {
-            'xmlns': NS_EVENT,
-            'hls_host': helpers.settings['correlator']['nagios_hls_host'],
-        }
-
-        # Extraction des informations du messages
-        info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary = {
+                "type": "event",
+                "timestamp": datetime.fromtimestamp(1239104006),
+                "host": helpers.settings['correlator']['nagios_hls_host'],
+                "service": "Load",
+                "state": "WARNING",
+                "message": "WARNING: Load average is above 4 (4.5)",
+                }
         info_dictionary['idsupitem'] = SupItem.get_supitem(
             info_dictionary['host'],
             info_dictionary['service']
@@ -137,19 +129,15 @@ class TestDbInsertion(unittest.TestCase):
         self.make_dependencies()
 
         # Création d'un message d'événement portant sur un hôte.
-        xml = """
-<event xmlns="%(xmlns)s">
-    <timestamp>1239104006</timestamp>
-    <host>server.example.com</host>
-    <state>DOWN</state>
-    <message>DOWN: No ping response</message>
-</event>""" % {'xmlns': NS_EVENT}
-
-        # Extraction des informations du messages
-        info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary = {
+                "type": "event",
+                "timestamp": datetime.fromtimestamp(1239104006),
+                "host": "server.example.com",
+                "state": u"DOWN",
+                "message": u"DOWN: No ping response",
+                }
         info_dictionary['idsupitem'] = SupItem.get_supitem(
-            info_dictionary['host'],
-            info_dictionary['service']
+            info_dictionary['host'], None,
         )
 
         # Insertion de l'événement dans la BDD
@@ -263,28 +251,26 @@ class TestDbInsertion(unittest.TestCase):
 #        self.assertEquals(3, len(history),
 #            "Expected 3 entries in history, got %d" % len(history))
 
+
     def test_insert_old_state(self):
         """Abandon de l'insertion d'un état ancien"""
         self.make_dependencies()
-        ts_old = "1239104006"
-        ts_recent = "1239104042"
-        ts_recent_dt = datetime.fromtimestamp(int(ts_recent))
+        ts_old = 1239104006
+        ts_recent = 1239104042
+        ts_recent_dt = datetime.fromtimestamp(ts_recent)
         idsupitem = SupItem.get_supitem("server.example.com", "Load")
         # Insertion de l'état récent
         state = DBSession.query(State).get(idsupitem)
         state.timestamp = ts_recent_dt
         # Création d'un message d'événement portant sur un SBN.
-        xml = """
-<event xmlns="%(xmlns)s">
-    <timestamp>%(ts_old)s</timestamp>
-    <host>server.example.com</host>
-    <service>Load</service>
-    <state>WARNING</state>
-    <message>WARNING: Load average is above 4 (4.5)</message>
-</event>""" % {'xmlns': NS_EVENT, "ts_old": ts_old}
-
-        # Extraction des informations du messages
-        info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary = {
+                "type": "event",
+                "timestamp": datetime.fromtimestamp(ts_old),
+                "host": "server.example.com",
+                "service": "Load",
+                "state": "WARNING",
+                "message": "WARNING: Load average is above 4 (4.5)",
+                }
         info_dictionary['idsupitem'] = SupItem.get_supitem(
             info_dictionary['host'],
             info_dictionary['service']
@@ -295,20 +281,18 @@ class TestDbInsertion(unittest.TestCase):
         supitem = DBSession.query(SupItem).get(idsupitem)
         self.assertEqual(supitem.state.timestamp, ts_recent_dt)
 
+
     def test_no_problem_exception(self):
         """Exception à réception d'une alerte n'indiquant aucun problème."""
         self.make_dependencies()
-        xml = """
-<event xmlns="%(xmlns)s">
-    <timestamp>%(ts)s</timestamp>
-    <host>server.example.com</host>
-    <service>Load</service>
-    <state>OK</state>
-    <message>No problem here</message>
-</event>""" % {'xmlns': NS_EVENT, "ts": int(time.time())}
-
-        # Extraction des informations du messages
-        info_dictionary = extract_information(etree.fromstring(xml))
+        info_dictionary = {
+                "type": "event",
+                "timestamp": int(time.time()),
+                "host": "server.example.com",
+                "service": "Load",
+                "state": "OK",
+                "message": "No problem here",
+                }
         info_dictionary['idsupitem'] = SupItem.get_supitem(
             info_dictionary['host'],
             info_dictionary['service']

@@ -12,10 +12,21 @@ from vigilo.models.demo import functions
 from vigilo.models.tables import Host, Event, EventHistory, CorrEvent, StateName
 
 from vigilo.correlator.handle_ticket import handle_ticket
-import helpers
+from vigilo.correlator.test import helpers
+
+
 
 class TestHandleTicket(unittest.TestCase):
     """Test des méthodes du module 'handle_ticket'"""
+
+
+    def setUp(self):
+        helpers.setup_db()
+        self.add_data()
+
+    def tearDown(self):
+        helpers.teardown_db()
+
 
     def add_data(self):
         """Ajout des données dans la base avant les tests"""
@@ -27,14 +38,6 @@ class TestHandleTicket(unittest.TestCase):
         DBSession.add(self.events_aggregate)
         DBSession.flush()
 
-    def setUp(self):
-        """Initialisation de la BDD préalable à chacun des tests"""
-        helpers.setup_db()
-        self.add_data()
-
-    def tearDown(self):
-        """Nettoyage de la BDD à la fin de chaque test"""
-        helpers.teardown_db()
 
     def test_message_reception(self):
         """

@@ -15,8 +15,6 @@ des commandes pour Nagios).
 import time
 from datetime import datetime
 
-from zope.interface import implements
-
 try:
     import json
 except ImportError:
@@ -26,7 +24,6 @@ import transaction
 from sqlalchemy import exc
 
 from twisted.internet import defer, reactor, error
-from twisted.internet.interfaces import IPushProducer
 from twisted.python import threadpool
 
 from vigilo.common.logging import get_logger, get_error_message
@@ -36,14 +33,14 @@ from vigilo.models.session import DBSession
 from vigilo.models.tables import SupItem, Version
 
 from vigilo.connector.handlers import MessageHandler
+from vigilo.correlator.correvent import CorrEventBuilder
+from vigilo.correlator.publish_messages import MessagePublisher
 
 from vigilo.correlator.actors import executor
 from vigilo.correlator.context import Context
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
         insert_hls_history, OldStateReceived, NoProblemException
-from vigilo.correlator.publish_messages import publish_state
-from vigilo.correlator.correvent import make_correvent
 from vigilo.correlator import registry
 
 LOGGER = get_logger(__name__)
@@ -57,15 +54,12 @@ class RuleDispatcher(MessageHandler):
     et envoie ensuite les résultats sur le bus.
     """
 
-    implements(IPushProducer)
     _context_factory = Context
 
 
     def __init__(self, database, nagios_hls_host, timeout, min_runner,
                  max_runner, max_idle):
         super(RuleDispatcher, self).__init__()
-        self.max_send_simult = 1
-        self._process_as_domish = False
         self.tree_end = None
         self._database = database
         self.nagios_hls_host = nagios_hls_host
@@ -74,7 +68,8 @@ class RuleDispatcher(MessageHandler):
         # @TODO: #875: réimplémenter le timeout avec des threads.
         self.rrp = threadpool.ThreadPool(min_runner, max_runner, "Rule runners")
         self._executor = executor.Executor(self)
-        self.consumer = None # expéditeur des résultats sur le bus
+        self.bus_publisher = None
+        self.correvent_builder = None
         self._tmp_correl_time = None
         self._correl_times = []
 
@@ -426,14 +421,12 @@ class RuleDispatcher(MessageHandler):
 
         # On publie sur le bus XMPP l'état de l'hôte
         # ou du service concerné par l'alerte courante.
-        publish_state(self, info_dictionary)
+        self.bus_publisher.publish_state(info_dictionary)
 
         d = defer.Deferred()
         def inc_messages(result):
             self._messages_sent += 1
         d.addCallback(inc_messages)
-
-        idnt = info_dictionary["id"]
 
         # Pour les services de haut niveau, on s'arrête ici,
         # on NE DOIT PAS générer d'événement corrélé.
@@ -442,7 +435,8 @@ class RuleDispatcher(MessageHandler):
             return d
 
         def cb(result, *args, **kwargs):
-            return make_correvent(self, self._database, *args, **kwargs)
+            assert self.correvent_builder is not None
+            return self.correvent_builder.make_correvent(*args, **kwargs)
         def eb(failure):
             try:
                 error_message = unicode(failure)
@@ -457,7 +451,7 @@ class RuleDispatcher(MessageHandler):
             return failure
         d.addCallback(lambda res: self._database.run(
             transaction.begin, transaction=False))
-        d.addCallback(cb, idnt, info_dictionary)
+        d.addCallback(cb, info_dictionary)
         d.addCallback(lambda res: self._database.run(
             transaction.commit, transaction=False))
         d.addErrback(eb)
@@ -567,16 +561,10 @@ class RuleDispatcher(MessageHandler):
         self.tree_end.addCallback(fn, self, self._database, idnt)
 
 
-    # Envoi des résultats sur le bus
-
     def sendItem(self, msg):
-        if self.consumer is not None:
-            return self.consumer.write(msg)
-
-    def pauseProducing(self):
-        pass
-    def resumeProducing(self):
-        pass
+        """Envoi des résultats sur le bus"""
+        if self.bus_publisher is not None:
+            return self.bus_publisher.write(msg)
 
 
 
@@ -600,5 +588,15 @@ def ruledispatcher_factory(settings, database, client):
     msg_handler.check_database_connectivity()
     msg_handler.setClient(client)
     msg_handler.subscribe(settings["bus"]["queue"])
+
+    # Expéditeur de messages
+    publications = settings.get('publications', {}).copy()
+    publisher = MessagePublisher(publications)
+    publisher.setClient(client)
+    msg_handler.bus_publisher = publisher
+
+    # Créateur de correvents
+    correvent_builder = CorrEventBuilder(publisher, database)
+    msg_handler.correvent_builder = correvent_builder
 
     return msg_handler

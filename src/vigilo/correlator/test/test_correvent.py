@@ -21,13 +21,17 @@ from vigilo.correlator.test.helpers import ContextStubFactory, \
 from vigilo.pubsub.xml import NS_EVENT
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, Event, CorrEvent, StateName
-from vigilo.correlator.correvent import make_correvent
+from vigilo.correlator.correvent import CorrEventBuilder
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
+
+
 class TestCorrevents(unittest.TestCase):
+
+
     @deferred(timeout=30)
     def setUp(self):
         """Initialise MemcacheD et la BDD au début de chaque test."""
@@ -36,6 +40,9 @@ class TestCorrevents(unittest.TestCase):
         helpers.populate_statename()
         self.forwarder = RuleDispatcherStub()
         self.context_factory = ContextStubFactory()
+        self.corrbuilder = CorrEventBuilder(self.forwarder,
+                DummyDatabaseWrapper(True))
+        self.corrbuilder.context_factory = self.context_factory
         self.make_deps()
         return defer.succeed(None)
 
@@ -46,6 +53,7 @@ class TestCorrevents(unittest.TestCase):
         helpers.teardown_db()
         self.context_factory.reset()
         return defer.succeed(None)
+
 
     def make_deps(self):
         self.host = Host(
@@ -59,6 +67,7 @@ class TestCorrevents(unittest.TestCase):
         DBSession.add(self.host)
         DBSession.flush()
 
+
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_ignore_obsolete_updates(self):
@@ -68,25 +77,13 @@ class TestCorrevents(unittest.TestCase):
         ts = time.time()
         ctx = self.context_factory(42)
         info_dictionary = {
-            'timestamp': ts,
+            'id': 42,
+            'timestamp': datetime.fromtimestamp(int(ts)),
             'host': self.host.name,
             'service': u'',
             'state': u'DOWN',
             'message': u'DOWN',
-            'xmlns': NS_EVENT,
         }
-
-        payload = """
-<event xmlns="%(xmlns)s">
-    <timestamp>%(timestamp)s</timestamp>
-    <host>%(host)s</host>
-    <service>%(service)s</service>
-    <state>%(state)s</state>
-    <message>%(state)s</message>
-</event>
-""" % info_dictionary
-        item = etree.fromstring(payload)
-        info_dictionary['timestamp'] = datetime.fromtimestamp(int(ts))
 
         # Création Event + CorrEvent plus récent que
         # les informations portées par le message.
@@ -109,7 +106,6 @@ class TestCorrevents(unittest.TestCase):
         )
         DBSession.add(correvent)
 
-
         # On passe par une DeferredList pour garantir l'exécution
         # de tous les Deferred comme étant un seul bloc logique.
         yield defer.DeferredList([
@@ -118,21 +114,13 @@ class TestCorrevents(unittest.TestCase):
             ctx.set('statename', 'DOWN'),
             ctx.set('raw_event_id', event.idevent),
             ctx.set('idsupitem', self.host.idhost),
-            ctx.set('payload', payload),
             ctx.set('timestamp', info_dictionary['timestamp']),
         ])
 
         # make_correvent NE DOIT PAS mettre à jour l'événement corrélé.
         # Il ne doit pas non plus y avoir création d'un nouvel événement
         # corrélé.
-        res = yield make_correvent(
-            self.forwarder,
-            DummyDatabaseWrapper(True),
-            item,
-            42,
-            info_dictionary,
-            self.context_factory,
-        )
+        res = yield self.corrbuilder.make_correvent(info_dictionary)
 
         LOGGER.debug('res = %r', res)
         self.assertEquals(None, res)

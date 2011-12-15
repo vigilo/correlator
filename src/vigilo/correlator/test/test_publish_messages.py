@@ -8,50 +8,30 @@ Test du module publish_messages.
 """
 
 import unittest
+from datetime import datetime
+from time import mktime
 
-from vigilo.correlator.publish_messages import publish_aggregate, \
-                                            delete_published_aggregates, \
-                                            publish_state
+from vigilo.correlator.publish_messages import MessagePublisher
 
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
 from vigilo.models.tables import Host, HighLevelService, LowLevelService
 from vigilo.models.tables import State, StateName
 
-from datetime import datetime
-from time import mktime
-import helpers
+from mock import Mock
 
-class TestAggregatesHandlerFunctions(unittest.TestCase):
+from vigilo.correlator.test import helpers
+
+
+
+class MessagePublisherTestCase(unittest.TestCase):
     """Suite de tests du module publish_messages"""
+
 
     def setUp(self):
         """Initialisation d'une réplique du RuleDispatcher."""
-        self.forwarder = helpers.RuleDispatcherStub()
-
-    def test_publish_aggregate(self):
-        """Publication XMPP d'alertes à ajouter à des évènements corrélés"""
-        publish_aggregate(self.forwarder, [1, 2], [1, 2, 3, 4])
-
-        message = [u"<aggr xmlns='http://www.projet-vigilo.org/xmlns/aggr1'>"
-            "<aggregates><aggregate>1</aggregate><aggregate>2</aggregate>"
-            "</aggregates><alerts><alert>1</alert><alert>2</alert>"
-            "<alert>3</alert><alert>4</alert></alerts></aggr>"]
-
-        self.assertEqual(self.forwarder.buffer, message)
-
-    def test_delete_published_aggregates(self):
-        """Publication XMPP d'une liste d'évènements corrélés à supprimer"""
-        delete_published_aggregates(self.forwarder, [1, 2])
-
-        message = [u"<delaggr xmlns='http://www.projet-vigilo.org/xmlns/"
-            "delaggr1'><aggregates><aggregate>1</aggregate>"
-            "<aggregate>2</aggregate></aggregates></delaggr>"]
-
-        self.assertEqual(self.forwarder.buffer, message)
-
-    def test_publish_state(self):
-        """Publication XMPP de l'état d'un item"""
+        self.mp = MessagePublisher({})
+        self.mp.sendMessage = Mock()
 
         # Initialisation de la BDD
         helpers.setup_db()
@@ -69,9 +49,32 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         lls1 = functions.add_lowlevelservice(host1, u'Processes')
 
         # Création d'un timestamp à partir de l'heure actuelle
-        timestamp = datetime.now()
-        int_timestamp = int(mktime(timestamp.timetuple()))
+        self.timestamp = datetime.now()
+        self.int_timestamp = int(mktime(self.timestamp.timetuple()))
 
+
+    def tearDown(self):
+        helpers.teardown_db()
+
+
+    def test_publish_aggregate(self):
+        """Publication d'alertes à ajouter à des évènements corrélés"""
+        self.mp.publish_aggregate([1, 2], [1, 2, 3, 4])
+        print self.mp.sendMessage.call_args
+        self.assertEqual(self.mp.sendMessage.call_args[0][0],
+                {'aggregates': [1, 2], 'alerts': [1, 2, 3, 4], 'type': 'aggr'})
+
+
+    def test_delete_published_aggregates(self):
+        """Publication XMPP d'une liste d'évènements corrélés à supprimer"""
+        self.mp.delete_published_aggregates([1, 2])
+        print self.mp.sendMessage.call_args
+        self.assertEqual(self.mp.sendMessage.call_args[0][0],
+                {'aggregates': [1, 2], 'type': 'delaggr'})
+
+
+    def test_publish_state_host(self):
+        """Publication XMPP de l'état d'un hôte"""
         # Ajout de l'état du host1 dans la BDD
         state1 = functions.add_host_state(
                     host1, u'UNREACHABLE', 'UNREACHABLE: Host1', timestamp)
@@ -83,21 +86,20 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
                            "message": state1.message}
 
         # On publie l'état du host1 sur le bus
-        publish_state(self.forwarder, info_dictionary)
+        self.mp.publish_state(info_dictionary)
 
-        message = [u"<state xmlns='http://www.projet-vigilo.org/xmlns/state1'>"
-            "<timestamp>" + str(int_timestamp) + "</timestamp>"
-            "<host>host1.example.com</host>"
-            "<state>UNREACHABLE</state>"
-            "<message>UNREACHABLE: Host1</message></state>"]
+        message = {'type': 'state',
+                   'timestamp': self.int_timestamp,
+                   'host': 'host1.example.com',
+                   'message': 'UNREACHABLE: Host1',
+                   'state': u'UNREACHABLE'
+                   }
 
         # On vérifie que le message publié sur le bus concernant
         # l'état du host1 est bien celui attendu.
-        self.assertEqual(self.forwarder.buffer, message)
+        self.assertEqual(self.mp.sendMessage.call_args[0][0], message)
 
-        # On vide le bus entre 2 tests
-        self.forwarder.clear()
-
+    def test_publish_state_hls(self):
         # Ajout de l'état du hls1 dans la BDD
         state2 = functions.add_svc_state(
                     hls1, u'UNKNOWN', 'UNKNOWN: Connection is in an unknown state', timestamp)
@@ -110,25 +112,21 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
                            "message": state2.message}
 
         # On publie l'état du hls1 sur le bus
-        publish_state(self.forwarder, info_dictionary)
+        self.mp.publish_state(info_dictionary)
 
-        message = [u"<state xmlns='http://www.projet-vigilo.org/xmlns/state1'>"
-            "<timestamp>" + str(int_timestamp) + "</timestamp>"
-            "<host>" +
-                helpers.settings['correlator']['nagios_hls_host'] +
-            "</host>"
-            "<service>Connexion</service>"
-            "<state>UNKNOWN</state>"
-            "<message>UNKNOWN: Connection is in an unknown state</message>"
-            "</state>"]
+        message = {'type': 'state',
+                   'timestamp': self.int_timestamp,
+                   'host': helpers.settings['correlator']['nagios_hls_host'],
+                   'service': 'Connexion',
+                   'state': u'UNKNOWN',
+                   'message': 'UNKNOWN: Connection is in an unknown state',
+                   }
 
         # On vérifie que le message publié sur le bus concernant
         # l'état du hls1 est bien celui attendu.
-        self.assertEqual(self.forwarder.buffer, message)
+        self.assertEqual(self.mp.sendMessage.call_args[0][0], message)
 
-        # On vide le bus entre 2 tests
-        self.forwarder.clear()
-
+    def test_publish_state_lls(self):
         # Ajout de l'état du lls1 dans la BDD
         state3 = functions.add_svc_state(
                     lls1, u'UNKNOWN', 'UNKNOWN: Processes are in an unknown state', timestamp)
@@ -140,18 +138,17 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
                            "message": state3.message}
 
         # On publie l'état du lls1 sur le bus
-        publish_state(self.forwarder, info_dictionary)
+        self.mp.publish_state(info_dictionary)
 
-        message = [u"<state xmlns='http://www.projet-vigilo.org/xmlns/state1'>"
-            "<timestamp>" + str(int_timestamp) + "</timestamp>"
-            "<host>host1.example.com</host>"
-            "<service>Processes</service>"
-            "<state>UNKNOWN</state>"
-            "<message>UNKNOWN: Processes are in an unknown state</message>"
-            "</state>"]
+        message = {'type': 'state',
+                   'host': 'host1.example.com',
+                   'service': 'Processes',
+                   'timestamp': self.int_timestamp,
+                   'state': u'UNKNOWN',
+                   'message': 'UNKNOWN: Processes are in an unknown state',
+                   }
 
         # On vérifie que le message publié sur le bus concernant
         # l'état du lls1 est bien celui attendu.
-        self.assertEqual(self.forwarder.buffer, message)
+        self.assertEqual(self.mp.sendMessage.call_args[0][0], message)
 
-        helpers.teardown_db()

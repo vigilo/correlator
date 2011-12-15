@@ -16,29 +16,31 @@ from twisted.internet import defer
 from lxml import etree
 
 from mock import Mock
-import helpers
-from vigilo.correlator.test.helpers import ContextStubFactory, \
-                                            RuleDispatcherStub
+from vigilo.correlator.test import helpers
 
-from vigilo.pubsub.xml import NS_EVENT
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
 from vigilo.models import tables
-from vigilo.correlator.correvent import make_correvent
+from vigilo.correlator.correvent import CorrEventBuilder
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
+
+
 class TestCorrevents4(unittest.TestCase):
+
     @deferred(timeout=30)
     def setUp(self):
         """Initialise la BDD au début de chaque test."""
         super(TestCorrevents4, self).setUp()
         helpers.setup_db()
         helpers.populate_statename()
-        self.forwarder = RuleDispatcherStub()
-        self.context_factory = ContextStubFactory()
+        self.forwarder = helpers.RuleDispatcherStub()
+        self.context_factory = helpers.ContextStubFactory()
+        self.corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
+        self.corrbuilder.context_factory = self.context_factory
         self.make_deps()
         self.ts = int(time.time()) - 10
         return defer.succeed(None)
@@ -51,6 +53,7 @@ class TestCorrevents4(unittest.TestCase):
         self.context_factory.reset()
         return defer.succeed(None)
 
+
     def make_deps(self):
         """
         Création de 4 hôtes "Host 1" jusqu'à "Host 4".
@@ -62,6 +65,7 @@ class TestCorrevents4(unittest.TestCase):
                 self.hosts[i].name,
                 self.hosts[i].idhost)
         print ""
+
 
     @defer.inlineCallbacks
     def handle_alert(self, host, new_state, preds=None, succs=None):
@@ -78,29 +82,17 @@ class TestCorrevents4(unittest.TestCase):
 
         self.ts += 1
         info_dictionary = {
-            'timestamp': self.ts,
+            'id': self.ts,
+            #'timestamp': self.ts,
             'host': host.name,
             'service': u'',
             'state': new_state,
             'message': new_state,
-            'xmlns': NS_EVENT,
         }
+        info_dictionary['timestamp'] = datetime.fromtimestamp(self.ts)
 
         ctx = self.context_factory(self.ts)
 
-        payload = """
-<event xmlns="%(xmlns)s">
-    <timestamp>%(timestamp)s</timestamp>
-    <host>%(host)s</host>
-    <service>%(service)s</service>
-    <state>%(state)s</state>
-    <message>%(state)s</message>
-</event>
-""" % info_dictionary
-        item = etree.fromstring(payload)
-        # À présent, le timestamp doit être un objet datetime.
-        # On fait la conversion directement ici.
-        info_dictionary['timestamp'] = datetime.fromtimestamp(self.ts)
 
         # Création Event.
         event = DBSession.query(tables.Event).filter(
@@ -132,21 +124,14 @@ class TestCorrevents4(unittest.TestCase):
             ctx.set('statename', new_state),
             ctx.set('raw_event_id', event.idevent),
             ctx.set('idsupitem', host.idhost),
-            ctx.set('payload', payload),
+            ctx.set('payload', None),
             ctx.set('timestamp', info_dictionary['timestamp']),
             ctx.set('predecessors_aggregates', preds),
             ctx.set('successors_aggregates', succs),
             ctx.setShared('open_aggr:%s' % host.idhost, open_aggr),
         ])
 
-        res = yield make_correvent(
-            self.forwarder,
-            DummyDatabaseWrapper(True),
-            item,
-            self.ts,
-            info_dictionary,
-            self.context_factory,
-        )
+        res = yield self.corrbuilder.make_correvent(info_dictionary)
         DBSession.flush()
 
         idcorrevent = DBSession.query(
@@ -157,6 +142,7 @@ class TestCorrevents4(unittest.TestCase):
         # la valeur du .events des CorrEvents.
         DBSession.expunge_all()
         defer.returnValue( (res, idcorrevent) )
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks

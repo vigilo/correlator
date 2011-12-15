@@ -12,20 +12,23 @@ import unittest
 
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
-from lxml import etree
 
 from mock import Mock
-import helpers
+from vigilo.correlator.test import helpers
 
 from vigilo.models.session import DBSession
 from vigilo.models import tables
-from vigilo.correlator.correvent import make_correvent
+from vigilo.correlator.correvent import CorrEventBuilder
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
+
+
 class TestAggregates(unittest.TestCase):
+
+
     @deferred(timeout=30)
     def setUp(self):
         """."""
@@ -34,6 +37,9 @@ class TestAggregates(unittest.TestCase):
         helpers.populate_statename()
         self.forwarder = helpers.RuleDispatcherStub()
         self.context_factory = helpers.ContextStubFactory()
+        self.corrbuilder = CorrEventBuilder(self.forwarder,
+                DummyDatabaseWrapper(True))
+        self.corrbuilder.context_factory = self.context_factory
         return defer.succeed(None)
 
     @deferred(timeout=30)
@@ -43,6 +49,7 @@ class TestAggregates(unittest.TestCase):
         helpers.teardown_db()
         self.context_factory.reset()
         return defer.succeed(None)
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
@@ -104,8 +111,8 @@ class TestAggregates(unittest.TestCase):
         correvents = []
 
         for i in xrange(1, 5):
-            dom = etree.Element('test')
             info_dictionary = {
+                'id': i,
                 'host': u'Host éçà %d' % i,
                 'service': None,
                 'state': u'DOWN',
@@ -154,13 +161,7 @@ class TestAggregates(unittest.TestCase):
             # Prépare le contexte et appelle la fonction
             # de création/mise à jour de l'agrégat.
             yield defer.DeferredList(defs)
-            yield make_correvent(
-                self.forwarder,
-                DummyDatabaseWrapper(),
-                dom,
-                i,
-                info_dictionary,
-                context_factory=self.context_factory)
+            yield self.corrbuilder.make_correvent(info_dictionary)
             DBSession.flush()
 
             correvent = DBSession.query(

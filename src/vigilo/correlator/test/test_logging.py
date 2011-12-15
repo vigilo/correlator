@@ -6,26 +6,27 @@
 """Suite de tests des logs du corrélateur"""
 
 import unittest
+from datetime import datetime
+import logging
+
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
-from datetime import datetime
-from lxml import etree
-import logging
-
-import helpers
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
 from vigilo.models.tables import LowLevelService, Host, \
                                     Event, Change, SupItem, State
 
-from vigilo.pubsub.xml import NS_EVENT
 from vigilo.correlator.db_insertion import insert_event, insert_state
-from vigilo.correlator.correvent import make_correvent
+from vigilo.correlator.correvent import CorrEventBuilder
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
+
+from vigilo.correlator.test import helpers
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
+
+
 
 class LogHandlerStub(object):
     """Classe interceptant les logs du corrélateur pendant les tests."""
@@ -59,6 +60,8 @@ class LogHandlerStub(object):
         """
         self.buffer = []
 
+
+
 class TestLogging(unittest.TestCase):
     """
     Test de l'écriture des logs dans le corrélateur.
@@ -69,106 +72,9 @@ class TestLogging(unittest.TestCase):
     de la base soit réalisée dans le même threads que les accès dans les tests.
     """
 
-    @defer.inlineCallbacks
-    def simulate_message_reception(self,
-        new_state, host_name, service_name=None):
-        """
-        Génère un message de changement d'état concernant l'item passé en
-        paramètre, réalise les mêmes traitements que ceux du rule_dispatcher
-        et des règles, et déclenche l'exécution de la fonction make_correvent.
-        """
-
-        # On incrémente l'identifiant du message
-        self.XMPP_id += 1
-
-        # On génère un timestamp à partir de la date courante
-        timestamp = datetime.now()
-
-        infos = {
-            'xmlns': NS_EVENT,
-            'ts': timestamp,
-            'service': service_name,
-            'state': new_state,
-            'xmpp_id': self.XMPP_id,
-        }
-
-        if host_name:
-            infos['host'] = host_name
-        else:
-            infos['host'] = helpers.settings['correlator']['nagios_hls_host']
-
-        payload = """
-<event xmlns="%(xmlns)s">
-    <timestamp>%(ts)s</timestamp>
-    <host>%(host)s</host>
-    <service>%(service)s</service>
-    <state>%(state)s</state>
-    <message>%(state)s</message>
-</event>
-""" % infos
-        item = etree.fromstring(payload)
-
-        idsupitem = SupItem.get_supitem(host_name, service_name)
-
-        # On ajoute les données nécessaires dans le contexte.
-        ctx = self.context_factory(self.XMPP_id)
-        yield ctx.set('hostname', host_name)
-        yield ctx.set('servicename', service_name)
-        yield ctx.set('statename', new_state)
-        yield ctx.set('idsupitem', idsupitem)
-
-        # On insère les données nécessaires dans la BDD:
-        info_dictionary = {
-            "host": host_name,
-            "service": service_name,
-            "state": new_state,
-            "timestamp": timestamp,
-            "message": new_state,
-            "idsupitem": idsupitem,
-        }
-
-        # - D'abord l'évènement ;
-        LOGGER.info("Inserting event")
-        raw_id = insert_event(info_dictionary)
-        yield ctx.set('raw_event_id', raw_id)
-        # - Et ensuite l'état.
-        LOGGER.info("Inserting state")
-        # Si le timestamp est trop récent insert_state ne fera rien
-        DBSession.query(State).get(idsupitem).timestamp = timestamp
-        insert_state(info_dictionary)
-        DBSession.flush()
-
-        # On force le traitement du message, par la fonction make_correvent,
-        # comme s'il avait été traité au préalable par le rule_dispatcher.
-        rd = helpers.RuleDispatcherStub()
-
-        LOGGER.info('Creating a new correlated event')
-        yield make_correvent(rd, DummyDatabaseWrapper(True), item,
-                             self.XMPP_id, info_dictionary,
-                             self.context_factory)
-        defer.returnValue(None)
-
-    def add_data(self):
-        """
-        Ajoute un hôte et un service de bas niveau dans la BDD, ainsi
-        que d'autres données nécessaires à l'exécution des tests.
-        """
-        helpers.populate_statename()
-
-        # Ajout de la date de dernière
-        # modification de la topologie dans la BDD.
-        DBSession.add(Change(
-            element = u"Topology",
-            last_modified = datetime.now(),))
-        DBSession.flush()
-
-        self.host = functions.add_host(u'Host')
-        self.lls = functions.add_lowlevelservice(self.host, u'LLS')
 
     @deferred(timeout=30)
     def setUp(self):
-        """Initialisation des tests"""
-
         # On prépare la base de données et le serveur MemcacheD.
         helpers.setup_db()
         self.context_factory = helpers.ContextStubFactory()
@@ -192,16 +98,105 @@ class TestLogging(unittest.TestCase):
         self.handler.setFormatter(formatter)
 
         # Initialisation de l'identifiant des messages XML.
-        self.XMPP_id = 0
+        self.msgid = 0
         return defer.succeed(None)
 
     @deferred(timeout=30)
     def tearDown(self):
-        """Nettoie MemcacheD et la BDD à la fin de chaque test."""
         # On dissocie le handler du logger.
         self.logger.removeHandler(self.handler)
         helpers.teardown_db()
         return defer.succeed(None)
+
+
+    @defer.inlineCallbacks
+    def simulate_message_reception(self,
+        new_state, host_name, service_name=None):
+        """
+        Génère un message de changement d'état concernant l'item passé en
+        paramètre, réalise les mêmes traitements que ceux du rule_dispatcher
+        et des règles, et déclenche l'exécution de la fonction make_correvent.
+        """
+
+        # On incrémente l'identifiant du message
+        self.msgid += 1
+
+        # On génère un timestamp à partir de la date courante
+        timestamp = datetime.now()
+
+        infos = {
+            'type': "event",
+            'id': self.msgid,
+            'timestamp': timestamp,
+            'service': service_name,
+            'state': new_state,
+            'message': new_state,
+        }
+
+        if host_name:
+            infos['host'] = host_name
+        else:
+            infos['host'] = helpers.settings['correlator']['nagios_hls_host']
+
+        idsupitem = SupItem.get_supitem(host_name, service_name)
+
+        # On ajoute les données nécessaires dans le contexte.
+        ctx = self.context_factory(self.msgid)
+        yield ctx.set('hostname', host_name)
+        yield ctx.set('servicename', service_name)
+        yield ctx.set('statename', new_state)
+        yield ctx.set('idsupitem', idsupitem)
+
+        # On insère les données nécessaires dans la BDD:
+        info_dictionary = {
+            "id": self.msgid,
+            "host": host_name,
+            "service": service_name,
+            "state": new_state,
+            "timestamp": timestamp,
+            "message": new_state,
+            "idsupitem": idsupitem,
+        }
+
+        # - D'abord l'évènement ;
+        LOGGER.info("Inserting event")
+        raw_id = insert_event(info_dictionary)
+        yield ctx.set('raw_event_id', raw_id)
+        # - Et ensuite l'état.
+        LOGGER.info("Inserting state")
+        # Si le timestamp est trop récent insert_state ne fera rien
+        DBSession.query(State).get(idsupitem).timestamp = timestamp
+        insert_state(info_dictionary)
+        DBSession.flush()
+
+        # On force le traitement du message, par la fonction make_correvent,
+        # comme s'il avait été traité au préalable par le rule_dispatcher.
+        rd = helpers.RuleDispatcherStub()
+        corrbuilder = CorrEventBuilder(rd, DummyDatabaseWrapper(True))
+        corrbuilder.context_factory = self.context_factory
+
+        LOGGER.info('Creating a new correlated event')
+        yield corrbuilder.make_correvent(info_dictionary)
+        defer.returnValue(None)
+
+
+    def add_data(self):
+        """
+        Ajoute un hôte et un service de bas niveau dans la BDD, ainsi
+        que d'autres données nécessaires à l'exécution des tests.
+        """
+        helpers.populate_statename()
+
+        # Ajout de la date de dernière
+        # modification de la topologie dans la BDD.
+        DBSession.add(Change(
+            element = u"Topology",
+            last_modified = datetime.now(),))
+        DBSession.flush()
+
+        self.host = functions.add_host(u'Host')
+        self.lls = functions.add_lowlevelservice(self.host, u'LLS')
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
@@ -229,7 +224,7 @@ class TestLogging(unittest.TestCase):
 
         # On recoit un message "WARNING" concernant lls1.
         LOGGER.debug("Received 'WARNING' message on lls1")
-        ctx = self.context_factory(self.XMPP_id)
+        ctx = self.context_factory(self.msgid)
         yield self.simulate_message_reception(u"WARNING", host_name, lls_name)
 
         event = DBSession.query(Event.idevent).one()
@@ -251,7 +246,7 @@ class TestLogging(unittest.TestCase):
 
         # On recoit un message "CRITICAL" concernant lls1.
         LOGGER.debug("Received 'CRITICAL' message on lls1")
-        ctx = self.context_factory(self.XMPP_id + 1)
+        ctx = self.context_factory(self.msgid + 1)
         yield ctx.set('update_id', event_id)
         yield self.simulate_message_reception(u"CRITICAL", host_name, lls_name)
 

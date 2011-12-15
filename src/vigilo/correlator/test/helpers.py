@@ -25,7 +25,6 @@ configure_db(settings['database'], 'sqlalchemy_')
 from vigilo.models.session import metadata, DBSession
 from vigilo.models.tables import StateName
 
-from vigilo.connector.forwarder import PubSubSender
 from vigilo.correlator.context import Context
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
@@ -123,6 +122,7 @@ def teardown_db():
 
 
 # Mocks
+
 class ConnectionStub(object):
     # Variable de classe (partagée). Penser à la réinitialiser en tearDown
     data = {}
@@ -155,6 +155,7 @@ class ConnectionStub(object):
     def topology(self):
         topology = self.get('vigilo:topology')
 
+
 class ContextStub(Context):
     def __init__(self, idxmpp, timeout=None, must_defer=True):
         self._connection = ConnectionStub(must_defer=must_defer)
@@ -164,6 +165,7 @@ class ContextStub(Context):
         self._timeout = timeout
         self._transaction = False
         self._database = DummyDatabaseWrapper(True)
+
 
 class ContextStubFactory(object):
     def __init__(self):
@@ -186,14 +188,13 @@ class ContextStubFactory(object):
         print "CLEARING CONTEXTS"
         ConnectionStub.data = {}
 
+
+
 class RuleDispatcherStub(RuleDispatcher):
     """Classe simulant le fonctionnement du RuleDispatcher"""
     def __init__(self):
-        PubSubSender.__init__(self)
-        self.max_send_simult = 1
-        self.tree_end = None
-        self._database = DummyDatabaseWrapper(True)
-        self._executor = Executor(self)
+        database = DummyDatabaseWrapper(True)
+        RuleDispatcher.__init__(self, database, "HLS", None, 0, 4, 20)
         self.buffer = []
 
     def sendItem(self, item):
@@ -210,6 +211,7 @@ class RuleDispatcherStub(RuleDispatcher):
 
     def doWork(self, f, *args, **kwargs):
         return defer.maybeDeferred(f, *args, **kwargs)
+
 
 
 class MemcachedStub(object):
@@ -234,11 +236,14 @@ class MemcachedStub(object):
     def getInstance(cls):
         return defer.succeed(cls())
 
+
 class MemcachedConnectionStub(MemcachedConnection):
     def __new__(cls, *args, **kwargs):
         cls.instance = object.__new__(cls)
         cls.instance._cache = MemcachedStub()
         return cls.instance
+
+
 
 @defer.inlineCallbacks
 def setup_context(factory, message_id, context_keys):

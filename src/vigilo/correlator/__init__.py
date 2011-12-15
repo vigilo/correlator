@@ -72,7 +72,6 @@ def makeService(options):
 
     from vigilo.common.conf import setup_plugins_path
     from vigilo.connector.client import client_factory
-    from vigilo.connector.handlers import buspublisher_factory
     from vigilo.correlator.actors.rule_dispatcher import ruledispatcher_factory
 
     # Enregistre les règles de corrélation dans le registre.
@@ -94,10 +93,6 @@ def makeService(options):
 
     # Réceptionneur de messages
     msg_handler = ruledispatcher_factory(settings, database, client)
-
-    # Expéditeur de messages (correvents)
-    bus_publisher = buspublisher_factory(settings, client)
-    bus_publisher.registerProducer(msg_handler, streaming=True)
 
     # Statistiques
     from vigilo.connector.status import statuspublisher_factory

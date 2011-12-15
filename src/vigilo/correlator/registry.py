@@ -171,6 +171,8 @@ class Registry(object):
         """Charge le registre depuis le fichier de settings"""
 
         # permet de placer les règles directement dans le dossier de plugins
+        if "correlator" not in settings:
+            return
         plugins_path = settings["correlator"].get("pluginsdir",
                                 "/etc/vigilo/correlator/plugins")
         sys.path.append(plugins_path)

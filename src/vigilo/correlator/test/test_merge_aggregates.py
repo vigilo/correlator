@@ -16,7 +16,7 @@ from twisted.internet import defer
 
 from vigilo.correlator.db_insertion import merge_aggregates
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-import helpers
+from vigilo.correlator.test import helpers
 
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions

@@ -18,28 +18,30 @@ from twisted.internet import defer
 from lxml import etree
 
 from mock import Mock
-import helpers
-from vigilo.correlator.test.helpers import ContextStubFactory, \
-                                            RuleDispatcherStub
+from vigilo.correlator.test import helpers
 
-from vigilo.pubsub.xml import NS_EVENT
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, Event, CorrEvent, StateName
-from vigilo.correlator.correvent import make_correvent
+from vigilo.correlator.correvent import CorrEventBuilder
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
+
+
 class TestCorrevents3(unittest.TestCase):
+
     @deferred(timeout=30)
     def setUp(self):
         """Initialise la BDD au début de chaque test."""
         super(TestCorrevents3, self).setUp()
         helpers.setup_db()
         helpers.populate_statename()
-        self.forwarder = RuleDispatcherStub()
-        self.context_factory = ContextStubFactory()
+        self.forwarder = helpers.RuleDispatcherStub()
+        self.context_factory = helpers.ContextStubFactory()
+        self.corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
+        self.corrbuilder.context_factory = self.context_factory
         return defer.succeed(None)
 
     @deferred(timeout=30)
@@ -49,6 +51,7 @@ class TestCorrevents3(unittest.TestCase):
         helpers.teardown_db()
         self.context_factory.reset()
         return defer.succeed(None)
+
 
     def make_deps(self):
         self.host = Host(
@@ -62,6 +65,7 @@ class TestCorrevents3(unittest.TestCase):
         DBSession.add(self.host)
         DBSession.flush()
 
+
     @defer.inlineCallbacks
     def prepare_correvent(self, old_state, new_state, ack):
         old_state = unicode(old_state)
@@ -73,24 +77,13 @@ class TestCorrevents3(unittest.TestCase):
         ts = time.time()
         ctx = self.context_factory(42)
         info_dictionary = {
-            'timestamp': ts,
+            'id': 42,
+            #'timestamp': ts,
             'host': self.host.name,
             'service': u'',
             'state': new_state,
             'message': new_state,
-            'xmlns': NS_EVENT,
         }
-
-        payload = """
-<event xmlns="%(xmlns)s">
-    <timestamp>%(timestamp)s</timestamp>
-    <host>%(host)s</host>
-    <service>%(service)s</service>
-    <state>%(state)s</state>
-    <message>%(state)s</message>
-</event>
-""" % info_dictionary
-        item = etree.fromstring(payload)
         info_dictionary['timestamp'] = datetime.fromtimestamp(int(ts + 1))
 
         # Création Event + CorrEvent.
@@ -123,21 +116,15 @@ class TestCorrevents3(unittest.TestCase):
             ctx.set('statename', new_state),
             ctx.set('raw_event_id', event.idevent),
             ctx.set('idsupitem', self.host.idhost),
-            ctx.set('payload', payload),
+            ctx.set('payload', None),
             ctx.set('timestamp', info_dictionary['timestamp']),
             ctx.setShared('open_aggr:%s' % self.host.idhost, idcorrevent)
         ])
 
-        res = yield make_correvent(
-            self.forwarder,
-            DummyDatabaseWrapper(True),
-            item,
-            42,
-            info_dictionary,
-            self.context_factory,
-        )
+        res = yield self.corrbuilder.make_correvent(info_dictionary)
         DBSession.flush()
         defer.returnValue( (res, idcorrevent) )
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
@@ -171,6 +158,7 @@ class TestCorrevents3(unittest.TestCase):
         self.assertNotEquals(open_aggr, 0)
         defer.returnValue(None)
 
+
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_reactivate_aaclosed(self):
@@ -202,6 +190,7 @@ class TestCorrevents3(unittest.TestCase):
         open_aggr = yield ctx.getShared('open_aggr:%s' % self.host.idhost)
         self.assertNotEquals(open_aggr, 0)
         defer.returnValue(None)
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks

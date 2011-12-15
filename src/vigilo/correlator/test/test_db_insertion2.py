@@ -7,7 +7,6 @@
 from datetime import datetime
 import unittest
 import time
-from lxml import etree
 
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
@@ -22,8 +21,11 @@ from vigilo.models.tables import State, StateName, Event, SupItem, \
                             CorrEvent
 from vigilo.models.session import DBSession
 
+
+
 class TestDbInsertion2(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""
+
 
     @deferred(timeout=30)
     def setUp(self):
@@ -37,6 +39,7 @@ class TestDbInsertion2(unittest.TestCase):
         helpers.teardown_db()
         super(TestDbInsertion2, self).tearDown()
         return defer.succeed(None)
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks

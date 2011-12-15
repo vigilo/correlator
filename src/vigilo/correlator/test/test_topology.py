@@ -18,7 +18,7 @@ from vigilo.models.tables import Event, CorrEvent
 
 from vigilo.correlator.topology import Topology
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-import helpers
+from vigilo.correlator.test import helpers
 
 class TopologyTestHelpers(object):
     @deferred(timeout=30)
