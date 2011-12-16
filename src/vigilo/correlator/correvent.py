@@ -268,7 +268,7 @@ class CorrEventBuilder(object):
         occurrences = yield ctx.get('occurrences_count')
         if not occurrences is None:
             correvent.occurrence = occurrences
-            info_dictionary["occurence"] = occurences
+            info_dictionary["occurrence"] = occurrences
 
         # Stockage des services de haut niveau impactés.
         impacted_hls = yield ctx.get('impacted_hls')

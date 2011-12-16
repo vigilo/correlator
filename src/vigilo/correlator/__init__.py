@@ -57,8 +57,8 @@ def set_signal_handlers():
 
 def makeService(options):
     """Crée un service client du bus XMPP"""
-    from vigilo.connector import getSettings
-    settings = getSettings(options)
+    from vigilo.connector.options import getSettings
+    settings = getSettings(options, __name__)
 
     from twisted.internet import reactor
     from twisted.application import service
