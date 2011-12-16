@@ -50,7 +50,7 @@ class CorrEventBuilder(object):
 
 
     def __init__(self, publisher, database):
-        self.publisher = None
+        self.publisher = publisher
         self.database = database
 
 

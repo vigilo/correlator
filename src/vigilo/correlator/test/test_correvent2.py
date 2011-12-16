@@ -37,8 +37,7 @@ class TestAggregates(unittest.TestCase):
         helpers.populate_statename()
         self.forwarder = helpers.RuleDispatcherStub()
         self.context_factory = helpers.ContextStubFactory()
-        self.corrbuilder = CorrEventBuilder(self.forwarder,
-                DummyDatabaseWrapper(True))
+        self.corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
         self.corrbuilder.context_factory = self.context_factory
         return defer.succeed(None)
 
@@ -147,16 +146,23 @@ class TestAggregates(unittest.TestCase):
 
             # Valeurs dans le contexte spécifiques à chaque message.
             if i == 1:
-                pass
+                is_update = False
+                idcorrevent = 1
             elif i == 2:
+                is_update = False
+                idcorrevent = 2
                 defs.append(ctx.set('successors_aggregates',
-                                    [correvents[0].idcorrevent]))
+                        [correvents[0].idcorrevent]))
             elif i == 3:
+                is_update = False
+                idcorrevent = 2
                 defs.append(ctx.set('predecessors_aggregates',
-                                    [correvents[1].idcorrevent]))
+                        [correvents[1].idcorrevent]))
             else:
+                is_update = False
+                idcorrevent = i
                 defs.append(ctx.set('successors_aggregates',
-                                    [correvents[1].idcorrevent]))
+                        [correvents[1].idcorrevent]))
 
             # Prépare le contexte et appelle la fonction
             # de création/mise à jour de l'agrégat.
@@ -170,7 +176,7 @@ class TestAggregates(unittest.TestCase):
                 ).first()
             correvents.append(correvent)
 
-            print repr(self.forwarder.buffer)
+            print self.corrbuilder.publisher.sendMessage.call_args_list
 
         # Il doit y avoir 1 seul agrégat, dont la cause est Host2
         # et qui contient 4 événements correspondant aux 4 hôtes.

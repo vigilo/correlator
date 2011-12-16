@@ -12,6 +12,8 @@ import logging
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
+from mock import Mock
+
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
 from vigilo.models.tables import LowLevelService, Host, \
@@ -172,12 +174,11 @@ class TestLogging(unittest.TestCase):
         # On force le traitement du message, par la fonction make_correvent,
         # comme s'il avait été traité au préalable par le rule_dispatcher.
         rd = helpers.RuleDispatcherStub()
-        corrbuilder = CorrEventBuilder(rd, DummyDatabaseWrapper(True))
+        corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
         corrbuilder.context_factory = self.context_factory
 
         LOGGER.info('Creating a new correlated event')
         yield corrbuilder.make_correvent(info_dictionary)
-        defer.returnValue(None)
 
 
     def add_data(self):

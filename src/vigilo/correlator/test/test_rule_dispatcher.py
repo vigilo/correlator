@@ -13,8 +13,8 @@ from mock import Mock
 from vigilo.models import tables
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
-from vigilo.pubsub.xml import NS_EVENT
-import helpers
+from vigilo.correlator.test import helpers
+
 
 class RuleDispatcherTestCase(unittest.TestCase):
 
@@ -41,8 +41,8 @@ class RuleDispatcherTestCase(unittest.TestCase):
     @deferred(timeout=30)
     def test_recv_old_state(self):
         """Abandon du traitement d'un état ancien"""
-        ts_old = "1239104006"
-        ts_recent = "1239104042"
+        ts_old = 1239104006
+        ts_recent = 1239104042
         ts_recent_dt = datetime.fromtimestamp(int(ts_recent))
         idsupitem = tables.SupItem.get_supitem("server.example.com", "Load")
         self.rd._do_correl = Mock(name="do_correl")
@@ -51,18 +51,16 @@ class RuleDispatcherTestCase(unittest.TestCase):
         state = DBSession.query(tables.State).get(idsupitem)
         state.timestamp = ts_recent_dt
         # Création d'un message d'événement portant sur un SBN.
-        xml = """
-        <item id="4242">
-            <event xmlns="%(xmlns)s">
-                <timestamp>%(ts_old)s</timestamp>
-                <host>server.example.com</host>
-                <service>Load</service>
-                <state>WARNING</state>
-                <message>WARNING: Load average is above 4 (4.5)</message>
-            </event>
-        </item>
-        """ % {'xmlns': NS_EVENT, "ts_old": ts_old}
-        d = self.rd._processMessage(xml)
+        msg = {
+                "id": 4242,
+                "type": "event",
+                "timestamp": ts_old,
+                "host": "server.example.com",
+                "service": "Load",
+                "state": "WARNING",
+                "message": "WARNING: Load average is above 4 (4.5)",
+                }
+        d = self.rd._processMessage(msg)
 
         def cb(result):
             self.assertEqual(DBSession.query(tables.Event).count(), 0,

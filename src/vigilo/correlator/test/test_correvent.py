@@ -40,8 +40,7 @@ class TestCorrevents(unittest.TestCase):
         helpers.populate_statename()
         self.forwarder = RuleDispatcherStub()
         self.context_factory = ContextStubFactory()
-        self.corrbuilder = CorrEventBuilder(self.forwarder,
-                DummyDatabaseWrapper(True))
+        self.corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
         self.corrbuilder.context_factory = self.context_factory
         self.make_deps()
         return defer.succeed(None)
@@ -133,4 +132,5 @@ class TestCorrevents(unittest.TestCase):
         state = StateName.value_to_statename(db_event.current_state)
         LOGGER.debug("Event's state: %r", state)
         self.assertEquals(u'UP', state)
-        defer.returnValue(None)
+        self.assertEqual(0,
+                len(self.corrbuilder.publisher.sendMessage.call_args_list))
