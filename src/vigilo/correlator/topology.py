@@ -6,7 +6,7 @@
 """Graphe topologique"""
 
 from vigilo.models.session import DBSession
-from sqlalchemy.sql.expression import not_, and_, or_
+from sqlalchemy.sql.expression import not_, and_
 
 import networkx as nx
 import networkx.exception as nx_exc
@@ -180,23 +180,18 @@ def get_open_aggregate(ctx, database, item_id):
 
         # Sinon on récupère l'information
         # depuis la base de données...
+        state_ok = StateName.statename_to_value('OK')
+        state_up = StateName.statename_to_value('UP')
         aggregate = database.run(
             DBSession.query(
                 CorrEvent.idcorrevent
             ).join(
                 (Event, CorrEvent.idcause == Event.idevent)
             ).filter(
-                not_(
-                    and_(
-                        or_(
-                        Event.current_state ==
-                            StateName.statename_to_value('OK'),
-                        Event.current_state ==
-                            StateName.statename_to_value('UP')
-                        ),
-                        CorrEvent.status == u'AAClosed'
-                    )
-                )
+                not_(and_(
+                    Event.current_state.in_([state_ok, state_up]),
+                    CorrEvent.status == u'AAClosed'
+                ))
             ).filter(CorrEvent.timestamp_active != None
             ).filter(Event.idsupitem == item_id
             ).scalar)

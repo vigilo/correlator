@@ -272,18 +272,15 @@ def add_to_aggregate(idevent, idcorrevent, database, ctx, idsupitem, merging):
         Met à jour l'entrée dans memcached qui indique l'événement corrélé
         ouvert qui impacte cet élément supervisé.
         """
-        # Si on est en train de fusionner l'événement brut dans un événement
-        # correlé ouvert plus général, alors il n'est pas la cause de cet
-        # événement corrélé et n'a donc plus d'entrée associée.
         if merging:
+            # Si on est en train de fusionner l'événement brut dans un événement
+            # correlé ouvert plus général, alors il n'est pas la cause de cet
+            # événement corrélé et n'a donc plus d'entrée associée.
             new_idcorrevent = 0
-
-        # Sinon, il s'agit de la cause, donc on remplit le cache.
         else:
+            # Sinon, il s'agit de la cause, donc on remplit le cache.
             new_idcorrevent = idcorrevent
-
-        d = ctx.setShared('open_aggr:%d' % idsupitem, new_idcorrevent)
-        return d
+        return ctx.setShared('open_aggr:%d' % idsupitem, new_idcorrevent)
 
     def _insert():
         LOGGER.debug(_('Adding event #%(event)d (supitem #%(supitem)d) '

@@ -9,6 +9,8 @@ Création des événements corrélés dans la BDD et transmission à pubsub.
 
 from sqlalchemy import not_ , and_
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import aliased
+from sqlalchemy.sql import functions
 import logging
 
 from lxml import etree
@@ -23,6 +25,7 @@ from vigilo.correlator.publish_messages import publish_aggregate, \
 from vigilo.models.session import DBSession
 from vigilo.models.tables import CorrEvent, Event, EventHistory
 from vigilo.models.tables import SupItem, HighLevelService, StateName
+from vigilo.models.tables.eventsaggregate import EventsAggregate
 
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
@@ -107,10 +110,11 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
             (Event, CorrEvent.idcause == Event.idevent),
             (SupItem, SupItem.idsupitem == Event.idsupitem),
         ).filter(SupItem.idsupitem == item_id
-        ).filter(not_(and_(
-            Event.current_state.in_([state_ok, state_up]),
-            CorrEvent.status == u'AAClosed'
-        ))
+        ).filter(
+            not_(and_(
+                Event.current_state.in_([state_ok, state_up]),
+                CorrEvent.status == u'AAClosed'
+            ))
         ).filter(CorrEvent.timestamp_active != None
         ).scalar,
         transaction=False
@@ -146,11 +150,12 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                                 'database'), update_id)
                 defer.returnValue(None)
 
-            LOGGER.debug(_(u'Updating existing correlated event (%r)'),
-                update_id)
+            LOGGER.debug(_('Updating existing correlated event (%r)'),
+                            update_id)
         else:
-            LOGGER.error(_(u'Got a reference to a non-existent '
-                'correlated event (%r), adding as new'), update_id)
+            LOGGER.error(_('Got a reference to a non-existent '
+                            'correlated event (%r), adding as new'),
+                            update_id)
 
     # Il s'agit d'une création ou bien l'événement corrélé
     # indiqué n'existe pas.
@@ -159,7 +164,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
 
         # Si l'état de l'alerte brute est 'OK' ou 'UP', on ne fait rien.
         if state in ("OK", "UP"):
-            LOGGER.info(_(u'Raw event ignored. Reason: status = %r'), state)
+            LOGGER.info(_('Raw event ignored. Reason: status = %r'), state)
             defer.returnValue(None)
 
         # Si un ou plusieurs agrégats dont dépend l'alerte sont
@@ -187,9 +192,10 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                         transaction=False,
                     )
                 except NoResultFound:
-                    LOGGER.error(_(u'Got a reference to a nonexistent '
-                            'correlated event (%r), skipping this aggregate'),
-                            int(predecessing_aggregate_id))
+                    LOGGER.error(_('Got a reference to a nonexistent '
+                                    'correlated event (%r), skipping '
+                                    'this aggregate'),
+                                    int(predecessing_aggregate_id))
 
                 else:
                     # D'abord on rattache l'alerte
@@ -238,7 +244,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
             yield database.run(DBSession.flush, transaction=False)
             defer.returnValue(None)
 
-        LOGGER.debug(_(u'Creating new correlated event'))
+        LOGGER.debug(_('Creating a new correlated event'))
 
         correvent = CorrEvent()
         correvent.idcause = raw_event_id
@@ -295,7 +301,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                 type_action=u'Acknowlegement change state',
                 idevent=correvent.idcause,
                 value=u'None',
-                text=u'System forced treatment to None. ' \
+                text=u'System forced treatment to None. '
                     'Reason: Event was reactivated due to new outage',
                 timestamp=timestamp,
                 username=None,
@@ -334,12 +340,84 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     )
 
     # Identifiant de l'événement corrélé à mettre à jour.
-    if not update_id is None:
-        dom.set('update', str(update_id))
-    else:
+    if update_id is None:
         dom.set('id', str(idcorrevent))
+    else:
+        dom.set('update', str(update_id))
 
-    # On génère le message à envoyer à PubSub.
+        # La cause de l'événement corrélé n'est plus en panne,
+        # on tente de désagréger les événements bruts associés.
+        if state in ('OK', 'UP'):
+            # On récupère les événements bruts de cet agrégat.
+            raw_events = yield database.run(
+                DBSession.query(
+                    EventsAggregate.idevent
+                ).filter(EventsAggregate.idcorrevent == update_id
+                ).filter(EventsAggregate.idevent != correvent.idcause
+                ).all,
+                transaction=False
+            )
+            raw_events = [ev.idevent for ev in raw_events]
+
+            # Pour chacun de ces événements bruts, on crée
+            # un nouvel événement corrélé dont l'événement
+            # brut est la cause.
+            for raw_event in raw_events:
+                LOGGER.debug(_('Creating new aggregate with cause #%(cause)d '
+                                'from aggregate #%(original)d'), {
+                                    'original': update_id,
+                                    'cause': raw_event,
+                                })
+                new_correvent = CorrEvent(
+                    idcause=raw_event,
+                    impact=None,
+                    priority=settings['correlator'].as_int(
+                                'unknown_priority_value'),
+                    # On ne recopie pas le ticket d'incident
+                    # et on place l'événement corrélé dans
+                    # l'état d'acquittement initial.
+                    status=u'None',
+                    occurrence=1,
+                    timestamp_active=timestamp,
+                )
+                yield database.run(
+                    DBSession.add, new_correvent,
+                    transaction=False,
+                )
+                yield database.run(
+                    DBSession.flush,
+                    transaction=False,
+                )
+
+                # On supprime l'association entre l'événement brut
+                # et l'ancien agrégat.
+                yield database.run(
+                    DBSession.query(
+                        EventsAggregate
+                    ).filter(EventsAggregate.idevent == raw_event
+                    ).filter(EventsAggregate.idcorrevent !=
+                                new_correvent.idcorrevent
+                    ).delete,
+                    transaction=False,
+                )
+
+                yield database.run(
+                    DBSession.add,
+                    EventsAggregate(
+                        idevent=raw_event,
+                        idcorrevent=new_correvent.idcorrevent
+                    ),
+                    transaction=False,
+                )
+
+                yield database.run(
+                    DBSession.flush,
+                    transaction=False,
+                )
+
+                # @XXX: redemander l'état de l'équipement à Nagios ?
+
+    # On envoie le message <correvent> correspondant sur le bus.
     payload = etree.tostring(dom)
     forwarder.sendItem(payload)
 
@@ -370,7 +448,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     except KeyError:
         log_level = logging.INFO
 
-    LOGGER.debug(_(u'Sending correlated event to syslog'))
+    LOGGER.debug(_('Sending the correlated event to syslog'))
     data_logger = get_logger('vigilo.correlator.syslog')
     if data_logger.isEnabledFor(log_level):
         data_logger.log(

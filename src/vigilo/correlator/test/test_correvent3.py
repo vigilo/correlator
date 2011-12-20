@@ -3,7 +3,11 @@
 # Copyright (C) 2006-2011 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
-""""""
+"""
+Teste la gestion de l'état d'acquittement
+des événements corrélés lorsque de nouveaux
+événements bruts arrivent (#924).
+"""
 
 import time
 from datetime import datetime
