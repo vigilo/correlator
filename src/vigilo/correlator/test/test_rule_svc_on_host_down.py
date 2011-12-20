@@ -13,23 +13,24 @@ import unittest
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 from mock import Mock
-from lxml import etree
 
 from vigilo.models import tables
 from vigilo.models.demo import functions
 from vigilo.models.session import DBSession
-from vigilo.pubsub.xml import NS_COMMAND
 
-from vigilo.correlator.rules.svc_on_host_down import SvcHostDown, NAGIOS_MESSAGE
+from vigilo.correlator.rules.svc_on_host_down import SvcHostDown
 from vigilo.correlator.rules.svc_on_host_down import on_host_down
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-import helpers
+from vigilo.correlator.test import helpers
+
+
 
 class TestSvcHostDownRule(unittest.TestCase):
     """
     Le setUp et le tearDown sont décorés par @deferred() pour que la création
     de la base soit réalisée dans le même threads que les accès dans les tests.
     """
+
 
     @deferred(timeout=30)
     def setUp(self):
@@ -57,10 +58,12 @@ class TestSvcHostDownRule(unittest.TestCase):
         helpers.teardown_db()
         return defer.succeed(None)
 
+
     def populate_db(self):
         helpers.populate_statename()
         self.host = functions.add_host(u'testhost')
         self.lls = functions.add_lowlevelservice(self.host, u'testservice')
+
 
     def setup_context(self, state_from, state_to):
         res = helpers.setup_context(
@@ -77,6 +80,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         ctx._connection._must_defer = False
         return res
 
+
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_host_down(self):
@@ -90,6 +94,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         self.assertEqual(
             rule_dispatcher.registerCallback.call_args[1]["fn"],
             on_host_down)
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
@@ -109,23 +114,24 @@ class TestSvcHostDownRule(unittest.TestCase):
         print "state:", self.lls.state.name.statename
         self.assertEqual(self.lls.state.name.statename, u"UNKNOWN")
 
+
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_host_up(self):
         """Demander les états des services d'un hôte qui passe UP"""
         yield self.setup_context("DOWN", "UP")
         yield self.rule.process(self.rule_dispatcher, self.message_id)
-        expected = NAGIOS_MESSAGE % {
-            "ns": NS_COMMAND,
-            "timestamp": 42,
-            "host": "testhost"
-        }
-        expected = etree.fromstring(expected % {"svc": "testservice"})
+        expected = {"type": "nagios",
+                    "timestamp": 42,
+                    "cmdname": "SEND_CUSTOM_SVC_NOTIFICATION",
+                    "value": "testhost;testservice;4;Vigilo;Host came up"
+                    }
         self.assertTrue(len(self.rule_dispatcher.buffer) > 0)
-        print "Received:", self.rule_dispatcher.buffer[-1]
-        result = etree.fromstring(self.rule_dispatcher.buffer[-1])
-        result.find("{%s}timestamp" % NS_COMMAND).text = "42"
-        self.assertEqual(etree.tostring(result), etree.tostring(expected))
+        recv = self.rule_dispatcher.buffer[-1]
+        print "Received:", recv
+        recv["timestamp"] = 42
+        self.assertEqual(recv, expected)
+
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
@@ -142,6 +148,6 @@ class TestSvcHostDownRule(unittest.TestCase):
         self.assertEqual(rule_dispatcher.sendItem.call_count, len(servicenames))
         for i, servicename in enumerate(servicenames):
             call = rule_dispatcher.method_calls[i]
-            print call
-            assert call[0] == "sendItem"
-            assert call[2]["item"].count(servicename) == 1
+            print servicename, call
+            self.assertEqual(call[0], "sendItem")
+            self.assertEqual(call[2]["item"]["value"].count(servicename), 1)

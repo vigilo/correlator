@@ -40,14 +40,6 @@ LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
 
-NAGIOS_MESSAGE = """
-<command xmlns="%(ns)s">
-    <timestamp>%(timestamp)d</timestamp>
-    <cmdname>SEND_CUSTOM_SVC_NOTIFICATION</cmdname>
-    <value>%(host)s;%%(svc)s;4;Vigilo;Host came up</value>
-</command>
-"""
-
 
 @defer.inlineCallbacks
 def on_host_down(result, forwarder, database, idnt, ctx=None):
@@ -70,6 +62,7 @@ def on_host_down(result, forwarder, database, idnt, ctx=None):
             }
         )
 
+
 def get_all_services(hostname, database):
     query = DBSession.query(
             LowLevelService.idsupitem,
@@ -81,6 +74,7 @@ def get_all_services(hostname, database):
     return database.run(query)
 
 
+
 class SvcHostDown(Rule): # pylint: disable-msg=W0232
     """
     Règle de gestion des services dont l'hôte est DOWN.
@@ -88,6 +82,7 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
     Si l'hôte passe DOWN: on marque tous ses services comme UNKNOWN
     Si l'hôte passe UP : on demande à Nagios l'état de ses services
     """
+
 
     def process(self, link, xmpp_id):
         """
@@ -125,14 +120,17 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
             LOGGER.info(_("Unsupported transition: %(from)s -> %(to)s"),
                         {"from": previous_statename, "to": statename})
 
+
     def _on_host_up(self, hostname, link):
-        message_tpl = NAGIOS_MESSAGE % {
-            "ns": NS_COMMAND,
-            "timestamp": int(time.mktime(datetime.now().timetuple())),
-            "host": hostname,
-        }
+        msg_tpl = {"type": "nagios",
+                   "timestamp": int(time.mktime(datetime.now().timetuple())),
+                   "cmdname": "SEND_CUSTOM_SVC_NOTIFICATION",
+                   }
         services = get_all_services(hostname, self._database)
         LOGGER.info(_("Asking Nagios for updates on %d services"),
                     len(services))
         for svc in services:
-            link.sendItem(item=message_tpl % {"svc": svc.servicename})
+            msg = msg_tpl.copy()
+            msg["value"] = ("%(host)s;%(svc)s;4;Vigilo;Host came up"
+                           % {"host": hostname, "svc": svc.servicename})
+            link.sendItem(item=msg)

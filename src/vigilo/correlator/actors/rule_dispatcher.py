@@ -209,7 +209,7 @@ class RuleDispatcher(MessageHandler):
         ctx = self._context_factory(msg["id"])
 
         hls_names = set()
-        for servicename in msg["children"]: # TODO: adapter l'envoi
+        for servicename in msg["hls"]: # TODO: adapter l'envoi
             if not isinstance(servicename, unicode):
                 servicename = servicename.decode('utf-8')
             hls_names.add(servicename)
@@ -227,9 +227,6 @@ class RuleDispatcher(MessageHandler):
                 hls_names
             )
         )
-        def inc_messages(result):
-            self._messages_sent += 1
-        d.addCallback(inc_messages)
         return d
 
 
@@ -353,10 +350,7 @@ class RuleDispatcher(MessageHandler):
             lorsqu'aucun événement corrélé n'existe en base de données
             et qu'on reçoit un message indiquant un état nominal (OK/UP).
             """
-            if fail.check(NoProblemException):
-                self._messages_sent += 1
-                return None
-            return fail
+            fail.trap(NoProblemException)
         d.addErrback(no_problem)
         return d
 
@@ -424,9 +418,6 @@ class RuleDispatcher(MessageHandler):
         self.bus_publisher.publish_state(info_dictionary)
 
         d = defer.Deferred()
-        def inc_messages(result):
-            self._messages_sent += 1
-        d.addCallback(inc_messages)
 
         # Pour les services de haut niveau, on s'arrête ici,
         # on NE DOIT PAS générer d'événement corrélé.
@@ -544,6 +535,15 @@ class RuleDispatcher(MessageHandler):
 
     def getStats(self):
         """Récupère des métriques de fonctionnement du corrélateur"""
+        def add_publisher_stats(stats):
+            if self.bus_publisher is None:
+                return stats
+            p_stats_d = self.bus_publisher.getStats()
+            def update(p_stats):
+                stats["sent"] = p_stats["sent"]
+                return stats
+            p_stats_d.addCallback(update)
+            return p_stats_d
         def add_exec_stats(stats):
             rule_stats = self._executor.getStats()
             stats.update(rule_stats)
@@ -553,6 +553,7 @@ class RuleDispatcher(MessageHandler):
                 self._correl_times = []
             return stats
         d = super(RuleDispatcher, self).getStats()
+        d.addCallback(add_publisher_stats)
         d.addCallback(add_exec_stats)
         return d
 
