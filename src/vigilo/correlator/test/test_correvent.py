@@ -3,8 +3,6 @@
 # Copyright (C) 2006-2011 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
-""""""
-
 import time
 from datetime import datetime
 import unittest
@@ -14,11 +12,9 @@ from twisted.internet import defer
 from lxml import etree
 
 from mock import Mock
-import helpers
-from vigilo.correlator.test.helpers import ContextStubFactory, \
-                                            RuleDispatcherStub
 
-from vigilo.pubsub.xml import NS_EVENT
+from vigilo.correlator.test import helpers
+
 from vigilo.models.session import DBSession
 from vigilo.models.tables import Host, Event, CorrEvent, StateName
 from vigilo.correlator.correvent import CorrEventBuilder
@@ -38,8 +34,8 @@ class TestCorrevents(unittest.TestCase):
         super(TestCorrevents, self).setUp()
         helpers.setup_db()
         helpers.populate_statename()
-        self.forwarder = RuleDispatcherStub()
-        self.context_factory = ContextStubFactory()
+        self.forwarder = helpers.RuleDispatcherStub()
+        self.context_factory = helpers.ContextStubFactory()
         self.corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
         self.corrbuilder.context_factory = self.context_factory
         self.make_deps()

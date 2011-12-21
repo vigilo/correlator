@@ -21,9 +21,6 @@ import time
 from datetime import datetime
 from twisted.internet import defer
 
-from vigilo.common.conf import settings
-settings.load_module("vigilo.correlator")
-
 from vigilo.correlator.rule import Rule
 
 from vigilo.models.session import DBSession
@@ -32,7 +29,6 @@ from vigilo.models.tables import StateName, Host, LowLevelService
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
 
-from vigilo.pubsub.xml import NS_COMMAND
 from vigilo.correlator.context import Context
 from vigilo.correlator.db_insertion import insert_state
 

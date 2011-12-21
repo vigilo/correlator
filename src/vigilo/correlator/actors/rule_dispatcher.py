@@ -592,7 +592,7 @@ def ruledispatcher_factory(settings, database, client):
 
     # Expéditeur de messages
     publications = settings.get('publications', {}).copy()
-    publisher = MessagePublisher(publications)
+    publisher = MessagePublisher(nagios_hls_host, publications)
     publisher.setClient(client)
     msg_handler.bus_publisher = publisher
 

@@ -7,17 +7,18 @@
 Fonctions permettant la publication de messages divers sur le bus XMPP.
 """
 
-from twisted.words.xish import domish
-from vigilo.pubsub.xml import NS_AGGR, NS_DELAGGR, NS_STATE
-from vigilo.connector.handlers import BusPublisher
-
 from time import mktime
 
-from vigilo.common.conf import settings
+from vigilo.connector.handlers import BusPublisher
 
 
 
 class MessagePublisher(BusPublisher):
+
+
+    def __init__(self, nagios_hls_host, publications):
+        super(MessagePublisher, self).__init__(publications)
+        self.nagios_hls_host = nagios_hls_host
 
 
     def publish_aggregate(self, aggregate_id_list, event_id_list):
@@ -71,7 +72,7 @@ class MessagePublisher(BusPublisher):
         msg["timestamp"] = int(mktime(info_dictionary["timestamp"].timetuple()))
 
         if not info_dictionary["host"]:
-            info_dictionary["host"] = settings['correlator']['nagios_hls_host']
+            info_dictionary["host"] = self.nagios_hls_host
         msg["host"] = info_dictionary["host"]
 
         if info_dictionary["service"]:

@@ -30,7 +30,8 @@ class MessagePublisherTestCase(unittest.TestCase):
 
     def setUp(self):
         """Initialisation d'une réplique du RuleDispatcher."""
-        self.mp = MessagePublisher({})
+        self.mp = MessagePublisher(
+                helpers.settings['correlator']['nagios_hls_host'], {})
         self.mp.sendMessage = Mock()
 
         # Initialisation de la BDD
@@ -40,13 +41,13 @@ class MessagePublisherTestCase(unittest.TestCase):
         helpers.populate_statename()
 
         # Ajout d'un hôte dans la BDD
-        host1 = functions.add_host(u'host1.example.com')
+        self.host1 = functions.add_host(u'host1.example.com')
 
         # Ajout d'un service de haut niveau dans la BDD
-        hls1 = functions.add_highlevelservice(u'Connexion')
+        self.hls1 = functions.add_highlevelservice(u'Connexion')
 
         # Ajout d'un service de bas niveau dans la BDD
-        lls1 = functions.add_lowlevelservice(host1, u'Processes')
+        self.lls1 = functions.add_lowlevelservice(self.host1, u'Processes')
 
         # Création d'un timestamp à partir de l'heure actuelle
         self.timestamp = datetime.now()
@@ -77,7 +78,8 @@ class MessagePublisherTestCase(unittest.TestCase):
         """Publication XMPP de l'état d'un hôte"""
         # Ajout de l'état du host1 dans la BDD
         state1 = functions.add_host_state(
-                    host1, u'UNREACHABLE', 'UNREACHABLE: Host1', timestamp)
+                    self.host1, u'UNREACHABLE', 'UNREACHABLE: Host1',
+                    self.timestamp)
 
         info_dictionary = {"host": "host1.example.com",
                            "service": None,
@@ -102,7 +104,9 @@ class MessagePublisherTestCase(unittest.TestCase):
     def test_publish_state_hls(self):
         # Ajout de l'état du hls1 dans la BDD
         state2 = functions.add_svc_state(
-                    hls1, u'UNKNOWN', 'UNKNOWN: Connection is in an unknown state', timestamp)
+                    self.hls1, u'UNKNOWN',
+                    'UNKNOWN: Connection is in an unknown state',
+                    self.timestamp)
 
         info_dictionary = {"host":
                             helpers.settings['correlator']['nagios_hls_host'],
@@ -129,7 +133,9 @@ class MessagePublisherTestCase(unittest.TestCase):
     def test_publish_state_lls(self):
         # Ajout de l'état du lls1 dans la BDD
         state3 = functions.add_svc_state(
-                    lls1, u'UNKNOWN', 'UNKNOWN: Processes are in an unknown state', timestamp)
+                    self.lls1, u'UNKNOWN',
+                    'UNKNOWN: Processes are in an unknown state',
+                    self.timestamp)
 
         info_dictionary = {"host": "host1.example.com",
                            "service": "Processes",
