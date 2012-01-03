@@ -159,6 +159,13 @@ def insert_event(info_dictionary):
                                 u'New occurrence' or \
                                 u'Nagios update state'
 
+        try:
+            history.state = \
+                StateName.statename_to_value(info_dictionary['state'])
+        except KeyError:
+            # Si le nom d'état n'est pas reconnu, on ne fait rien.
+            pass
+
         history.value = info_dictionary['state']
         history.text = info_dictionary['message']
         history.timestamp = info_dictionary['timestamp']
