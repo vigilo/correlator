@@ -157,7 +157,7 @@ class RuleDispatcher(MessageHandler):
     def _processMessage(self, msg):
 
         # Ordre de calcul de l'état d'un service de haut niveau.
-        if msg["type"] == "computation_order":
+        if msg["type"] == "computation-order":
             return self._computation_order(msg)
 
         # Extraction des informations du message
