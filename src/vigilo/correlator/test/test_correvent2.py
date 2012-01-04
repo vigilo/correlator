@@ -56,7 +56,6 @@ class TestAggregates(unittest.TestCase):
         for i in xrange(1, 5):
             hosts.append(tables.Host(
                 name = u'Host éçà %d' % i,
-                checkhostcmd = u'check11',
                 snmpcommunity = u'com11',
                 hosttpl = u'tpl11',
                 address = u'192.168.0.%d' % i,

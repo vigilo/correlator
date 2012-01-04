@@ -166,7 +166,6 @@ class TestLogging(unittest.TestCase):
         # Ajout d'un hôte dans la BDD.
         self.host = Host(
             name = u'Host',
-            checkhostcmd = u'check11',
             snmpcommunity = u'com11',
             hosttpl = u'tpl11',
             address = u'192.168.0.11',

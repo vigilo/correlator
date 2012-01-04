@@ -61,7 +61,6 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         # Ajout d'un hôte dans la BDD
         host1 = Host(
             name = u'host1.example.com',
-            checkhostcmd = u'check11',
             snmpcommunity = u'com11',
             hosttpl = u'tpl11',
             address = u'192.168.0.11',

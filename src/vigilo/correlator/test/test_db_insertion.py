@@ -37,7 +37,6 @@ class TestDbInsertion(unittest.TestCase):
         """Création de quelques dépendances dans la BDD."""
         host = Host(
             name=u'server.example.com',
-            checkhostcmd=u'halt',
             hosttpl=u'',
             address=u'127.0.0.1',
             snmpcommunity=u'public',

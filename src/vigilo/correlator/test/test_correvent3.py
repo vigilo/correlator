@@ -53,7 +53,6 @@ class TestCorrevents3(unittest.TestCase):
     def make_deps(self):
         self.host = Host(
             name = u'Host',
-            checkhostcmd = u'check11',
             snmpcommunity = u'com11',
             hosttpl = u'tpl11',
             address = u'192.168.0.11',

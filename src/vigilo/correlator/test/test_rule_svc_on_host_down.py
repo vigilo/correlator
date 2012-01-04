@@ -60,7 +60,6 @@ class TestSvcHostDownRule(unittest.TestCase):
         helpers.populate_statename()
         self.host = tables.Host(
             name = u'testhost',
-            checkhostcmd = u'',
             hosttpl = u'',
             address = u'127.0.0.1',
             snmpcommunity = u'public',

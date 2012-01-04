@@ -51,7 +51,6 @@ class TopologyTestHelpers(object):
         """Création de 5 couples host/service"""
         self.host1 = Host(
             name = u'messagerie',
-            checkhostcmd = u'check11',
             snmpcommunity = u'com11',
             hosttpl = u'tpl11',
             address = u'192.168.0.11',
@@ -63,7 +62,6 @@ class TopologyTestHelpers(object):
 
         self.host2 = Host(
             name = u'firewall',
-            checkhostcmd = u'check26',
             snmpcommunity = u'com26',
             hosttpl = u'tpl26',
             address = u'192.168.0.26',

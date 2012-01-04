@@ -33,7 +33,6 @@ def create_topology_and_events():
     # On crée 4 couples host/service.
     host1 = Host(
         name = u'messagerie',
-        checkhostcmd = u'check11',
         snmpcommunity = u'com11',
         hosttpl = u'tpl11',
         address = u'192.168.0.11',
