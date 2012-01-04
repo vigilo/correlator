@@ -2,35 +2,28 @@
 include = @SYSCONFDIR@/vigilo/correlator/conf.d/
 
 [bus]
-# Nom ou adresse IP du serveur XMPP à utiliser.
+# Nom ou adresse IP du serveur AMQP à utiliser.
 host = localhost
 
-# Nom du service de publication pour les messages.
-service = pubsub.localhost
-
 # Nom d'utilisateur à utiliser pour se connecter au bus.
-jid = correlator@localhost
+user = correlator
 
-# Mot de passe associé au JID donné.
+# Mot de passe à utiliser
 password = correlator
 
-# Priorité statique. Si cette valeur n'est pas renseignée, la priorité est
-# automatiquement choisie en fonction du nombre de connecteurs utilisant le
-# même compte sur le bus.
-#priority = 1
+# Chiffrement du flux par SSL
+use_ssl = False
 
-# Indique s'il faut chiffrer la connexion (True) ou simplement compresser
-# le flux (False).
-require_tls = False
+# Nom de la file d'attente du connecteur
+queue = correlator
 
-# Liste des noms des topics auxquels le corrélateur est abonné,
-# séparés par des virgules.
-# À minima, il doit être abonné aux événements bruts publiés par
-# le connector-nagios.
-subscriptions = /vigilo/event, /vigilo/computation_order
+# Liste des abonnements du connecteur, séparés par des virgules.
+# Si la liste est vide, mettre uniquement une virgule.
+subscriptions = event, computation-order
 
-# Le trafic lié au bus XMPP doit-il être enregistré dans les logs ?
+# Le trafic lié au bus doit-il être enregistré dans les logs ?
 log_traffic = False
+
 
 [database]
 # URL d'accès à la base de données.
@@ -39,24 +32,6 @@ sqlalchemy_url = postgres://vigilo:vigilo@127.0.0.1/vigilo
 # Préfixe des tables.
 db_basename = vigilo_
 
-[connector]
-# Fichier de sauvegarde locale des messages
-# en cas d'échec d'une transmission.
-backup_file = @LOCALSTATEDIR@/lib/vigilo/correlator/correlator.sqlite
-
-# Table de sauvegarde pour les messages
-# provenant du bus XMPP.
-backup_table_from_bus = frombus
-
-# Table de sauvegarde pour les messages
-# à destination du bus XMPP.
-backup_table_to_bus = tobus
-
-# Nom d'hôte utilisé pour signaler à Vigilo que ce connecteur fonctionne
-# correctement. Cela doit correspondre au nom d'hôte configuré dans VigiConf
-# pour cette machine. Par défaut, on utilise le nom d'hôte court (sans le
-# domaine DNS)
-#hostname = hostname
 
 [correlator]
 # Délai d'expiration par défaut des contextes.
@@ -112,18 +87,33 @@ max_rule_runners = 4
 # ressources inutilement par moments.
 rule_runners_max_idle = 20
 
+
 [rules]
 # Règles de corrélation actives.
 svc_on_host_down = vigilo.correlator.rules.svc_on_host_down:SvcHostDown
 
+
+[connector]
+# Nom d'hôte utilisé pour signaler à Vigilo que ce connecteur fonctionne
+# correctement. Cela doit correspondre au nom d'hôte configuré dans VigiConf
+# pour cette machine. Par défaut, on utilise le nom d'hôte court (sans le
+# domaine DNS)
+#hostname = hostname
+
+# L'exchange à utiliser pour les messages d'état du connecteur.
+# Par défaut, la section [publications] est utilisée.
+#status_exchange = connectors-status
+
+
 [publications]
-# Indique le nœud cible du message en fonction du type.
-event = /vigilo/correvent
-aggr = /vigilo/aggr
-delaggr = /vigilo/delaggr
-state = /vigilo/state
-command = /vigilo/command
-perf = /vigilo/perf
+# Types de messages et le nom de l'exchange à utiliser pour leur publication.
+# Par défaut, un exchange du même nom que le type est utilisé.
+event = correlation
+
+
+# -------
+# Logging
+#
 
 [loggers]
 keys = root,twisted,correlation
