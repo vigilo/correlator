@@ -190,7 +190,7 @@ def get_open_aggregate(ctx, database, item_id):
             ).filter(
                 not_(and_(
                     Event.current_state.in_([state_ok, state_up]),
-                    CorrEvent.status == u'AAClosed'
+                    CorrEvent.ack == CorrEvent.ACK_CLOSED
                 ))
             ).filter(CorrEvent.timestamp_active != None
             ).filter(Event.idsupitem == item_id

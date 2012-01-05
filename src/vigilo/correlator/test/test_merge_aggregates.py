@@ -123,7 +123,7 @@ def create_topology_and_events():
         impact = 1,
         priority = 1,
         trouble_ticket = u'azerty1234',
-        status = u'None',
+        ack = CorrEvent.ACK_NONE,
         occurrence = 1,
         timestamp_active = datetime.now(),
     )
@@ -137,7 +137,7 @@ def create_topology_and_events():
         impact = 1,
         priority = 1,
         trouble_ticket = u'azerty1234',
-        status = u'None',
+        ack = CorrEvent.ACK_NONE,
         occurrence = 1,
         timestamp_active = datetime.now(),
     )

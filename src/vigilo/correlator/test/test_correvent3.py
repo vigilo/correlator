@@ -67,7 +67,6 @@ class TestCorrevents3(unittest.TestCase):
     def prepare_correvent(self, old_state, new_state, ack):
         old_state = unicode(old_state)
         new_state = unicode(new_state)
-        ack = unicode(ack)
 
         # Ajoute les dépendances nécessaires au test.
         self.make_deps()
@@ -109,7 +108,7 @@ class TestCorrevents3(unittest.TestCase):
             impact=42,
             priority=42,
             trouble_ticket=None,
-            status=ack,
+            ack=ack,
             occurrence=42,
             timestamp_active=datetime.fromtimestamp(int(ts)),
         )
@@ -155,7 +154,7 @@ class TestCorrevents3(unittest.TestCase):
         res, idcorrevent = yield self.prepare_correvent(
             'UNREACHABLE',
             'DOWN',
-            'Acknowledged'
+            CorrEvent.ACK_KNOWN
         )
 
         # Aucune erreur ne doit avoir été levée.
@@ -168,7 +167,7 @@ class TestCorrevents3(unittest.TestCase):
 
         # L'état d'acquittement ne doit pas avoir été modifié
         # et l'agrégat doit toujours être ouvert.
-        self.assertEquals(db_correvent.status, u'Acknowledged')
+        self.assertEquals(db_correvent.ack, CorrEvent.ACK_KNOWN)
         ctx = self.context_factory(42)
         open_aggr = yield ctx.getShared('open_aggr:%s' % self.host.idhost)
         self.assertNotEquals(open_aggr, 0)
@@ -187,7 +186,7 @@ class TestCorrevents3(unittest.TestCase):
         res, idcorrevent = yield self.prepare_correvent(
             'UNREACHABLE',
             'DOWN',
-            'AAClosed'
+            CorrEvent.ACK_CLOSED
         )
 
         # Aucune erreur ne doit avoir été levée.
@@ -200,7 +199,7 @@ class TestCorrevents3(unittest.TestCase):
 
         # L'état d'acquittement DOIT avoir été modifié
         # et l'agrégat doit toujours être ouvert.
-        self.assertEquals(db_correvent.status, u'None')
+        self.assertEquals(db_correvent.ack, CorrEvent.ACK_NONE)
         ctx = self.context_factory(42)
         open_aggr = yield ctx.getShared('open_aggr:%s' % self.host.idhost)
         self.assertNotEquals(open_aggr, 0)
@@ -219,7 +218,7 @@ class TestCorrevents3(unittest.TestCase):
         res, idcorrevent = yield self.prepare_correvent(
             'DOWN',
             'UP',
-            'AAClosed'
+            CorrEvent.ACK_CLOSED
         )
 
         # Aucune erreur ne doit avoir été levée.
@@ -232,7 +231,7 @@ class TestCorrevents3(unittest.TestCase):
 
         # L'état d'acquittement DOIT être "AAClosed"
         # et l'agrégat ne doit plus être marqué comme "ouvert".
-        self.assertEquals(db_correvent.status, u'AAClosed')
+        self.assertEquals(db_correvent.ack, CorrEvent.ACK_CLOSED)
         ctx = self.context_factory(42)
         open_aggr = yield ctx.getShared('open_aggr:%s' % self.host.idhost)
         self.assertEquals(open_aggr, 0)

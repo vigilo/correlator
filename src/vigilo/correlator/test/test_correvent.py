@@ -105,7 +105,7 @@ class TestCorrevents(unittest.TestCase):
             impact=42,
             priority=42,
             trouble_ticket=None,
-            status=u'None',
+            ack=CorrEvent.ACK_NONE,
             occurrence=42,
             timestamp_active=new_ts,
         )

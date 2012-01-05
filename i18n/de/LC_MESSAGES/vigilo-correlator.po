@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-11-19 12:29+0100\n"
-"PO-Revision-Date: 2011-11-22 10:52+0100\n"
+"PO-Revision-Date: 2012-01-06 11:55+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.4\n"
 
-#: src/twisted/plugins/vigilo_correlator.py:36
+#: src/twisted/plugins/vigilo_correlator.py:34
 msgid "The topology has been reloaded."
 msgstr "Die Topologie wurde erneut geladen."
 
-#: src/twisted/plugins/vigilo_correlator.py:53
+#: src/twisted/plugins/vigilo_correlator.py:51
 msgid ""
 "Could not set signal handlers. The correlator may not be able to shutdown"
 " cleanly"
@@ -30,38 +30,38 @@ msgstr ""
 "Signalhandler konnte nicht eingestellt werden. Es kann sein, dass der "
 "Korrelator nicht sauber herunterfahren kann"
 
-#: src/vigilo/correlator/correvent.py:81
+#: src/vigilo/correlator/correvent.py:84
 #, python-format
 msgid ""
 "Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
 "the correlation rules"
 msgstr ""
 
-#: src/vigilo/correlator/correvent.py:144
+#: src/vigilo/correlator/correvent.py:148
 #, python-format
 msgid ""
 "Ignoring request to update correlated event %r: a more recent update "
 "already exists in the database"
 msgstr ""
 
-#: src/vigilo/correlator/correvent.py:149
+#: src/vigilo/correlator/correvent.py:153
 #, python-format
 msgid "Updating existing correlated event (%r)"
 msgstr "Bestehendes korreliertes Ereignis (%r) aktualisieren"
 
-#: src/vigilo/correlator/correvent.py:152
+#: src/vigilo/correlator/correvent.py:156
 #, python-format
 msgid "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr ""
 "Verweis auf ein nicht vorhandenes korreliertes Ereignis (%r), wird als "
 "neu hinzugefügt"
 
-#: src/vigilo/correlator/correvent.py:162
+#: src/vigilo/correlator/correvent.py:167
 #, python-format
 msgid "Raw event ignored. Reason: status = %r"
 msgstr "Rohereignis ignoriert. Ursache: Status = %r"
 
-#: src/vigilo/correlator/correvent.py:190
+#: src/vigilo/correlator/correvent.py:195
 #, python-format
 msgid ""
 "Got a reference to a nonexistent correlated event (%r), skipping this "
@@ -70,12 +70,19 @@ msgstr ""
 "Verweis auf ein nicht vorhandenes korreliertes Ereignis (%r), Aggregat "
 "wird übersprungen"
 
-#: src/vigilo/correlator/correvent.py:241
-msgid "Creating new correlated event"
+#: src/vigilo/correlator/correvent.py:247
+#, fuzzy
+msgid "Creating a new correlated event"
 msgstr "Neues korreliertes Ereignis wird erstellt"
 
-#: src/vigilo/correlator/correvent.py:373
-msgid "Sending correlated event to syslog"
+#: src/vigilo/correlator/correvent.py:366
+#, python-format
+msgid "Creating new aggregate with cause #%(cause)d from aggregate #%(original)d"
+msgstr ""
+
+#: src/vigilo/correlator/correvent.py:451
+#, fuzzy
+msgid "Sending the correlated event to syslog"
 msgstr "Korreliertes Ereignis wird an Syslog gesendet"
 
 #: src/vigilo/correlator/db_insertion.py:58
@@ -92,12 +99,7 @@ msgstr ""
 "Verweis auf ein nicht konfiguriertes Element (%(host)r, %(service)r) "
 "erhalten, Ereignis übersprungen"
 
-#: src/vigilo/correlator/db_insertion.py:95
-#, python-format
-msgid "Updating event %r"
-msgstr "Ereignis %r wird aktualisiert"
-
-#: src/vigilo/correlator/db_insertion.py:101
+#: src/vigilo/correlator/db_insertion.py:117
 #, python-format
 msgid ""
 "Ignoring request to create a new event with state \"%s\" (nothing "
@@ -106,22 +108,27 @@ msgstr ""
 "Anforderung zur Erstellung eines neuen Ereignisse mit Status \"%s\" wird "
 "ignoriert (hier nicht bedenklich)"
 
-#: src/vigilo/correlator/db_insertion.py:108
+#: src/vigilo/correlator/db_insertion.py:124
 msgid "Creating new event"
 msgstr "Neues Ereignis wird erstellt"
 
-#: src/vigilo/correlator/db_insertion.py:111
-msgid "Multiple matching events found, skipping."
-msgstr "Mehrere entsprechende Ereignisse gefunden, überspringen."
+#: src/vigilo/correlator/db_insertion.py:129
+msgid "Multiple raw events found, using the first one available."
+msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:161
+#: src/vigilo/correlator/db_insertion.py:134
+#, python-format
+msgid "Updating event %r"
+msgstr "Ereignis %r wird aktualisiert"
+
+#: src/vigilo/correlator/db_insertion.py:190
 #, python-format
 msgid "Got a reference to a non configured high-level service (%(service)r)"
 msgstr ""
 "Verweis auf einen nicht konfigurierten High-level-Service (%(service)r) "
 "vorhanden"
 
-#: src/vigilo/correlator/db_insertion.py:188
+#: src/vigilo/correlator/db_insertion.py:217
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -130,29 +137,29 @@ msgstr ""
 "Verweis auf ein nicht konfiguriertes Element (%(host)r, %(service)r) "
 "vorhanden, Status überspringen"
 
-#: src/vigilo/correlator/db_insertion.py:253
+#: src/vigilo/correlator/db_insertion.py:293
 #, python-format
 msgid "Adding event #%(event)d (supitem #%(supitem)d) to aggregate #%(aggregate)d"
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:272
+#: src/vigilo/correlator/db_insertion.py:309
 #, python-format
 msgid ""
 "Event #%(event)d already belongs to aggregate #%(aggregate)d, refusing to"
 " add it twice"
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:303
+#: src/vigilo/correlator/db_insertion.py:342
 #, fuzzy, python-format
 msgid "Merging aggregate #%(src)d into aggregate #%(dest)d"
 msgstr "Aggregat #%(src)d und Aggregat #%(dest)d werden zusammengeführt"
 
-#: src/vigilo/correlator/db_insertion.py:355
-#: src/vigilo/correlator/db_insertion.py:360
+#: src/vigilo/correlator/db_insertion.py:412
+#: src/vigilo/correlator/db_insertion.py:417
 msgid "Got a reference to a nonexistent aggregate, aborting"
 msgstr "Verweis auf ein nicht existierendes Quell-Aggregat vorhanden, abbrechen"
 
-#: src/vigilo/correlator/db_insertion.py:372
+#: src/vigilo/correlator/db_insertion.py:429
 #, python-format
 msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
@@ -362,35 +369,35 @@ msgstr ""
 msgid "Handling correlation results"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:482
+#: src/vigilo/correlator/actors/rule_dispatcher.py:487
 #, python-format
 msgid ""
 "Error while saving the correlated event (%s). The message will be handled"
 " once more."
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:513
+#: src/vigilo/correlator/actors/rule_dispatcher.py:518
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:534
+#: src/vigilo/correlator/actors/rule_dispatcher.py:539
 #, python-format
 msgid ""
 "Unable to store correlated alert for message #%(id)s (%(payload)s) : "
 "%(error)s"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:558
+#: src/vigilo/correlator/actors/rule_dispatcher.py:563
 msgid "Connection lost, stopping rule runners pool"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:598
+#: src/vigilo/correlator/actors/rule_dispatcher.py:603
 #, python-format
 msgid "%s. The message will be handled once more."
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_runner.py:36
+#: src/vigilo/correlator/actors/rule_runner.py:41
 #, python-format
 msgid ""
 "Got an exception while running rule \"%(rule)s\". Running the correlator "
@@ -400,13 +407,6 @@ msgstr ""
 "Ausnahme während der Ausführung der Regel \"%(rule)s\". Ausführen der "
 "Korrelator im Vordergrund (service vigilo-correlator debug) kann "
 "Problemlösungen helfen (%(error)s)"
-
-#: src/vigilo/correlator/rules/SetPriority.py:102
-#, python-format
-msgid ""
-"The priority for the alert on (%(hostname)r, %(servicename)r) is "
-"%(newprio)r (old: %(oldprio)r)."
-msgstr ""
 
 #: src/vigilo/correlator/rules/example.py:36
 #, python-format
@@ -431,3 +431,4 @@ msgstr ""
 #, python-format
 msgid "Asking Nagios for updates on %d services"
 msgstr ""
+

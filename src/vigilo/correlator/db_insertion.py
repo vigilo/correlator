@@ -100,7 +100,7 @@ def insert_event(info_dictionary):
                                     StateName.statename_to_value(u'OK'),
                                     StateName.statename_to_value(u'UP')
                                 ]),
-                                CorrEvent.status == u'AAClosed'
+                                CorrEvent.ack == CorrEvent.ACK_CLOSED
                             )
                         ),
                         CorrEvent.timestamp_active != None

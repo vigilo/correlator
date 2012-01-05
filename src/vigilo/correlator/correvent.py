@@ -113,7 +113,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
         ).filter(
             not_(and_(
                 Event.current_state.in_([state_ok, state_up]),
-                CorrEvent.status == u'AAClosed'
+                CorrEvent.ack == CorrEvent.ACK_CLOSED
             ))
         ).filter(CorrEvent.timestamp_active != None
         ).scalar,
@@ -291,7 +291,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     if correvent.timestamp_active is None:
         correvent.timestamp_active = timestamp
 
-    if correvent.status == u'AAClosed':
+    if correvent.ack == CorrEvent.ACK_CLOSED:
         # On repasse l'événement dans l'état non-acquitté si un nouvel état
         # en erreur arrive et que le ticket avait été marqué comme "acquitté"
         # ou "acquitté et clos".
@@ -307,7 +307,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                 username=None,
             )
             yield database.run(DBSession.add, history, transaction=False)
-            correvent.status = u'None'
+            correvent.ack = CorrEvent.ACK_NONE
 
         # Si l'événement a été marqué comme traité et que le nouveau état
         # indique la résolution effective du problème, l'événement corrélé
@@ -376,7 +376,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                     # On ne recopie pas le ticket d'incident
                     # et on place l'événement corrélé dans
                     # l'état d'acquittement initial.
-                    status=u'None',
+                    ack=CorrEvent.ACK_NONE,
                     occurrence=1,
                     timestamp_active=timestamp,
                 )

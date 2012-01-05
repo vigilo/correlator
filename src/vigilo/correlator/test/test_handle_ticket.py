@@ -47,7 +47,7 @@ class TestHandleTicket(unittest.TestCase):
             impact = 1,
             priority = 1,
             trouble_ticket = u'azerty1234',
-            status = u'None',
+            ack = None,
             occurrence = 1,
             timestamp_active = datetime.now(),
         )
