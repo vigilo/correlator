@@ -52,10 +52,10 @@ start() {
         TWISTD_OPTIONS="$TWISTD_OPTIONS --logfile /dev/null"
         OUTPUT=">/dev/null 2>&1"
     fi
-    [ -n "$NUM" ] && SERVICENAME="--name ${NAME}${NUM}"
+    [ -n "$NUM" ] && CONFIG="--config /etc/vigilo/correlator/settings-${NUM}.ini"
 
     echo -n "Starting ${NAME}${NUM}: "
-    su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE $TWISTD_OPTIONS $TAPNAME $SERVICENAME $OPTIONS $OUTPUT"
+    su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE $TWISTD_OPTIONS $TAPNAME $CONFIG $OPTIONS $OUTPUT"
     RETVAL=$?
     [ "$1" = "debug" ] && return
     if [ $RETVAL -eq 0 ]; then
