@@ -25,6 +25,7 @@ from vigilo.correlator.publish_messages import publish_aggregate, \
 from vigilo.models.session import DBSession
 from vigilo.models.tables import CorrEvent, Event, EventHistory
 from vigilo.models.tables import SupItem, HighLevelService, StateName
+from vigilo.models.tables import DependencyGroup, Dependency
 from vigilo.models.tables.eventsaggregate import EventsAggregate
 
 from vigilo.common.logging import get_logger
@@ -348,29 +349,41 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
         # La cause de l'événement corrélé n'est plus en panne,
         # on tente de désagréger les événements bruts associés.
         if state in ('OK', 'UP'):
-            # On récupère les événements bruts de cet agrégat.
-            raw_events = yield database.run(
+            cause = aliased(Event)
+            others = aliased(Event)
+            # On déterminer les causes des nouveaux événements corrélés
+            # (ceux obtenus par désagrégation de l'événement courant).
+            new_causes = yield database.run(
                 DBSession.query(
-                    EventsAggregate.idevent
-                ).filter(EventsAggregate.idcorrevent == update_id
-                ).filter(EventsAggregate.idevent != correvent.idcause
-                ).all,
+                    EventsAggregate.idevent,
+                    DependencyGroup.iddependent,
+                ).join(
+                    (CorrEvent, CorrEvent.idcorrevent == EventsAggregate.idcorrevent),
+                    (others, others.idevent == EventsAggregate.idevent),
+                    (DependencyGroup, DependencyGroup.iddependent == others.idsupitem),
+                    (Dependency, Dependency.idgroup == DependencyGroup.idgroup),
+                    (cause, cause.idevent == CorrEvent.idcause),
+                ).filter(EventsAggregate.idevent != CorrEvent.idcause
+                ).filter(Dependency.idsupitem == cause.idsupitem
+                ).filter(Dependency.distance == 1
+                ).filter(DependencyGroup.role == u'topology'
+                ).filter(CorrEvent.idcorrevent == update_id).all,
                 transaction=False
             )
-            raw_events = [ev.idevent for ev in raw_events]
 
-            # Pour chacun de ces événements bruts, on crée
-            # un nouvel événement corrélé dont l'événement
-            # brut est la cause.
-            for raw_event in raw_events:
+            # Pour chacune des nouvelles causes, on crée
+            # le nouvel événement corrélé.
+            for new_cause in new_causes:
                 LOGGER.debug(_('Creating new aggregate with cause #%(cause)d '
-                                'from aggregate #%(original)d'), {
+                                '(#%(supitem)d) from aggregate #%(original)d'),
+                                {
                                     'original': update_id,
-                                    'cause': raw_event,
+                                    'cause': new_cause.idevent,
+                                    'supitem': new_cause.iddependent,
                                 })
+
                 new_correvent = CorrEvent(
-                    idcause=raw_event,
-                    impact=None,
+                    idcause=new_cause.idevent,
                     priority=settings['correlator'].as_int(
                                 'unknown_priority_value'),
                     # On ne recopie pas le ticket d'incident
@@ -378,44 +391,79 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                     # l'état d'acquittement initial.
                     ack=CorrEvent.ACK_NONE,
                     occurrence=1,
-                    timestamp_active=timestamp,
+                    timestamp_active=timestamp, # @XXX: ou datetime.now() ?
                 )
                 yield database.run(
                     DBSession.add, new_correvent,
                     transaction=False,
                 )
-                yield database.run(
-                    DBSession.flush,
-                    transaction=False,
-                )
 
-                # On supprime l'association entre l'événement brut
-                # et l'ancien agrégat.
+                # Retrait de l'événement brut cause des autres agrégats.
                 yield database.run(
                     DBSession.query(
                         EventsAggregate
-                    ).filter(EventsAggregate.idevent == raw_event
-                    ).filter(EventsAggregate.idcorrevent !=
-                                new_correvent.idcorrevent
+                    ).filter(EventsAggregate.idevent == new_cause.idevent,
+                    ).filter(EventsAggregate.idcorrevent != update_id
                     ).delete,
                     transaction=False,
                 )
 
                 yield database.run(
-                    DBSession.add,
-                    EventsAggregate(
-                        idevent=raw_event,
-                        idcorrevent=new_correvent.idcorrevent
-                    ),
-                    transaction=False,
-                )
-
-                yield database.run(
                     DBSession.flush,
                     transaction=False,
                 )
 
+                # On ajoute à cet agrégat les événements bruts
+                # qui s'y rapportent (cf. topologie réseau).
+                raw_events = yield database.run(
+                    DBSession.query(
+                        Event.idevent,
+                        Event.idsupitem,
+                    ).join(
+                        (DependencyGroup, DependencyGroup.iddependent == Event.idsupitem),
+                        (Dependency, Dependency.idgroup == DependencyGroup.idgroup),
+                        (EventsAggregate, EventsAggregate.idevent == Event.idevent),
+                    ).filter(Dependency.idsupitem == new_cause.iddependent
+                    ).filter(DependencyGroup.role == u'topology'
+                    ).filter(EventsAggregate.idcorrevent == update_id).all,
+                    transaction=False,
+                )
+                for raw_event in raw_events:
+                    yield add_to_aggregate(
+                        raw_event.idevent,
+                        new_correvent.idcorrevent,
+                        database,
+                        ctx,
+                        raw_event.idsupitem,
+                        merging=False
+                    )
+
+                # Association de l'événement brut cause dans le nouvel agrégat.
+                yield add_to_aggregate(
+                    new_cause.idevent,
+                    new_correvent.idcorrevent,
+                    database,
+                    ctx,
+                    new_cause.iddependent,
+                    merging=False
+                )
+
                 # @XXX: redemander l'état de l'équipement à Nagios ?
+
+            # Prise en compte des modifications précédentes.
+            yield database.run(DBSession.flush, transaction=False)
+
+            # Suppression de l'association entre l'ancien agrégat
+            # et les événements bruts qu'il contenait (sauf pour sa cause).
+            yield database.run(
+                DBSession.query(EventsAggregate
+                    ).filter(EventsAggregate.idcorrevent == update_id
+                    ).filter(EventsAggregate.idevent != correvent.idcause
+                    ).delete,
+                transaction=False,
+            )
+            yield database.run(DBSession.flush, transaction=False)
+
 
     # On envoie le message <correvent> correspondant sur le bus.
     payload = etree.tostring(dom)

@@ -147,23 +147,43 @@ class TopologyTestHelpers(object):
         DBSession.add(dep_group4)
         DBSession.flush()
 
-        self.dependency1 = Dependency(group=dep_group1, supitem=self.service2)
+        self.dependency1 = Dependency(
+            group=dep_group1,
+            supitem=self.service2,
+            distance=1,
+        )
         DBSession.add(self.dependency1)
         DBSession.flush()
 
-        self.dependency2 = Dependency(group=dep_group1, supitem=self.service3)
+        self.dependency2 = Dependency(
+            group=dep_group1,
+            supitem=self.service3,
+            distance=1,
+        )
         DBSession.add(self.dependency2)
         DBSession.flush()
 
-        self.dependency3 = Dependency(group=dep_group2, supitem=self.service4)
+        self.dependency3 = Dependency(
+            group=dep_group2,
+            supitem=self.service4,
+            distance=1,
+        )
         DBSession.add(self.dependency3)
         DBSession.flush()
 
-        self.dependency4 = Dependency(group=dep_group3, supitem=self.service4)
+        self.dependency4 = Dependency(
+            group=dep_group3,
+            supitem=self.service4,
+            distance=1,
+        )
         DBSession.add(self.dependency4)
         DBSession.flush()
 
-        self.dependency5 = Dependency(group=dep_group4, supitem=self.service5)
+        self.dependency5 = Dependency(
+            group=dep_group4,
+            supitem=self.service5,
+            distance=1,
+        )
         DBSession.add(self.dependency5)
         DBSession.flush()
 
@@ -194,7 +214,6 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
         self.events_aggregate1 = CorrEvent(
             idcause = self.event1.idevent,
-            impact = 1,
             priority = 1,
             trouble_ticket = u'azerty1234',
             ack = CorrEvent.ACK_NONE,
@@ -207,7 +226,6 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
         self.events_aggregate2 = CorrEvent(
             idcause = self.event2.idevent,
-            impact = 1,
             priority = 1,
             trouble_ticket = u'azerty1234',
             ack = CorrEvent.ACK_NONE,
@@ -302,7 +320,6 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
         self.events_aggregate3 = CorrEvent(
             idcause = self.event3.idevent,
-            impact = 1,
             priority = 1,
             trouble_ticket = u'azerty1234',
             ack = CorrEvent.ACK_NONE,
@@ -358,7 +375,6 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
 
         self.events_aggregate1 = CorrEvent(
             idcause = self.event1.idevent,
-            impact = 1,
             priority = 1,
             trouble_ticket = u'azerty1234',
             ack = CorrEvent.ACK_NONE,

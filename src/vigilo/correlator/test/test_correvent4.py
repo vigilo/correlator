@@ -52,11 +52,10 @@ class TestCorrevents4(unittest.TestCase):
 
     def make_deps(self):
         """
-        Création de 2 hôtes "Host 1" et "Host 2", tels que
-        "Host 2" dépend de "Host 1" au sens de la topologie.
+        Création de 4 hôtes "Host 1" jusqu'à "Host 4".
         """
         self.hosts = {}
-        for i in xrange(1, 4):
+        for i in xrange(1, 4 + 1):
             self.hosts[i] = tables.Host(
                 name = u'Host %d' % i,
                 snmpcommunity = u'com11',
@@ -170,17 +169,61 @@ class TestCorrevents4(unittest.TestCase):
     @deferred(timeout=30)
     @defer.inlineCallbacks
     def test_desaggregate(self):
-        """
-        Désagrégation des événements corrélés (#467).
-        """
+        """Désagrégation des événements corrélés (#467)."""
+        # Ajout des dépendances topologiques :
+        # - Host 2 dépend de Host 1
+        # - Host 4 dépend de Host 1
+        # - Host 3 dépend de Host 3
+        dep_group = tables.DependencyGroup(
+            dependent=self.hosts[2],
+            role=u'topology',
+            operator=u'|',
+        )
+        DBSession.add(dep_group)
+        DBSession.add(tables.Dependency(
+            group=dep_group,
+            supitem=self.hosts[1],
+            distance=1,
+        ))
+
+        dep_group = tables.DependencyGroup(
+            dependent=self.hosts[4],
+            role=u'topology',
+            operator=u'|',
+        )
+        DBSession.add(dep_group)
+        DBSession.add(tables.Dependency(
+            group=dep_group,
+            supitem=self.hosts[1],
+            distance=1,
+        ))
+
+        dep_group = tables.DependencyGroup(
+            dependent=self.hosts[3],
+            role=u'topology',
+            operator=u'|',
+        )
+        DBSession.add(dep_group)
+        DBSession.add(tables.Dependency(
+            group=dep_group,
+            supitem=self.hosts[4],
+            distance=1,
+        ))
+        DBSession.add(tables.Dependency(
+            group=dep_group,
+            supitem=self.hosts[1],
+            distance=2,
+        ))
+        DBSession.flush()
+
         # 1. Un 1er agrégat doit avoir été créé.
-        res, idcorrevent = yield self.handle_alert(self.hosts[2], 'UNREACHABLE')
+        res, idcorrevent1 = yield self.handle_alert(self.hosts[2], 'UNREACHABLE')
         print "Finished step 1\n"
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
-        self.assertNotEquals(idcorrevent, None)
+        self.assertNotEquals(idcorrevent1, None)
         # Un agrégat a été créé sur cet hôte...
-        db_correvent = DBSession.query(tables.CorrEvent).get(idcorrevent)
+        db_correvent = DBSession.query(tables.CorrEvent).get(idcorrevent1)
         self.assertEquals(self.hosts[2].idhost, db_correvent.cause.idsupitem)
         # ... dans l'état indiqué.
         self.assertEquals(
@@ -188,19 +231,23 @@ class TestCorrevents4(unittest.TestCase):
             tables.StateName.value_to_statename(
                 db_correvent.cause.current_state)
         )
+        # ... contenant uniquement un événement (cause hôte 2).
+        self.assertEquals(
+            [u'Host 2'],
+            [ev.supitem.name for ev in db_correvent.events]
+        )
 
         # 2. Un nouvel agrégat doit avoir été créé et l'agrégat
         #    précédent doit avoir été fusionné dans celui-ci.
-        res, idcorrevent = yield self.handle_alert(
-            self.hosts[1], 'DOWN', succs=[idcorrevent])
+        res, idcorrevent2 = yield self.handle_alert(
+            self.hosts[1], 'DOWN', succs=[idcorrevent1])
         print "Finished step 2\n"
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
-        self.assertNotEquals(idcorrevent, None)
-        # Il ne doit rester qu'un seul agrégat (fusion)
-        db_correvent = DBSession.query(tables.CorrEvent
-            ).filter(tables.CorrEvent.idcorrevent == idcorrevent
-            ).one()
+        self.assertNotEquals(idcorrevent2, None)
+        # Il ne doit rester qu'un seul agrégat (le 1er a été fusionné).
+        db_correvent = DBSession.query(tables.CorrEvent).one()
+        self.assertEquals(db_correvent.idcorrevent, idcorrevent2)
         # ... dont la cause est l'hôte 1.
         self.assertEquals(self.hosts[1].idhost, db_correvent.cause.idsupitem)
         # ... dans l'état indiqué.
@@ -209,65 +256,119 @@ class TestCorrevents4(unittest.TestCase):
             tables.StateName.value_to_statename(
                 db_correvent.cause.current_state)
         )
+        # ... ayant 2 événements bruts rattachés (cause hôte 1 + hôte 2).
+        self.assertEquals(
+            [u'Host 1', u'Host 2'],
+            sorted([ev.supitem.name for ev in db_correvent.events])
+        )
 
-        # 3. L'agrégat de l'étape 2 doit avoir été désagrégé
-        #    en 2 agrégats, l'un signalant que l'hôte 1 est UP
-        #    et l'autre indiquant que l'hôte 2 est UNREACHABLE.
-        res, idcorrevent = yield self.handle_alert(self.hosts[1], 'UP')
+        # 3. Pas de nouvel agrégat, mais un nouvel événement brut (hôte 4)
+        #    ajouté à l'agrégat de l'étape 2.
+        res, idcorrevent3 = yield self.handle_alert(
+            self.hosts[4], 'UNREACHABLE', preds=[idcorrevent2])
         print "Finished step 3\n"
         # Aucune erreur n'a été levée.
+        self.assertEquals(res, None)
+        self.assertEquals(idcorrevent3, None) # ajouté dans l'agrégat 2.
+        # Toujours un seul agrégat.
+        db_correvent = DBSession.query(tables.CorrEvent).one()
+        self.assertEquals(db_correvent.idcorrevent, idcorrevent2)
+        # ... dont la cause est l'hôte 1.
+        self.assertEquals(self.hosts[1].idhost, db_correvent.cause.idsupitem)
+        # ... dans l'état indiqué.
+        self.assertEquals(
+            u'DOWN',
+            tables.StateName.value_to_statename(
+                db_correvent.cause.current_state)
+        )
+        # ... ayant 3 événements bruts.
+        self.assertEquals(
+            [u'Host 1', u'Host 2', u'Host 4'],
+            sorted([ev.supitem.name for ev in db_correvent.events])
+        )
+
+        # 4. Pas de nouvel agrégat, mais un nouvel événement brut (hôte 3)
+        #    ajouté à l'agrégat de l'étape 2.
+        res, idcorrevent4 = yield self.handle_alert(
+            self.hosts[3], 'UNREACHABLE', preds=[idcorrevent2])
+        print "Finished step 4\n"
+        # Aucune erreur n'a été levée.
+        self.assertEquals(res, None)
+        self.assertEquals(idcorrevent4, None) # ajouté dans l'agrégat 2.
+        # On a 4 événements bruts en base.
+        self.assertEquals(4, DBSession.query(tables.Event).count())
+        # On a toujours un seul agrégat.
+        db_correvent = DBSession.query(tables.CorrEvent).one()
+        self.assertEquals(db_correvent.idcorrevent, idcorrevent2)
+        # ... dont la cause est l'hôte 1.
+        self.assertEquals(self.hosts[1].idhost, db_correvent.cause.idsupitem)
+        # ... dans l'état indiqué.
+        self.assertEquals(
+            u'DOWN',
+            tables.StateName.value_to_statename(
+                db_correvent.cause.current_state)
+        )
+        # ... ayant 3 événements bruts.
+        self.assertEquals(
+            [u'Host 1', u'Host 2', u'Host 3', u'Host 4'],
+            sorted([ev.supitem.name for ev in db_correvent.events])
+        )
+
+        # 5. L'agrégat de l'étape 2 doit avoir été désagrégé
+        #    en 3 agrégats, l'un signalant que l'hôte 1 est UP,
+        #    un autre indiquant que l'hôte 2 est UNREACHABLE,
+        #    le dernier donnant les hôtes 4 et 3 UNREACHABLE.
+        res, idcorrevent5 = yield self.handle_alert(self.hosts[1], 'UP')
+        print "Finished step 5\n"
+        # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
-        self.assertNotEquals(idcorrevent, None)
-        # On a 2 événements bruts et 2 agrégats en base.
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        # Désagrégé à partir de l'agrégat 2.
+        self.assertEquals(idcorrevent5, idcorrevent2)
+        # On a 4 événements bruts et 3 agrégats en base.
+        print "events"
+        self.assertEquals(4, DBSession.query(tables.Event).count())
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(2, len(db_correvents))
+        print "correvents"
+        self.assertEquals(3, len(db_correvents))
         db_correvents.sort(key=lambda x: x.cause.supitem.name)
-        # L'un des agrégats porte sur l'hôte 1,
-        # qui doit être dans l'état "UP".
+        # L'un porte sur l'hôte 1 qui doit être dans l'état "UP"
+        # et ne contient qu'un seul événement brut sur host 1.
         self.assertEquals(self.hosts[1].idhost, db_correvents[0].cause.idsupitem)
         self.assertEquals(
             u'UP',
             tables.StateName.value_to_statename(
                 db_correvents[0].cause.current_state)
         )
-        # L'autre porte sur l'hôte 2, qui se trouve
-        # toujours dans l'état "UNREACHABLE".
+        self.assertEquals(
+            [u'Host 1'],
+            sorted([ev.supitem.name for ev in db_correvents[0].events])
+        )
+        # Le second porte sur l'hôte 2, qui se trouve toujours dans
+        # l'état "UNREACHABLE" et n'a qu'un seul événement brut (host 2).
         self.assertEquals(self.hosts[2].idhost, db_correvents[1].cause.idsupitem)
         self.assertEquals(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
                 db_correvents[1].cause.current_state)
         )
+        self.assertEquals(
+            [u'Host 2'],
+            sorted([ev.supitem.name for ev in db_correvents[1].events])
+        )
+        # Le dernier des agrégats porte sur l'hôte 4
+        # qui se trouve dans l'état UNREACHABLE et
+        # contient 2 événements bruts (host 4 et host 3).
+        self.assertEquals(self.hosts[4].idhost, db_correvents[2].cause.idsupitem)
+        self.assertEquals(
+            u'UNREACHABLE',
+            tables.StateName.value_to_statename(
+                db_correvents[2].cause.current_state)
+        )
+        self.assertEquals(
+            [u'Host 3', u'Host 4'],
+            sorted([ev.supitem.name for ev in db_correvents[2].events])
+        )
 
-        # 4. Toujours 2 agrégats, l'un donnant l'hôte 1 comme UP,
-        #    et second signalant que l'hôte 2 est DOWN.
-        res, idcorrevent = yield self.handle_alert(self.hosts[2], 'DOWN')
-        print "Finished step 4\n"
-        # Aucune erreur n'a été levée.
-        self.assertNotEquals(res, None)
-        self.assertNotEquals(idcorrevent, None)
-        # On a 2 événements bruts et 2 agrégats en base.
-        self.assertEquals(2, DBSession.query(tables.Event).count())
-        db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(2, len(db_correvents))
-        db_correvents.sort(key=lambda x: x.cause.supitem.name)
-        # L'un des agrégats porte sur l'hôte 1,
-        # qui doit être dans l'état "UP".
-        self.assertEquals(self.hosts[1].idhost, db_correvents[0].cause.idsupitem)
-        self.assertEquals(
-            u'UP',
-            tables.StateName.value_to_statename(
-                db_correvents[0].cause.current_state)
-        )
-        # L'autre porte sur l'hôte 2, qui se trouve
-        # maintenant dans l'état "DOWN".
-        self.assertEquals(self.hosts[2].idhost, db_correvents[1].cause.idsupitem)
-        self.assertEquals(
-            u'DOWN',
-            tables.StateName.value_to_statename(
-                db_correvents[1].cause.current_state)
-        )
 
     @deferred(timeout=30)
     @defer.inlineCallbacks
@@ -281,6 +382,26 @@ class TestCorrevents4(unittest.TestCase):
 
         Lorsque le 1er hôte redevient opérationnel,
         """
+        # Ajout des dépendances topologiques :
+        # - Host 3 dépend de Host 1 et Host 2 (triangle).
+        dep_group = tables.DependencyGroup(
+            dependent=self.hosts[3],
+            role=u'topology',
+            operator=u'|',
+        )
+        DBSession.add(dep_group)
+        DBSession.add(tables.Dependency(
+            group=dep_group,
+            supitem=self.hosts[1],
+            distance=1,
+        ))
+        DBSession.add(tables.Dependency(
+            group=dep_group,
+            supitem=self.hosts[2],
+            distance=1,
+        ))
+        DBSession.flush()
+
         # Simule la chute des hôtes "Host 1" et "Host 2", puis l'indisponibilité
         # de l'hôte "Host 3" qui dépend des 2 autres topologiquement.
         res, idcorrevent1 = yield self.handle_alert(self.hosts[1], 'DOWN')

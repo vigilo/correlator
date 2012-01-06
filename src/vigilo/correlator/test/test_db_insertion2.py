@@ -83,7 +83,6 @@ class TestDbInsertion2(unittest.TestCase):
 
         events_aggregate1 = CorrEvent(
             idcause = event2.idevent,
-            impact = 1,
             priority = 1,
             trouble_ticket = u'azerty1234',
             ack = CorrEvent.ACK_NONE,

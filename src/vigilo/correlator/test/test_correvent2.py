@@ -74,9 +74,31 @@ class TestAggregates(unittest.TestCase):
         DBSession.add(dg2)
         DBSession.add(dg3)
 
-        DBSession.add(tables.Dependency(group=dg1, supitem=hosts[1]))
-        DBSession.add(tables.Dependency(group=dg2, supitem=hosts[1]))
-        DBSession.add(tables.Dependency(group=dg3, supitem=hosts[3]))
+        DBSession.add(tables.Dependency(
+            group=dg1,
+            supitem=hosts[1],
+            distance=1,
+        ))
+        DBSession.add(tables.Dependency(
+            group=dg2,
+            supitem=hosts[1],
+            distance=1,
+        ))
+        DBSession.add(tables.Dependency(
+            group=dg3,
+            supitem=hosts[3],
+            distance=1,
+        ))
+        DBSession.add(tables.Dependency(
+            group=dg1,
+            supitem=hosts[3],
+            distance=2,
+        ))
+        DBSession.add(tables.Dependency(
+            group=dg2,
+            supitem=hosts[3],
+            distance=2,
+        ))
         DBSession.flush()
 
         correvents = []

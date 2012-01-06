@@ -43,7 +43,6 @@ class TestHandleTicket(unittest.TestCase):
 
         self.events_aggregate = CorrEvent(
             idcause = self.event.idevent,
-            impact = 1,
             priority = 1,
             trouble_ticket = u'azerty1234',
             ack = None,

@@ -101,7 +101,6 @@ class TestCorrevents(unittest.TestCase):
 
         correvent = CorrEvent(
             cause=event,
-            impact=42,
             priority=42,
             trouble_ticket=None,
             ack=CorrEvent.ACK_NONE,

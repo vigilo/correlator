@@ -43,6 +43,7 @@ class Topology(nx.DiGraph):
                             (Dependency, Dependency.idgroup == \
                                 DependencyGroup.idgroup),
                         ).filter(DependencyGroup.role == u'topology'
+                        ).filter(Dependency.distance == 1
                         ).all()
 
         # On ajoute ces dépendances dans le graphe en tant qu'arcs.
