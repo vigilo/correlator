@@ -100,6 +100,11 @@ svc_on_host_down = vigilo.correlator.rules.svc_on_host_down:SvcHostDown
 # domaine DNS)
 #hostname = hostname
 
+# Service utilisé pour signaler à Vigilo que ce connecteur fonctionne
+# correctement. Comme ci-dessus, cela doit correspondre au nom de service
+# configuré dans VigiConf.
+#status_service = vigilo-correlator
+
 # L'exchange à utiliser pour les messages d'état du connecteur.
 # Par défaut, la section [publications] est utilisée.
 #status_exchange = connectors-status

@@ -96,10 +96,7 @@ def makeService(options):
 
     # Statistiques
     from vigilo.connector.status import statuspublisher_factory
-    servicename = options["name"]
-    if servicename is None:
-        servicename = "vigilo-correlator"
-    status_publisher = statuspublisher_factory(settings, servicename, client,
+    status_publisher = statuspublisher_factory(settings, client,
             providers=(msg_handler,))
 
     return root_service
