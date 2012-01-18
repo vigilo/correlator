@@ -16,6 +16,7 @@ from mock import Mock
 from lxml import etree
 
 from vigilo.models import tables
+from vigilo.models.demo import functions
 from vigilo.models.session import DBSession
 from vigilo.pubsub.xml import NS_COMMAND
 
@@ -58,22 +59,8 @@ class TestSvcHostDownRule(unittest.TestCase):
 
     def populate_db(self):
         helpers.populate_statename()
-        self.host = tables.Host(
-            name = u'testhost',
-            hosttpl = u'',
-            address = u'127.0.0.1',
-            snmpcommunity = u'public',
-            snmpport = 42,
-            weight = 42,
-        )
-        DBSession.add(self.host)
-        self.lls = tables.LowLevelService(
-            host = self.host,
-            servicename = u'testservice',
-            weight = 42,
-        )
-        DBSession.add(self.lls)
-        DBSession.flush()
+        self.host = functions.add_host(u'testhost')
+        self.lls = functions.add_lowlevelservice(self.host, u'testservice')
 
     def setup_context(self, state_from, state_to):
         res = helpers.setup_context(
@@ -147,12 +134,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         yield self.setup_context("DOWN", "UP")
         servicenames = [ u'testservice-%d' % i for i in range(10) ]
         for servicename in servicenames:
-            DBSession.add(tables.LowLevelService(
-                host=self.host,
-                servicename=servicename,
-                weight=42,
-            ))
-        DBSession.flush()
+            functions.add_lowlevelservice(self.host, servicename)
         rule_dispatcher = Mock()
         yield self.rule.process(rule_dispatcher, self.message_id)
         servicenames.insert(0, "testservice") # crée en setUp

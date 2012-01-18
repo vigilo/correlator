@@ -16,6 +16,7 @@ from vigilo.correlator.db_insertion import add_to_aggregate
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 import helpers
 
+from vigilo.models.demo import functions
 from vigilo.models.tables import State, StateName, Event, SupItem, \
                             LowLevelService, HighLevelService, Host, \
                             CorrEvent
@@ -42,66 +43,16 @@ class TestDbInsertion2(unittest.TestCase):
     def test_add_to_agregate(self):
         """Ajout d'un événement brut à un évènement corrélé déjà existant"""
         # On crée 2 couples host/service.
-        host1 = Host(
-            name = u'messagerie',
-            snmpcommunity = u'com11',
-            hosttpl = u'tpl11',
-            address = u'192.168.0.11',
-            snmpport = 11,
-            weight = 42,
-        )
-        DBSession.add(host1)
-        DBSession.flush()
-
-        service1 = LowLevelService(
-            servicename = u'Processes',
-            host = host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(service1)
-        DBSession.flush()
-
-        service2 = LowLevelService(
-            servicename = u'CPU',
-            host = host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(service2)
-        DBSession.flush()
+        host1 = functions.add_host(u'messagerie')
+        service1 = functions.add_lowlevelservice(host1, u'Processes')
+        service2 = functions.add_lowlevelservice(host1, u'CPU')
 
         # On ajoute 1 couple événement/agrégat à la BDD.
-        event2 = Event(
-            idsupitem = service2.idservice,
-            current_state = 2,
-            message = 'WARNING: CPU is overloaded',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(event2)
-        DBSession.flush()
-
-        events_aggregate1 = CorrEvent(
-            idcause = event2.idevent,
-            priority = 1,
-            trouble_ticket = u'azerty1234',
-            ack = CorrEvent.ACK_NONE,
-            occurrence = 1,
-            timestamp_active = datetime.now(),
-        )
-        events_aggregate1.events.append(event2)
-        DBSession.add(events_aggregate1)
-        DBSession.flush()
+        event2 = functions.add_event(service2, u'WARNING', 'WARNING: CPU is overloaded')
+        events_aggregate1 = functions.add_correvent([event2])
 
         # On ajoute un nouvel événement à la BDD.
-        event1 = Event(
-            idsupitem = service1.idservice,
-            current_state = 2,
-            message = 'WARNING: Processes are not responding',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(event1)
-        DBSession.flush()
+        event1 = functions.add_event(service1, u'WARNING', 'WARNING: Processes are not responding')
 
         # On ajoute ce nouvel événement à l'agrégat existant.
         ctx = helpers.ContextStub(42)

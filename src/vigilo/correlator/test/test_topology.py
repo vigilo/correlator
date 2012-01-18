@@ -11,6 +11,7 @@ from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
 
 from vigilo.models.session import DBSession
+from vigilo.models.demo import functions
 from vigilo.models.tables import Host, LowLevelService, \
                                     Dependency, DependencyGroup
 from vigilo.models.tables import Event, CorrEvent
@@ -49,143 +50,30 @@ class TopologyTestHelpers(object):
 
     def add_services(self):
         """Création de 5 couples host/service"""
-        self.host1 = Host(
-            name = u'messagerie',
-            snmpcommunity = u'com11',
-            hosttpl = u'tpl11',
-            address = u'192.168.0.11',
-            snmpport = 11,
-            weight = 42,
-        )
-        DBSession.add(self.host1)
-        DBSession.flush()
+        self.host1 = functions.add_host(u'messagerie')
+        self.host2 = functions.add_host(u'firewall')
 
-        self.host2 = Host(
-            name = u'firewall',
-            snmpcommunity = u'com26',
-            hosttpl = u'tpl26',
-            address = u'192.168.0.26',
-            snmpport = 26,
-            weight = 42,
-        )
-        DBSession.add(self.host2)
-        DBSession.flush()
-
-        self.service1 = LowLevelService(
-            servicename = u'Processes',
-            host = self.host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(self.service1)
-        DBSession.flush()
-
-        self.service2 = LowLevelService(
-            servicename = u'CPU',
-            host = self.host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(self.service2)
-        DBSession.flush()
-
-        self.service3 = LowLevelService(
-            servicename = u'RAM',
-            host = self.host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(self.service3)
-        DBSession.flush()
-
-        self.service4 = LowLevelService(
-            servicename = u'Interface eth0',
-            host = self.host1,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(self.service4)
-        DBSession.flush()
-
-        self.service5 = LowLevelService(
-            servicename = u'Interface eth1',
-            host = self.host2,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(self.service5)
-        DBSession.flush()
+        self.service1 = functions.add_lowlevelservice(self.host1, u'Processes')
+        self.service2 = functions.add_lowlevelservice(self.host1, u'CPU')
+        self.service3 = functions.add_lowlevelservice(self.host1, u'RAM')
+        self.service4 = functions.add_lowlevelservice(self.host1, u'Interface eth0')
+        self.service5 = functions.add_lowlevelservice(self.host2, u'Interface eth1')
 
     def add_dependencies(self):
         """
         Ajout de quelques dépendances entre services de bas
         niveau dans la BDD, préalable à certains des test.
         """
-        dep_group1 = DependencyGroup(
-            dependent=self.service1,
-            operator=u'|',
-            role=u'topology',
-        )
-        dep_group2 = DependencyGroup(
-            dependent=self.service2,
-            operator=u'|',
-            role=u'topology',
-        )
-        dep_group3 = DependencyGroup(
-            dependent=self.service3,
-            operator=u'|',
-            role=u'topology',
-        )
-        dep_group4 = DependencyGroup(
-            dependent=self.service4,
-            operator=u'|',
-            role=u'topology',
-        )
-        DBSession.add(dep_group1)
-        DBSession.add(dep_group2)
-        DBSession.add(dep_group3)
-        DBSession.add(dep_group4)
-        DBSession.flush()
+        dep_group1 = functions.add_dependency_group(None, self.service1, u'topology', u'|')
+        dep_group2 = functions.add_dependency_group(None, self.service2, u'topology', u'|')
+        dep_group3 = functions.add_dependency_group(None, self.service3, u'topology', u'|')
+        dep_group4 = functions.add_dependency_group(None, self.service4, u'topology', u'|')
 
-        self.dependency1 = Dependency(
-            group=dep_group1,
-            supitem=self.service2,
-            distance=1,
-        )
-        DBSession.add(self.dependency1)
-        DBSession.flush()
-
-        self.dependency2 = Dependency(
-            group=dep_group1,
-            supitem=self.service3,
-            distance=1,
-        )
-        DBSession.add(self.dependency2)
-        DBSession.flush()
-
-        self.dependency3 = Dependency(
-            group=dep_group2,
-            supitem=self.service4,
-            distance=1,
-        )
-        DBSession.add(self.dependency3)
-        DBSession.flush()
-
-        self.dependency4 = Dependency(
-            group=dep_group3,
-            supitem=self.service4,
-            distance=1,
-        )
-        DBSession.add(self.dependency4)
-        DBSession.flush()
-
-        self.dependency5 = Dependency(
-            group=dep_group4,
-            supitem=self.service5,
-            distance=1,
-        )
-        DBSession.add(self.dependency5)
-        DBSession.flush()
+        self.dependency1 = functions.add_dependency(dep_group1, self.service2, 1)
+        self.dependency2 = functions.add_dependency(dep_group1, self.service3, 1)
+        self.dependency3 = functions.add_dependency(dep_group2, self.service4, 1)
+        self.dependency4 = functions.add_dependency(dep_group3, self.service4, 1)
+        self.dependency5 = functions.add_dependency(dep_group4, self.service5, 1)
 
 class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
     """Test des méthodes de la classe 'Topology'"""
@@ -194,47 +82,10 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         Ajout de quelques événements associés à des services de
         bas niveau dans la BDD, ainsi que de quelques agrégats.
         """
-        self.event1 = Event(
-            idsupitem = self.service3.idservice,
-            current_state = 2,
-            message = 'WARNING: RAM is overloaded',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(self.event1)
-        DBSession.flush()
-
-        self.event2 = Event(
-            idsupitem = self.service4.idservice,
-            current_state = 2,
-            message = 'WARNING: eth0 is down',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(self.event2)
-        DBSession.flush()
-
-        self.events_aggregate1 = CorrEvent(
-            idcause = self.event1.idevent,
-            priority = 1,
-            trouble_ticket = u'azerty1234',
-            ack = CorrEvent.ACK_NONE,
-            occurrence = 1,
-            timestamp_active = datetime.now(),
-        )
-        self.events_aggregate1.events.append(self.event1)
-        DBSession.add(self.events_aggregate1)
-        DBSession.flush()
-
-        self.events_aggregate2 = CorrEvent(
-            idcause = self.event2.idevent,
-            priority = 1,
-            trouble_ticket = u'azerty1234',
-            ack = CorrEvent.ACK_NONE,
-            occurrence = 1,
-            timestamp_active = datetime.now(),
-        )
-        self.events_aggregate2.events.append(self.event2)
-        DBSession.add(self.events_aggregate2)
-        DBSession.flush()
+        self.event1 = functions.add_event(self.service3, u'WARNING', 'WARNING: RAM is overloaded')
+        self.event2 = functions.add_event(self.service4, u'WARNING', 'WARNING: eth0 is down')
+        self.events_aggregate1 = functions.add_correvent([self.event1])
+        self.events_aggregate2 = functions.add_correvent([self.event2])
 
     def test_instanciation(self):
         """Instanciation de la classe 'Topology'"""
@@ -309,26 +160,8 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
 
         # On ajoute un événement et un nouvel
         # agrégat dont cet événement est la cause.
-        self.event3 = Event(
-            idsupitem = self.service1.idservice,
-            current_state = 2,
-            message = 'WARNING: Processes are not responding',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(self.event3)
-        DBSession.flush()
-
-        self.events_aggregate3 = CorrEvent(
-            idcause = self.event3.idevent,
-            priority = 1,
-            trouble_ticket = u'azerty1234',
-            ack = CorrEvent.ACK_NONE,
-            occurrence = 1,
-            timestamp_active = datetime.now(),
-        )
-        self.events_aggregate3.events.append(self.event3)
-        DBSession.add(self.events_aggregate3)
-        DBSession.flush()
+        self.event3 = functions.add_event(self.service1, u'WARNING', 'WARNING: Processes are not responding')
+        self.events_aggregate3 = functions.add_correvent([self.event3])
 
         # On récupère les aggrégats causés par le service 5
         ctx = self.context_factory(142, defer=True)
@@ -364,26 +197,8 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
         Ajout de quelques événements associés à des services de
         bas niveau dans la BDD, ainsi que de quelques agrégats.
         """
-        self.event1 = Event(
-            idsupitem = self.service3.idservice,
-            current_state = 2,
-            message = 'WARNING: RAM is overloaded',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(self.event1)
-        DBSession.flush()
-
-        self.events_aggregate1 = CorrEvent(
-            idcause = self.event1.idevent,
-            priority = 1,
-            trouble_ticket = u'azerty1234',
-            ack = CorrEvent.ACK_NONE,
-            occurrence = 1,
-            timestamp_active = datetime.now(),
-        )
-        self.events_aggregate1.events.append(self.event1)
-        DBSession.add(self.events_aggregate1)
-        DBSession.flush()
+        self.event1 = functions.add_event(self.service3, u'WARNING', 'WARNING: RAM is overloaded')
+        self.events_aggregate1 = functions.add_correvent([self.event1])
 
     @deferred(timeout=30)
     @defer.inlineCallbacks

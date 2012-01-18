@@ -12,6 +12,7 @@ from mock import Mock
 
 from vigilo.models import tables
 from vigilo.models.session import DBSession
+from vigilo.models.demo import functions
 from vigilo.pubsub.xml import NS_EVENT
 import helpers
 
@@ -33,29 +34,9 @@ class RuleDispatcherTestCase(unittest.TestCase):
 
     def _insert_test_data(self):
         """Création de quelques dépendances dans la BDD."""
-        host = tables.Host(
-            name=u'server.example.com',
-            hosttpl=u'',
-            address=u'127.0.0.1',
-            snmpcommunity=u'public',
-            snmpport=42,
-            weight=42,
-        )
-        DBSession.add(host)
-        DBSession.add(tables.LowLevelService(
-            servicename=u'Load',
-            host=host,
-            weight=42,
-        ))
-
-        DBSession.add(tables.HighLevelService(
-            servicename=u'Load',
-            message=u'Ouch',
-            warning_threshold=100,
-            critical_threshold=80,
-        ))
-        DBSession.flush()
-
+        host = functions.add_host(u'server.example.com')
+        functions.add_lowlevelservice(host, u'Load')
+        functions.add_highlevelservice(u'Load')
 
     @deferred(timeout=30)
     def test_recv_old_state(self):

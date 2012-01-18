@@ -14,6 +14,7 @@ from vigilo.correlator.publish_messages import publish_aggregate, \
                                             publish_state
 
 from vigilo.models.session import DBSession
+from vigilo.models.demo import functions
 from vigilo.models.tables import Host, HighLevelService, LowLevelService
 from vigilo.models.tables import State, StateName
 
@@ -59,49 +60,21 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         helpers.populate_statename()
 
         # Ajout d'un hôte dans la BDD
-        host1 = Host(
-            name = u'host1.example.com',
-            snmpcommunity = u'com11',
-            hosttpl = u'tpl11',
-            address = u'192.168.0.11',
-            snmpport = 11,
-            weight = 100,
-        )
-        DBSession.add(host1)
-        DBSession.flush()
+        host1 = functions.add_host(u'host1.example.com')
 
         # Ajout d'un service de haut niveau dans la BDD
-        hls1 = HighLevelService(
-            servicename = u'Connexion',
-            message = u'Ouch',
-            warning_threshold = 300,
-            critical_threshold = 150,
-        )
-        DBSession.add(hls1)
-        DBSession.flush()
+        hls1 = functions.add_highlevelservice(u'Connexion')
 
         # Ajout d'un service de bas niveau dans la BDD
-        lls1 = LowLevelService(
-            servicename = u'Processes',
-            host = host1,
-            command = u'halt',
-            weight = 100,
-        )
-        DBSession.add(lls1)
-        DBSession.flush()
+        lls1 = functions.add_lowlevelservice(host1, u'Processes')
 
         # Création d'un timestamp à partir de l'heure actuelle
         timestamp = datetime.now()
         int_timestamp = int(mktime(timestamp.timetuple()))
 
         # Ajout de l'état du host1 dans la BDD
-        state1 = State(
-            idsupitem = host1.idhost,
-            timestamp = timestamp,
-            state = StateName.statename_to_value(u"UNREACHABLE"),
-            message = "UNREACHABLE: Host1")
-        state1 = DBSession.merge(state1)
-        DBSession.flush()
+        state1 = functions.add_host_state(
+                    host1, u'UNREACHABLE', 'UNREACHABLE: Host1', timestamp)
 
         info_dictionary = {"host": "host1.example.com",
                            "service": None,
@@ -126,13 +99,8 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         self.forwarder.clear()
 
         # Ajout de l'état du hls1 dans la BDD
-        state2 = State(
-            idsupitem = hls1.idservice,
-            timestamp = timestamp,
-            state = StateName.statename_to_value(u"UNKNOWN"),
-            message = "UNKNOWN: Connection is in an unknown state")
-        state2 = DBSession.merge(state2)
-        DBSession.flush()
+        state2 = functions.add_svc_state(
+                    hls1, u'UNKNOWN', 'UNKNOWN: Connection is in an unknown state', timestamp)
 
         info_dictionary = {"host":
                             helpers.settings['correlator']['nagios_hls_host'],
@@ -162,13 +130,8 @@ class TestAggregatesHandlerFunctions(unittest.TestCase):
         self.forwarder.clear()
 
         # Ajout de l'état du lls1 dans la BDD
-        state3 = State(
-            idsupitem = lls1.idservice,
-            timestamp = timestamp,
-            state = StateName.statename_to_value(u"UNKNOWN"),
-            message = "UNKNOWN: Processes are in an unknown state")
-        state3 = DBSession.merge(state3)
-        DBSession.flush()
+        state3 = functions.add_svc_state(
+                    lls1, u'UNKNOWN', 'UNKNOWN: Processes are in an unknown state', timestamp)
 
         info_dictionary = {"host": "host1.example.com",
                            "service": "Processes",

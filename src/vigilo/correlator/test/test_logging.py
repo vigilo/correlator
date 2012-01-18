@@ -15,6 +15,7 @@ import logging
 
 import helpers
 from vigilo.models.session import DBSession
+from vigilo.models.demo import functions
 from vigilo.models.tables import LowLevelService, Host, \
                                     Event, Change, SupItem, State
 
@@ -152,8 +153,6 @@ class TestLogging(unittest.TestCase):
         Ajoute un hôte et un service de bas niveau dans la BDD, ainsi
         que d'autres données nécessaires à l'exécution des tests.
         """
-
-        # Ajout d'états dans la BDD.
         helpers.populate_statename()
 
         # Ajout de la date de dernière
@@ -163,27 +162,8 @@ class TestLogging(unittest.TestCase):
             last_modified = datetime.now(),))
         DBSession.flush()
 
-        # Ajout d'un hôte dans la BDD.
-        self.host = Host(
-            name = u'Host',
-            snmpcommunity = u'com11',
-            hosttpl = u'tpl11',
-            address = u'192.168.0.11',
-            snmpport = 11,
-            weight = 42,
-        )
-        DBSession.add(self.host)
-        DBSession.flush()
-
-        # Ajout d'un service de bas niveau dans la BDD.
-        self.lls = LowLevelService(
-            servicename = u'LLS',
-            host = self.host,
-            command = u'halt',
-            weight = 42,
-        )
-        DBSession.add(self.lls)
-        DBSession.flush()
+        self.host = functions.add_host(u'Host')
+        self.lls = functions.add_lowlevelservice(self.host, u'LLS')
 
     @deferred(timeout=30)
     def setUp(self):

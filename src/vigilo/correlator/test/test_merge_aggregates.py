@@ -19,6 +19,7 @@ from vigilo.correlator.db_thread import DummyDatabaseWrapper
 import helpers
 
 from vigilo.models.session import DBSession
+from vigilo.models.demo import functions
 from vigilo.models.tables import Event, CorrEvent
 from vigilo.models.tables import LowLevelService, Host, StateName
 
@@ -27,121 +28,39 @@ def create_topology_and_events():
     Création de 4 couples host/service,
     4 événéments et 2 agrégats dans la BDD.
     """
-    DBSession.add(StateName(statename=u'OK', order=1))
-    DBSession.add(StateName(statename=u'UP', order=1))
-    DBSession.flush()
+    helpers.populate_statename()
+
     # On crée 4 couples host/service.
-    host1 = Host(
-        name = u'messagerie',
-        snmpcommunity = u'com11',
-        hosttpl = u'tpl11',
-        address = u'192.168.0.11',
-        snmpport = 11,
-        weight = 42,
-    )
-    DBSession.add(host1)
-    DBSession.flush()
-
-    service1 = LowLevelService(
-        servicename = u'Processes',
-        host = host1,
-        command = u'halt',
-        weight = 42,
-    )
-    DBSession.add(service1)
-    DBSession.flush()
-
-    service2 = LowLevelService(
-        servicename = u'CPU',
-        host = host1,
-        command = u'halt',
-        weight = 42,
-    )
-    DBSession.add(service2)
-    DBSession.flush()
-
-    service3 = LowLevelService(
-        servicename = u'RAM',
-        host = host1,
-        command = u'halt',
-        weight = 42,
-    )
-    DBSession.add(service3)
-    DBSession.flush()
-
-    service4 = LowLevelService(
-        servicename = u'Interface eth0',
-        host = host1,
-        command = u'halt',
-        weight = 42,
-    )
-    DBSession.add(service4)
-    DBSession.flush()
+    host1 = functions.add_host(u'messagerie')
+    service1 = functions.add_lowlevelservice(host1, u'Processes')
+    service2 = functions.add_lowlevelservice(host1, u'CPU')
+    service3 = functions.add_lowlevelservice(host1, u'RAM')
+    service4 = functions.add_lowlevelservice(host1, u'Interface eth0')
 
     # On ajoute 4 événements et 2 agrégats dans la BDD.
-    event1 = Event(
-        supitem = service1,
-        current_state = 2,
-        message = 'WARNING: Processes are not responding',
-        timestamp = datetime.now(),
+    event1 = functions.add_event(
+        service1,
+        u'WARNING',
+        'WARNING: Processes are not responding',
     )
-    DBSession.add(event1)
-    DBSession.flush()
-
-    event2 = Event(
-        supitem = service2,
-        current_state = 2,
-        message = 'WARNING: CPU is overloaded',
-        timestamp = datetime.now(),
+    event2 = functions.add_event(
+        service2,
+        u'WARNING',
+        'WARNING: CPU is overloaded',
     )
-    DBSession.add(event2)
-    DBSession.flush()
-
-    event3 = Event(
-        supitem = service3,
-        current_state = 2,
-        message = 'WARNING: RAM is overloaded',
-        timestamp = datetime.now(),
+    event3 = functions.add_event(
+        service3,
+        u'WARNING',
+        'WARNING: RAM is overloaded',
+    )
+    event4 = functions.add_event(
+        service4,
+        u'WARNING',
+        'WARNING: eth0 is down',
     )
 
-    DBSession.add(event3)
-    DBSession.flush()
-
-    event4 = Event(
-        supitem = service4,
-        current_state = 2,
-        message = 'WARNING: eth0 is down',
-        timestamp = datetime.now(),
-    )
-
-    DBSession.add(event4)
-    DBSession.flush()
-
-    events_aggregate1 = CorrEvent(
-        idcause = event2.idevent,
-        priority = 1,
-        trouble_ticket = u'azerty1234',
-        ack = CorrEvent.ACK_NONE,
-        occurrence = 1,
-        timestamp_active = datetime.now(),
-    )
-    events_aggregate1.events.append(event1)
-    events_aggregate1.events.append(event2)
-    DBSession.add(events_aggregate1)
-    DBSession.flush()
-
-    events_aggregate2 = CorrEvent(
-        idcause = event4.idevent,
-        priority = 1,
-        trouble_ticket = u'azerty1234',
-        ack = CorrEvent.ACK_NONE,
-        occurrence = 1,
-        timestamp_active = datetime.now(),
-    )
-    events_aggregate2.events.append(event3)
-    events_aggregate2.events.append(event4)
-    DBSession.add(events_aggregate2)
-    DBSession.flush()
+    events_aggregate1 = functions.add_correvent([event2, event1])
+    events_aggregate2 = functions.add_correvent([event4, event3])
 
     return [[event1.idevent, event2.idevent, event3.idevent, event4.idevent],
             [events_aggregate1.idcorrevent, events_aggregate2.idcorrevent]]
@@ -187,9 +106,7 @@ class TestMergeAggregateFunction(unittest.TestCase):
             self.assertTrue(aggregate2)
             self.assertEqual(aggregate2.idcause, events_id[3])
 
-            events_id = []
-            for event in aggregate2.events:
-                events_id.append(event.idevent)
+            events_id = [e.idevent for e in aggregate2.events]
             events_id.sort()
 
             # On vérifie que l'agrégat 2 regroupe
@@ -200,6 +117,7 @@ class TestMergeAggregateFunction(unittest.TestCase):
             # On vérifie que le résultat retourné par la fonction
             # merge_aggregates est bien la liste des ids des
             # événements qui était auparavant rattachés à l'agrégat 1.
+            res.sort()
             self.assertEqual(res, [events_id[0], events_id[1]])
 
         # On fusionne les 2 agrégats.

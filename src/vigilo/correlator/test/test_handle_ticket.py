@@ -8,6 +8,7 @@ from datetime import datetime
 import unittest
 
 from vigilo.models.session import DBSession
+from vigilo.models.demo import functions
 from vigilo.models.tables import Host, Event, EventHistory, CorrEvent, StateName
 
 from vigilo.correlator.handle_ticket import handle_ticket
@@ -18,38 +19,11 @@ class TestHandleTicket(unittest.TestCase):
 
     def add_data(self):
         """Ajout des données dans la base avant les tests"""
-        DBSession.add(StateName(statename=u'OK', order=1))
-        DBSession.add(StateName(statename=u'UP', order=1))
-        DBSession.flush()
-        self.host = Host(
-            name = u'messagerie',
-            snmpcommunity = u'com11',
-            hosttpl = u'tpl11',
-            address = u'192.168.0.11',
-            snmpport = 11,
-            weight = 42,
-        )
-        DBSession.add(self.host)
-        DBSession.flush()
-
-        self.event = Event(
-            idsupitem = self.host.idhost,
-            current_state = 2,
-            message = 'WARNING',
-            timestamp = datetime.now(),
-        )
-        DBSession.add(self.event)
-        DBSession.flush()
-
-        self.events_aggregate = CorrEvent(
-            idcause = self.event.idevent,
-            priority = 1,
-            trouble_ticket = u'azerty1234',
-            ack = None,
-            occurrence = 1,
-            timestamp_active = datetime.now(),
-        )
-        self.events_aggregate.events.append(self.event)
+        helpers.populate_statename()
+        self.host = functions.add_host(u'messagerie')
+        self.event = functions.add_event(self.host, u'WARNING', 'WARNING')
+        self.events_aggregate = functions.add_correvent([self.event])
+        self.events_aggregate.trouble_ticket = u'azerty1234'
         DBSession.add(self.events_aggregate)
         DBSession.flush()
 
