@@ -16,32 +16,16 @@ BuildRequires:   python-babel
 
 Requires:   python >= 2.5
 Requires:   python-setuptools
-Requires:   vigilo-common
 Requires:   vigilo-connector
-Requires:   vigilo-pubsub
 Requires:   vigilo-models
 Requires:   python-lxml
 Requires:   python-memcached
-Requires:   python-twisted-words
 ######### Dependance from python dependance tree ########
-Requires:   vigilo-common
-Requires:   vigilo-connector
-Requires:   vigilo-pubsub
-Requires:   vigilo-models
-Requires:   python-memcached
-Requires:   python-lxml
-Requires:   python-setuptools
 Requires:   python-OpenSSL
-Requires:   python-twisted
-Requires:   python-wokkel
 Requires:   python-transaction
 Requires:   python-pastescript
 Requires:   python-zope.sqlalchemy
-Requires:   python-sqlalchemy
 Requires:   python-psycopg2
-Requires:   python-babel
-Requires:   python-zope-interface
-Requires:   python-configobj
 Requires:   python-pastedeploy
 Requires:   python-paste
 
