@@ -127,7 +127,7 @@ keys = root,twisted,correlation
 keys = console,syslog,correlation,errors
 
 [formatters]
-keys = consoleFormatter,syslogFormatter,correlationFormatter
+keys = consoleFormatter,syslogFormatter,correlationFormatter,errorFormatter
 
 [logger_root]
 level = INFO
@@ -174,7 +174,7 @@ args = '/dev/log', 'daemon'
 level = ERROR
 class = handlers.RotatingFileHandler
 args = ('@LOCALSTATEDIR@/log/vigilo/correlator/error.log', 'a', 1024*1024*10, 5)
-formatter = consoleFormatter
+formatter = errorFormatter
 
 [handler_correlation]
 class = handlers.SysLogHandler
@@ -202,5 +202,10 @@ class = vigilo.common.logging.VigiloFormatter
 
 [formatter_correlationFormatter]
 format = %(processName)s: %(message)s
+datefmt =
+class = vigilo.common.logging.VigiloFormatter
+
+[formatter_errorFormatter]
+format = %(asctime)s %(levelname)s %(name)s::%(message)s
 datefmt =
 class = vigilo.common.logging.VigiloFormatter
