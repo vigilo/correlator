@@ -132,7 +132,7 @@ class RuleDispatcher(MessageHandler):
         if msgid is None:
             LOGGER.error(_("Received invalid item ID (None)"))
             return defer.succeed(None)
-        msg["id"] = msgid
+        content["id"] = msgid
         d = defer.maybeDeferred(self.processMessage, content)
         d.addCallbacks(self.processingSucceeded, self.processingFailed,
                        callbackArgs=(msg, ))
