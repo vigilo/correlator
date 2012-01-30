@@ -59,7 +59,7 @@ class CorrelatorServiceMaker(object):
     implements(service.IServiceMaker, IPlugin)
     tapname = "vigilo-correlator"
     description = "Vigilo correlator"
-    options = base_options.Options
+    options = base_options.make_options('vigilo.correlator')
 
     def makeService(self, options):
         """Crée un service client du bus XMPP"""
