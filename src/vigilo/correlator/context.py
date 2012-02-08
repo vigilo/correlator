@@ -57,17 +57,17 @@ class Context(object):
         -   idsupitem : identifiant de l'élément supervisé impacté (C{int}).
     """
 
-    def __init__(self, idxmpp, transaction=True, timeout=None):
+    def __init__(self, msgid, transaction=True, timeout=None):
         """
         Initialisation d'un contexte de corrélation (au moyen de MemcacheD).
 
-        @param idxmpp: Identifiant XMPP de l'alerte brute
+        @param msgid: Identifiant de l'alerte brute
             reçue par le corrélateur.
-        @type idxmpp: C{basestring}.
+        @type msgid: C{basestring}.
         """
         self._connection = MemcachedConnection()
         self._transaction = transaction
-        self._id = str(idxmpp)
+        self._id = str(msgid)
         if timeout is None:
             timeout = settings['correlator'].as_float('context_timeout')
         self._timeout = timeout

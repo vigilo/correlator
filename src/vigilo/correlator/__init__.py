@@ -56,7 +56,7 @@ def set_signal_handlers():
 
 
 def makeService(options):
-    """Crée un service client du bus XMPP"""
+    """Crée un service client du bus"""
     from vigilo.connector.options import getSettings
     settings = getSettings(options, __name__)
 

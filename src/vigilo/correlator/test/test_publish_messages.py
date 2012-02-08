@@ -67,7 +67,7 @@ class MessagePublisherTestCase(unittest.TestCase):
 
 
     def test_delete_published_aggregates(self):
-        """Publication XMPP d'une liste d'évènements corrélés à supprimer"""
+        """Publication d'une liste d'évènements corrélés à supprimer"""
         self.mp.delete_published_aggregates([1, 2])
         print self.mp.sendMessage.call_args
         self.assertEqual(self.mp.sendMessage.call_args[0][0],
@@ -75,7 +75,7 @@ class MessagePublisherTestCase(unittest.TestCase):
 
 
     def test_publish_state_host(self):
-        """Publication XMPP de l'état d'un hôte"""
+        """Publication de l'état d'un hôte"""
         # Ajout de l'état du host1 dans la BDD
         state1 = functions.add_host_state(
                     self.host1, u'UNREACHABLE', 'UNREACHABLE: Host1',

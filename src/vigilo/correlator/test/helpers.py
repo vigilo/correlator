@@ -157,9 +157,9 @@ class ConnectionStub(object):
 
 
 class ContextStub(Context):
-    def __init__(self, idxmpp, timeout=None, must_defer=True):
+    def __init__(self, msgid, timeout=None, must_defer=True):
         self._connection = ConnectionStub(must_defer=must_defer)
-        self._id = str(idxmpp)
+        self._id = str(msgid)
         if timeout is None:
             timeout = 60.0
         self._timeout = timeout
@@ -171,14 +171,14 @@ class ContextStubFactory(object):
     def __init__(self):
         self.contexts = {}
 
-    def __call__(self, idxmpp, database=None, timeout=None, *args, **kwargs):
-        if idxmpp not in self.contexts:
-            print "CREATING CONTEXT FOR", idxmpp
+    def __call__(self, msgid, database=None, timeout=None, *args, **kwargs):
+        if msgid not in self.contexts:
+            print "CREATING CONTEXT FOR", msgid
             must_defer = kwargs.pop('must_defer', True)
-            self.contexts[idxmpp] = ContextStub(idxmpp, timeout, must_defer=must_defer)
+            self.contexts[msgid] = ContextStub(msgid, timeout, must_defer=must_defer)
         else:
-            print "GETTING PREVIOUS CONTEXT FOR", idxmpp
-        return self.contexts[idxmpp]
+            print "GETTING PREVIOUS CONTEXT FOR", msgid
+        return self.contexts[msgid]
 
     def reset(self):
         # On réinitialise les données de tous les contextes.
@@ -197,10 +197,10 @@ class RuleDispatcherStub(RuleDispatcher):
         RuleDispatcher.__init__(self, database, "HLS", None, 0, 4, 20)
         self.buffer = []
 
-    def sendItem(self, item):
+    def sendItem(self, msg):
         """Simule l'écriture d'un message sur la file"""
-        LOGGER.info("Sending this payload to the bus: %r", item)
-        self.buffer.append(item)
+        LOGGER.info("Sending this payload to the bus: %r", msg)
+        self.buffer.append(msg)
 
     def clear(self):
         """Vide la file de messages"""

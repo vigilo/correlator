@@ -233,12 +233,12 @@ class CorrEventBuilder(object):
 
                             is_built_dependant_event_list = True
 
-                # On rattache l'alerte courante aux agrégats sur le bus XMPP.
+                # On rattache l'alerte courante aux agrégats sur le bus.
                 self.publisher.publish_aggregate(
                                   predecessing_aggregates_id, [raw_event_id])
 
                 if succeeding_aggregates_id:
-                    # On publie également sur le bus XMPP la
+                    # On publie également sur le bus la
                     # liste des alertes brutes (dépendantes de
                     # l'alerte courante) à rattacher à ces agrégats.
                     self.publisher.publish_aggregate(
@@ -530,7 +530,7 @@ class CorrEventBuilder(object):
                 )
                 if events_id:
                     event_id_list.extend(events_id)
-            # On publie sur le bus XMPP la liste des alertes brutes
+            # On publie sur le bus la liste des alertes brutes
             # à rattacher à l'événement corrélé nouvellement créé.
             self.publisher.publish_aggregate([idcorrevent], event_id_list)
             self.publisher.delete_published_aggregates(aggregates_id)

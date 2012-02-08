@@ -75,5 +75,5 @@ class Rule(Named):
     def set_database(self, database):
         self._database = database
 
-    def _get_context(self, xmpp_id, timeout=None):
-        return self._context_factory(xmpp_id, transaction=False, timeout=timeout)
+    def _get_context(self, msg_id, timeout=None):
+        return self._context_factory(msg_id, transaction=False, timeout=timeout)

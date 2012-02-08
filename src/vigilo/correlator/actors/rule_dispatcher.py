@@ -5,7 +5,7 @@
 
 """
 Ce module fournit les mécanismes permettant de traiter les messages
-provenant du bus XMPP, afin que ceux-ci soient corrélés.
+provenant du bus, afin que ceux-ci soient corrélés.
 
 Il met également à disposition un moyen pour les règles de corrélation
 d'émettre de nouveaux messages XML à destination du bus (par exemple,
@@ -414,7 +414,7 @@ class RuleDispatcher(MessageHandler):
         """
         LOGGER.debug(_('Handling correlation results'))
 
-        # On publie sur le bus XMPP l'état de l'hôte
+        # On publie sur le bus l'état de l'hôte
         # ou du service concerné par l'alerte courante.
         self.bus_publisher.publish_state(info_dictionary)
 
@@ -458,11 +458,11 @@ class RuleDispatcher(MessageHandler):
         Elle se contente d'afficher un message d'erreur.
 
         @param failure: L'erreur responsable de l'échec.
-        @type failure: C{Failure}
-        @param idxmpp: Identifiant du message XMPP.
-        @type idxmpp: C{str}
+        @type  failure: C{Failure}
+        @param msgid: Identifiant du message.
+        @type  msgid: C{str}
         @param payload: Le message reçu à corréler.
-        @type payload: C{Element}
+        @type  payload: C{Element}
         @return: L'erreur reponsable de l'échec.
         @rtype: C{Failure}
         """
@@ -482,11 +482,11 @@ class RuleDispatcher(MessageHandler):
         Elle se contente d'afficher un message d'erreur.
 
         @param failure: L'erreur responsable de l'échec.
-        @type failure: C{Failure}
-        @param idxmpp: Identifiant du message XMPP.
-        @type idxmpp: C{str}
+        @type  failure: C{Failure}
+        @param msgid: Identifiant du message.
+        @type  msgid: C{str}
         @param payload: Le message reçu à corréler.
-        @type payload: C{Element}
+        @type  payload: C{Element}
         """
         LOGGER.error(_('Unable to store correlated alert for '
                         'message #%(id)s (%(payload)s) : %(error)s'), {

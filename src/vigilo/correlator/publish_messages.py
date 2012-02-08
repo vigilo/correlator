@@ -4,7 +4,7 @@
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
 """
-Fonctions permettant la publication de messages divers sur le bus XMPP.
+Fonctions permettant la publication de messages divers sur le bus.
 """
 
 from time import mktime
@@ -23,7 +23,7 @@ class MessagePublisher(BusPublisher):
 
     def publish_aggregate(self, aggregate_id_list, event_id_list):
         """
-        Publie sur le bus XMPP les agrégats (alertes corrélées) dont
+        Publie sur le bus les agrégats (alertes corrélées) dont
         l'id est passé en paramètre, contenant les événements
         (alertes brutes) dont l'id est également passé en paramètre.
 
@@ -45,7 +45,7 @@ class MessagePublisher(BusPublisher):
 
     def delete_published_aggregates(self, aggregate_id_list):
         """
-        Publie sur le bus XMPP un message signifiant la suppression des
+        Publie sur le bus un message signifiant la suppression des
         agrégats (alertes corrélées) dont l'id est passé en paramètre.
 
         @type aggregate_id_list: Liste de C{int}
@@ -59,7 +59,7 @@ class MessagePublisher(BusPublisher):
 
     def publish_state(self, info_dictionary):
         """
-        Publie sur le bus XMPP un message d'état correspondant
+        Publie sur le bus un message d'état correspondant
         correspondant au infos passées en paramètre.
 
         @param info_dictionary: Dictionnaire contenant les informations

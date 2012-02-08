@@ -30,18 +30,17 @@ class PriorityMaxRule(Rule):
 
     depends = ['PriorityRule']
 
-    def process(self, link, xmpp_id):
+    def process(self, link, msg_id):
         """
         Traitement du message par la règle.
 
         @param link: Objet servant de lien avec le dispatcher et pouvant
-            par exemple être utilisé pour envoyer des messages XML sur
-            le bus XMPP.
+            par exemple être utilisé pour envoyer des messages sur le bus.
         @type link: C{vigilo.correlator.actors.rule_runner.RuleRunner}
-        @param xmpp_id: Identifiant XMPP de l'alerte brute traitée.
-        @type xmpp_id: C{unicode}
+        @param msg_id: Identifiant de l'alerte brute traitée.
+        @type  msg_id: C{unicode}
         """
-        ctx = self._get_context(xmpp_id)
+        ctx = self._get_context(msg_id)
         priority = ctx.get('priority')
         item_id = ctx.get('idsupitem')
 

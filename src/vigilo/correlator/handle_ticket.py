@@ -23,13 +23,13 @@ _ = translate(__name__)
 def handle_ticket(info_dictionary):
     """
     Met à jour l'historique d'un évènement corrélé dans la base de
-    données après la réception d'un message sur le bus XMPP indiquant
+    données après la réception d'un message sur le bus indiquant
     la modification du ticket d'incident qui lui est associé.
 
     @param info_dictionary: Dictionnaire contenant les
     informations extraites du message reçu par le rule dispatcher.
     @type info_dictionary: C{dictionary}
-    
+
     Cette fonction permet de satisfaire l'exigence VIGILO_EXIG_VIGILO_BAC_0120
     """
     LOGGER.debug(_(u'handle_ticket: Trouble ticket message received. '
@@ -39,7 +39,7 @@ def handle_ticket(info_dictionary):
                  {
                     'timestamp': info_dictionary["timestamp"],
                     'hls': info_dictionary["impacted_HLS"],
-                    'ticket_id': info_dictionary["ticket_id"], 
+                    'ticket_id': info_dictionary["ticket_id"],
                     'ack_status': info_dictionary["acknowledgement_status"],
                     'message': info_dictionary["message"],
                  })
@@ -56,8 +56,8 @@ def handle_ticket(info_dictionary):
         # Si aucun évènement n'est trouvé on loggue une erreur.
         LOGGER.error(_(u'handle_ticket: No matching trouble ticket found : %r'),
                        info_dictionary["ticket_id"])
-        return     
-        
+        return
+
     except MultipleResultsFound:
         # Si plusieurs évènements sont trouvés on loggue une erreur.
         LOGGER.error(_(u'handle_ticket: Several events seem to be associated '
@@ -65,17 +65,17 @@ def handle_ticket(info_dictionary):
         return
     LOGGER.debug(_(u'handle_ticket: The event %(event_id)r is '
                    'associated with the given ticket (%(ticket_id)r)'), {
-                        'event_id': correvent.idcorrevent, 
+                        'event_id': correvent.idcorrevent,
                         'ticket_id': info_dictionary["ticket_id"],
                     })
-                 
+
     # Mise à jour de l'historique de l'évènement corrélé :
     history = EventHistory()
     history.type_action = u'Ticket change notification'
     history.idevent = correvent.idcorrevent
     history.value = info_dictionary['ticket_id']
-    history.text = '%r;%r;%r' % (info_dictionary['acknowledgement_status'], 
-                                 info_dictionary['message'], 
+    history.text = '%r;%r;%r' % (info_dictionary['acknowledgement_status'],
+                                 info_dictionary['message'],
                                  info_dictionary['impacted_HLS'])
     history.timestamp = info_dictionary['timestamp']
     history.username = None
@@ -83,11 +83,11 @@ def handle_ticket(info_dictionary):
     try:
         DBSession.add(history)
         DBSession.flush()
-        
+
     except (IntegrityError, InvalidRequestError):
         LOGGER.exception(_(u'handle_ticket: Got exception while updating '
                             'event %r history'), correvent.idcorrevent)
-        
+
     else:
         LOGGER.debug(_(u'handle_ticket: Event %r history updated '
                         'successfully.'), correvent.idcorrevent)

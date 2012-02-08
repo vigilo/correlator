@@ -80,19 +80,18 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
     """
 
 
-    def process(self, link, xmpp_id):
+    def process(self, link, msg_id):
         """
         Traitement du message par la règle.
 
         @param link: Objet servant de lien avec le dispatcher et pouvant
-            par exemple être utilisé pour envoyer des messages XML sur
-            le bus XMPP.
+            par exemple être utilisé pour envoyer des messages sur le bus.
         @type link: C{vigilo.correlator.actors.rule_runner.RuleRunner}
-        @param xmpp_id: Identifiant XMPP de l'alerte brute traitée.
-        @type xmpp_id: C{unicode}
+        @param msg_id: Identifiant de l'alerte brute traitée.
+        @type  msg_id: C{unicode}
         """
 
-        ctx = self._get_context(xmpp_id)
+        ctx = self._get_context(msg_id)
         hostname = ctx.get('hostname')
         servicename = ctx.get('servicename')
 
@@ -109,7 +108,7 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
             return # Pas de changement
 
         if previous_statename == "UP" and statename == "DOWN":
-            link.registerCallback(fn=on_host_down, idnt=xmpp_id)
+            link.registerCallback(fn=on_host_down, idnt=msg_id)
         elif previous_statename == "DOWN" and statename == "UP":
             self._on_host_up(hostname, link)
         else:
@@ -129,4 +128,4 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
             msg = msg_tpl.copy()
             msg["value"] = ("%(host)s;%(svc)s;4;Vigilo;Host came up"
                            % {"host": hostname, "svc": svc.servicename})
-            link.sendItem(item=msg)
+            link.sendItem(msg)

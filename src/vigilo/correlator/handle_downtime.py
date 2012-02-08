@@ -25,7 +25,7 @@ Prend en charge les messages concernant les mises en silence.
 #def handle_downtime(info_dictionary):
 #    """
 #    Met à jour le statut d'une opération de mise en silence dans la base
-#    de données grâce aux informations envoyées par Nagios sur le bus XMPP.
+#    de données grâce aux informations envoyées par Nagios sur le bus.
 #
 #    @param info_dictionary: Dictionnaire contenant les
 #    informations extraites du message reçu par le rule dispatcher.

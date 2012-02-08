@@ -119,7 +119,7 @@ class Executor(object):
         # - le tuple (1) est composé d'un booléen indiquant
         #   si le deferred s'est exécuté (toujours True ici
         #   car fireOnOneCallback vaut 0).
-        # - le tuple (2) contient l'identifiant XMPP de l'événement.
+        # - le tuple (2) contient l'identifiant de l'événement.
         msgid = result[0][1]
 
         d = defer.Deferred()
