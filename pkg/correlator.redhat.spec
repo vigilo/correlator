@@ -23,7 +23,6 @@ BuildRequires:   python26-babel
 Requires:   python26-distribute
 Requires:   vigilo-common
 Requires:   vigilo-connector
-Requires:   vigilo-pubsub
 Requires:   vigilo-models
 Requires:   python26-lxml
 Requires:   python26-memcached

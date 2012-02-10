@@ -4,7 +4,7 @@
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
 """
-Création des événements corrélés dans la BDD et transmission à pubsub.
+Création des événements corrélés dans la BDD et transmission au bus.
 """
 
 from sqlalchemy import not_ , and_
@@ -59,7 +59,7 @@ class CorrEventBuilder(object):
         """
         Récupère dans le contexte les informations transmises par
         les règles, crée les événements corrélés (agrégats
-        d'événements) nécessaires dans la BDD et les transmet à pubsub.
+        d'événements) nécessaires dans la BDD et les transmet au bus.
 
         Permet de satisfaire les exigences suivantes :
             - VIGILO_EXIG_VIGILO_COR_0040,

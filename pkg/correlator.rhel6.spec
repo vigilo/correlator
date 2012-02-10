@@ -17,7 +17,6 @@ BuildRequires:   python-babel
 Requires:   python-distribute
 Requires:   vigilo-common
 Requires:   vigilo-connector
-Requires:   vigilo-pubsub
 Requires:   vigilo-models
 Requires:   python-lxml
 Requires:   python-memcached
