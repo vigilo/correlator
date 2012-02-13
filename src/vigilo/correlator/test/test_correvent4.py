@@ -22,6 +22,7 @@ from vigilo.correlator.test.helpers import ContextStubFactory, \
 
 from vigilo.pubsub.xml import NS_EVENT
 from vigilo.models.session import DBSession
+from vigilo.models.demo import functions
 from vigilo.models import tables
 from vigilo.correlator.correvent import make_correvent
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
@@ -56,16 +57,7 @@ class TestCorrevents4(unittest.TestCase):
         """
         self.hosts = {}
         for i in xrange(1, 4 + 1):
-            self.hosts[i] = tables.Host(
-                name = u'Host %d' % i,
-                snmpcommunity = u'com11',
-                hosttpl = u'tpl11',
-                address = u'192.168.0.11',
-                snmpport = 11,
-                weight = 42,
-            )
-            DBSession.add(self.hosts[i])
-            DBSession.flush()
+            self.hosts[i] = functions.add_host(u'Host %d' % i)
             print "Added %s with ID #%d" % (
                 self.hosts[i].name,
                 self.hosts[i].idhost)
@@ -173,48 +165,19 @@ class TestCorrevents4(unittest.TestCase):
         # Ajout des dépendances topologiques :
         # - Host 2 dépend de Host 1
         # - Host 4 dépend de Host 1
-        # - Host 3 dépend de Host 3
-        dep_group = tables.DependencyGroup(
-            dependent=self.hosts[2],
-            role=u'topology',
-            operator=u'|',
-        )
-        DBSession.add(dep_group)
-        DBSession.add(tables.Dependency(
-            group=dep_group,
-            supitem=self.hosts[1],
-            distance=1,
-        ))
+        # - Host 3 dépend de Host 4
+        dep_group = functions.add_dependency_group(
+                        self.hosts[2], None, u'topology', u'|')
+        functions.add_dependency(dep_group, self.hosts[1], 1)
 
-        dep_group = tables.DependencyGroup(
-            dependent=self.hosts[4],
-            role=u'topology',
-            operator=u'|',
-        )
-        DBSession.add(dep_group)
-        DBSession.add(tables.Dependency(
-            group=dep_group,
-            supitem=self.hosts[1],
-            distance=1,
-        ))
+        dep_group = functions.add_dependency_group(
+                        self.hosts[4], None, u'topology', u'|')
+        functions.add_dependency(dep_group, self.hosts[1], 1)
 
-        dep_group = tables.DependencyGroup(
-            dependent=self.hosts[3],
-            role=u'topology',
-            operator=u'|',
-        )
-        DBSession.add(dep_group)
-        DBSession.add(tables.Dependency(
-            group=dep_group,
-            supitem=self.hosts[4],
-            distance=1,
-        ))
-        DBSession.add(tables.Dependency(
-            group=dep_group,
-            supitem=self.hosts[1],
-            distance=2,
-        ))
-        DBSession.flush()
+        dep_group = functions.add_dependency_group(
+                        self.hosts[3], None, u'topology', u'|')
+        functions.add_dependency(dep_group, self.hosts[4], 1)
+        functions.add_dependency(dep_group, self.hosts[1], 2)
 
         # 1. Un 1er agrégat doit avoir été créé.
         res, idcorrevent1 = yield self.handle_alert(self.hosts[2], 'UNREACHABLE')
@@ -380,27 +343,16 @@ class TestCorrevents4(unittest.TestCase):
         au sens de la topologie devient indisponible, l'événement brut sur
         ce 3ème hôte doit être agrégé dans les agrégats des 2 premiers.
 
-        Lorsque le 1er hôte redevient opérationnel,
+        Lorsque le 1er hôte remonte, un agrégat séparé doit être créé pour
+        sa dépendance. L'agrégat n'est pas affecté lorsque le 2nd hôte
+        redevient opérationnel. On finit donc avec 3 agrégats actifs.
         """
         # Ajout des dépendances topologiques :
         # - Host 3 dépend de Host 1 et Host 2 (triangle).
-        dep_group = tables.DependencyGroup(
-            dependent=self.hosts[3],
-            role=u'topology',
-            operator=u'|',
-        )
-        DBSession.add(dep_group)
-        DBSession.add(tables.Dependency(
-            group=dep_group,
-            supitem=self.hosts[1],
-            distance=1,
-        ))
-        DBSession.add(tables.Dependency(
-            group=dep_group,
-            supitem=self.hosts[2],
-            distance=1,
-        ))
-        DBSession.flush()
+        dep_group = functions.add_dependency_group(
+                        self.hosts[3], None, u'topology', u'|')
+        functions.add_dependency(dep_group, self.hosts[1], 1)
+        functions.add_dependency(dep_group, self.hosts[2], 2)
 
         # Simule la chute des hôtes "Host 1" et "Host 2", puis l'indisponibilité
         # de l'hôte "Host 3" qui dépend des 2 autres topologiquement.
