@@ -26,7 +26,6 @@ Le corrélateur VigiRules a besoin des modules Python suivants :
 - vigilo-common
 - vigilo-connector
 - vigilo-models
-- lxml
 - memcached
 - networkx
 

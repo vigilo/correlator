@@ -24,7 +24,6 @@ Requires:   python26-distribute
 Requires:   vigilo-common
 Requires:   vigilo-connector
 Requires:   vigilo-models
-Requires:   python26-lxml
 Requires:   python26-memcached
 Requires:   python26-twisted-words
 

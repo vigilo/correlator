@@ -13,7 +13,6 @@ import unittest
 
 from nose.twistedtools import reactor, deferred
 from twisted.internet import defer
-from lxml import etree
 
 from mock import Mock
 from vigilo.correlator.test import helpers

@@ -18,7 +18,6 @@ Requires:   python >= 2.5
 Requires:   python-setuptools
 Requires:   vigilo-connector
 Requires:   vigilo-models
-Requires:   python-lxml
 Requires:   python-memcached
 ######### Dependance from python dependance tree ########
 Requires:   python-OpenSSL

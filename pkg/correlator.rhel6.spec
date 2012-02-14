@@ -18,7 +18,6 @@ Requires:   python-distribute
 Requires:   vigilo-common
 Requires:   vigilo-connector
 Requires:   vigilo-models
-Requires:   python-lxml
 Requires:   python-memcached
 Requires:   python-twisted-words
 

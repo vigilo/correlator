@@ -44,7 +44,6 @@ setup(name='vigilo-correlator',
         zip_safe=False, # pour pouvoir écrire le dropin.cache de twisted
         install_requires=[
             'setuptools',
-            'lxml',
             'python-memcached',
             'vigilo-models',
             'vigilo-connector',
