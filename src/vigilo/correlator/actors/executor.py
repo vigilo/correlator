@@ -31,9 +31,9 @@ class Executor(object):
     moyennes d'exécution donnant lieu à de la métrologie.
 
     @ivar _stats: statistiques d'exécution, au format ci-dessus
-    @ivar _stats: C{dict}
+    @type _stats: C{dict}
     @ivar _stats_tmp: stockage temporaire des timestamps d'exécution
-    @ivar _stats_tmp: C{dict}
+    @type _stats_tmp: C{dict}
     """
 
     def __init__(self, dispatcher):

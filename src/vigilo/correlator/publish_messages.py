@@ -27,13 +27,11 @@ class MessagePublisher(BusPublisher):
         l'id est passé en paramètre, contenant les événements
         (alertes brutes) dont l'id est également passé en paramètre.
 
-        @param self.rule_dispatcher: File sur laquelle sont
-            envoyés les messages à publier sur le bus
         @param aggregate_id_list: Liste des ids des agrégats à publier.
-        @type aggregate_id_list: Liste de C{int}
-        @param event_id_list: Liste des événements
-        faisant partie des agrégats à publier.
-        @type event_id_list: Liste de C{int}
+        @type  aggregate_id_list: Liste de C{int}
+        @param event_id_list: Liste des événements faisant partie des agrégats
+            à publier.
+        @type  event_id_list: Liste de C{int}
         """
         # Création du message à publier sur le bus
         msg = { "type": "aggr",

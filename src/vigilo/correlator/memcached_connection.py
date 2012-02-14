@@ -55,7 +55,7 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
         Cette méthode déclenche l'exécution des C{Deferred} qui
         dépendent du protocole.
 
-        @type: Instance (initialisée) du protocole.
+        @param protocol: Instance (initialisée) du protocole.
         @rtype: L{VigiloMemCacheProtocol}
         """
         self.resetDelay()

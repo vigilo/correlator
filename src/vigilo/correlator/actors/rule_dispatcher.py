@@ -403,12 +403,9 @@ class RuleDispatcher(MessageHandler):
         Traite le résultat de l'exécution de TOUTES les règles
         de corrélation.
 
-        @param result: Résultat de la corrélation (transmis
-            automatiquement par Twisted, vaut toujours None
-            chez nous).
-        @type result: C{None}
-        @param xml: Message XML sérialisé traité par la corrélation.
-        @type xml: C{unicode}
+        @param result: Résultat de la corrélation (transmis automatiquement par
+            Twisted, vaut toujours None chez nous).
+        @type  result: C{None}
         @param info_dictionary: Informations extraites du message XML.
         @param info_dictionary: C{dict}
         """
@@ -459,10 +456,8 @@ class RuleDispatcher(MessageHandler):
 
         @param failure: L'erreur responsable de l'échec.
         @type  failure: C{Failure}
-        @param msgid: Identifiant du message.
-        @type  msgid: C{str}
-        @param payload: Le message reçu à corréler.
-        @type  payload: C{Element}
+        @param msg: Message concerné.
+        @type  msg: C{dict}
         @return: L'erreur reponsable de l'échec.
         @rtype: C{Failure}
         """
@@ -483,10 +478,8 @@ class RuleDispatcher(MessageHandler):
 
         @param failure: L'erreur responsable de l'échec.
         @type  failure: C{Failure}
-        @param msgid: Identifiant du message.
-        @type  msgid: C{str}
-        @param payload: Le message reçu à corréler.
-        @type  payload: C{Element}
+        @param msg: Message concerné.
+        @type  msg: C{dict}
         """
         LOGGER.error(_('Unable to store correlated alert for '
                         'message #%(id)s (%(payload)s) : %(error)s'), {
@@ -501,22 +494,20 @@ class RuleDispatcher(MessageHandler):
         Encapsule une opération nécessitant d'accéder à la base de données
         dans une transaction.
 
+        En cas d'erreur, le message XML est réinséré dans la file d'attente du
+        corrélateur pour pouvoir être à nouveau traité ultérieurement.
+
         @param error_desc: Un message d'erreur décrivant la nature de
             l'opération et qui sera affiché si l'opération échoue.
-        @type error_desc: C{unicode}
-        @param xml: Le message XML sérialisé en cours de traitement.
-        @type xml: C{unicode}
+        @type  error_desc: C{unicode}
         @param ex: Le type d'exceptions à capturer. Il peut également s'agir
             d'une liste de types d'exceptions.
-        @type ex: C{Exception} or C{list} of C{Exception}
+        @type  ex: C{Exception} or C{list} of C{Exception}
         @param func: La fonction à appeler pour exécuter l'opération.
-        @type func: C{callable}
+        @type  func: C{callable}
         @note: Des paramètres additionnels (nommés ou non) peuvent être
             passés à cette fonction. Ils seront transmis tel quel à C{func}
             lors de son appel.
-        @post: En cas d'erreur, le message XML est réinséré dans la file
-            d'attente du corrélateur pour pouvoir être à nouveau traité
-            ultérieurement.
         """
         if not isinstance(ex, list):
             ex = [ex]
