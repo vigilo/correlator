@@ -93,17 +93,14 @@ def insert_event(info_dictionary):
 
                     # Soit l'événement corrélé auquel
                     # il est rattaché est toujours ouvert.
-                    and_(
-                        not_(
-                            and_(
-                                cause_event.current_state.in_([
-                                    StateName.statename_to_value(u'OK'),
-                                    StateName.statename_to_value(u'UP')
-                                ]),
-                                CorrEvent.ack == CorrEvent.ACK_CLOSED
-                            )
-                        ),
-                        CorrEvent.timestamp_active != None
+                    not_(
+                        and_(
+                            cause_event.current_state.in_([
+                                StateName.statename_to_value(u'OK'),
+                                StateName.statename_to_value(u'UP')
+                            ]),
+                            CorrEvent.ack == CorrEvent.ACK_CLOSED
+                        )
                     )
                 )
             ).order_by(order_clause.desc()

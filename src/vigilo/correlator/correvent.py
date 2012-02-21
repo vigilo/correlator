@@ -116,7 +116,6 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                 Event.current_state.in_([state_ok, state_up]),
                 CorrEvent.ack == CorrEvent.ACK_CLOSED
             ))
-        ).filter(CorrEvent.timestamp_active != None
         ).scalar,
         transaction=False
     )

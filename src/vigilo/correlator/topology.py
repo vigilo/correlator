@@ -193,7 +193,6 @@ def get_open_aggregate(ctx, database, item_id):
                     Event.current_state.in_([state_ok, state_up]),
                     CorrEvent.ack == CorrEvent.ACK_CLOSED
                 ))
-            ).filter(CorrEvent.timestamp_active != None
             ).filter(Event.idsupitem == item_id
             ).scalar)
 

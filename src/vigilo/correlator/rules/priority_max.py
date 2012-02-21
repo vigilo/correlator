@@ -54,11 +54,11 @@ class PriorityMaxRule(Rule):
                 (Event, CorrEvent.idcause == Event.idevent),
                 (SupItem, SupItem.idsupitem == Event.idsupitem),
             ).filter(SupItem.idsupitem == item_id
-            ).filter(not_(and_(
-                Event.current_state.in_([state_ok, state_up]),
-                CorrEvent.ack == CorrEvent.ACK_CLOSED
-            ))
-            ).filter(CorrEvent.timestamp_active != None
+            ).filter(
+                not_(and_(
+                    Event.current_state.in_([state_ok, state_up]),
+                    CorrEvent.ack == CorrEvent.ACK_CLOSED
+                ))
             ).scalar)
 
         if curr_priority is None:
