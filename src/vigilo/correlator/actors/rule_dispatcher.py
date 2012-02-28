@@ -25,7 +25,7 @@ from lxml import etree
 
 from vigilo.common.conf import settings
 
-from vigilo.common.logging import get_logger
+from vigilo.common.logging import get_logger, get_error_message
 from vigilo.common.gettext import translate
 
 from vigilo.connector.forwarder import PubSubSender
@@ -140,7 +140,7 @@ class RuleDispatcher(PubSubSender):
             ne peut être établie.
             """
             LOGGER.error(_("Unable to contact the database: %s"),
-                failure.getErrorMessage())
+                get_error_message(failure.getErrorMessage()))
             try:
                 reactor.stop()
             except error.ReactorNotRunning:
@@ -190,7 +190,8 @@ class RuleDispatcher(PubSubSender):
 
     def _processException(self, failure):
         if not failure.check(KeyboardInterrupt):
-            LOGGER.error(_('Unexpected error: %s'), failure.getErrorMessage())
+            LOGGER.error(_('Unexpected error: %s'),
+                get_error_message(failure.getErrorMessage()))
         return failure
 
     def processMessage(self, xml):
