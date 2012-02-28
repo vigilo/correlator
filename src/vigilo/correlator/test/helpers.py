@@ -71,11 +71,8 @@ def setup_mc():
     env["PATH"] += ":/usr/sbin" # Sur mandriva, memcached est dans /usr/sbin
     memcached_bin = None
     LOGGER.info("Configuring memcached to run on port %d", port)
-    mc_pid = subprocess.Popen([settings['correlator']["memcached_command"],
-                               "-l", "127.0.0.1",
-                               "-p", str(port)],
-                               env=env,
-                               close_fds=True).pid
+    mc_pid = subprocess.Popen(["memcached", "-l", "127.0.0.1", "-p", str(port)],
+                               env=env, close_fds=True).pid
     # Give it time to start up properly. I should try a client connection in a
     # while loop. Oh well...
     MemcachedConnection.reset()
