@@ -150,4 +150,4 @@ class TestSvcHostDownRule(unittest.TestCase):
             call = rule_dispatcher.method_calls[i]
             print servicename, call
             self.assertEqual(call[0], "sendItem")
-            self.assertEqual(call[2]["item"]["value"].count(servicename), 1)
+            self.assertEqual(call[1][0]["value"].count(servicename), 1)
