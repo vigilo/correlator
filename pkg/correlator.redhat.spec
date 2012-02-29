@@ -25,7 +25,6 @@ Requires:   vigilo-common
 Requires:   vigilo-connector
 Requires:   vigilo-models
 Requires:   python26-memcached
-Requires:   python26-twisted-words
 
 # Init
 Requires(pre): shadow-utils
