@@ -1,3 +1,6 @@
+[include]
+include = @SYSCONFDIR@/vigilo/correlator/conf.d/
+
 [bus]
 # Nom ou adresse IP du serveur XMPP à utiliser.
 host = localhost
@@ -112,10 +115,6 @@ rule_runners_max_idle = 20
 [rules]
 # Règles de corrélation actives.
 svc_on_host_down = vigilo.correlator.rules.svc_on_host_down:SvcHostDown
-hls_deps = vigilo.correlator_enterprise.rules.hls_deps:HighLevelServiceDepsRule
-lls_deps = vigilo.correlator_enterprise.rules.lls_deps:LowLevelServiceDepsRule
-occ_count = vigilo.correlator_enterprise.rules.update_occurrences_count:UpdateOccurrencesCountRule
-priority = vigilo.correlator_enterprise.rules.priority:PriorityRule
 
 [publications]
 # Indique le nœud cible du message en fonction du type.

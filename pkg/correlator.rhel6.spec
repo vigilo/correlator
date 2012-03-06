@@ -83,6 +83,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(744,root,root) %{_initrddir}/%{name}
 %dir %{_sysconfdir}/vigilo/
 %dir %{_sysconfdir}/vigilo/%{module}
+%dir %{_sysconfdir}/vigilo/%{module}/conf.d
 %attr(640,root,%{name}) %config(noreplace) %{_sysconfdir}/vigilo/%{module}/settings.ini
 %dir %{_sysconfdir}/vigilo/%{module}/plugins
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
