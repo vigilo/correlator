@@ -83,7 +83,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %doc COPYING.txt README.txt
 %attr(755,root,root) %{_bindir}/%{name}
-%attr(744,root,root) %{_initrddir}/%{name}
+%attr(755,root,root) %{_initrddir}/%{name}
 %dir %{_sysconfdir}/vigilo/
 %dir %{_sysconfdir}/vigilo/%{module}
 %dir %{_sysconfdir}/vigilo/%{module}/conf.d
