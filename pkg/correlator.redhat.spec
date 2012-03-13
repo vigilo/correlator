@@ -100,5 +100,5 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon Feb 08 2010 Aurelien Bompard <aurelien.bompard@c-s.fr> - 1.0-1
+* Mon Feb 08 2010 Aurelien Bompard <aurelien.bompard@c-s.fr>
 - initial package
