@@ -12,6 +12,7 @@
 # Required-Stop: $network $syslog
 # Should-Stop: $named
 # Default-Start: 3 4 5
+# Default-Stop: 0 1 6
 # Short-Description: Vigilo correlator
 # Description: Vigilo event correlator
 ### END INIT INFO
