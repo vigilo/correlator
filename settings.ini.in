@@ -114,6 +114,9 @@ svc_on_host_down = vigilo.correlator.rules.svc_on_host_down:SvcHostDown
 # Types de messages et le nom de l'exchange à utiliser pour leur publication.
 # Par défaut, un exchange du même nom que le type est utilisé.
 event = correlation
+aggr = correlation
+delaggr = correlation
+correvent = correlation
 
 
 # -------
