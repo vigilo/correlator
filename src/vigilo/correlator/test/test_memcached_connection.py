@@ -7,7 +7,7 @@
 
 import unittest
 from nose.twistedtools import reactor, deferred
-from twisted.internet import defer, reactor, protocol
+from twisted.internet import defer, reactor, protocol, error
 from twisted.protocols.memcache import MemCacheProtocol
 
 try:
@@ -154,13 +154,15 @@ class TestMemcachedConnection(unittest.TestCase):
         # Ce deferred va émettre une exception car la connexion
         # a été perdue entre temps et car le deferred avait été
         # créé AVANT que la perte de connexion ne soit détectée.
+        # Avant Twisted 9.0, l'exception est une defer.TimoutError,
+        # ensuite il s'agit d'une error.ConnectionDone
         try:
             yield self.cache.get("test")
-            self.fail("A TimeoutError exception was expected")
-        except (defer.TimeoutError, KeyboardInterrupt):
+            self.fail("A TimeoutError exception was expected, got nothing.")
+        except (defer.TimeoutError, error.ConnectionDone, KeyboardInterrupt):
             pass
-        except:
-            self.fail("A TimeoutError exception was expected")
+        except Exception, e:
+            self.fail("A TimeoutError exception was expected, got %r" % e)
 
         # Ce get() fonctionnera car la connexion a été rétablie
         # entre temps (reconnexion automatique).

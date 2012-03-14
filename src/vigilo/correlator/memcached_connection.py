@@ -114,7 +114,10 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
         @rtype: L{VigiloMemCacheProtocol}
         """
         if self._instance is not None:
-            return defer.succeed(self._instance)
+            # Si on est en Twisted >= 9.0, il faut en plus vérifier que le
+            # protocole n'est pas déconnecté
+            if not getattr(self._instance, "_disconnected", True):
+                return defer.succeed(self._instance)
         d = defer.Deferred()
         self._waiting.append(d)
         return d

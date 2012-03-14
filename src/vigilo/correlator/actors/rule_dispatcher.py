@@ -200,7 +200,7 @@ class RuleDispatcher(MessageHandler):
         rule = registry.get_registry().rules.lookup('HighLevelServiceDepsRule')
 
         def eb(failure):
-            if failure.check(defer.TimeoutError):
+            if failure.check(defer.TimeoutError, error.ConnectionDone):
                 LOGGER.info(_("The connection to memcached timed out. "
                                 "The message will be handled once more."))
                 return failure # Provoque le retraitement du message.
@@ -281,7 +281,7 @@ class RuleDispatcher(MessageHandler):
         def prepare_ctx(res, ctx_name, value):
             return ctx.set(ctx_name, value)
         def eb(failure):
-            if failure.check(defer.TimeoutError):
+            if failure.check(defer.TimeoutError, error.ConnectionDone):
                 LOGGER.info(_("The connection to memcached timed out. "
                                 "The message will be handled once more."))
                 return failure # Provoque le retraitement du message.
