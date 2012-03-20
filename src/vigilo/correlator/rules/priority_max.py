@@ -60,7 +60,7 @@ class PriorityMaxRule(Rule):
                 ))
             ).scalar)
 
-        if curr_priority is None:
+        if curr_priority is None or priority is None:
             return
 
         if settings['correlator']['priority_order'] == 'asc':
