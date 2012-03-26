@@ -116,7 +116,8 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
         if self._instance is not None:
             # Si on est en Twisted >= 9.0, il faut en plus vérifier que le
             # protocole n'est pas déconnecté
-            if not getattr(self._instance, "_disconnected", True):
+            if not (hasattr(self._instance, "_disconnected")
+                    and self._instance._disconnected):
                 return defer.succeed(self._instance)
         d = defer.Deferred()
         self._waiting.append(d)
