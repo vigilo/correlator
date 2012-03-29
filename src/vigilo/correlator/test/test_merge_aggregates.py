@@ -7,11 +7,11 @@
 Test de la fonction merge_aggregates.
 """
 
-from datetime import datetime
 import unittest
-# ATTENTION: ne pas utiliser twisted.trial, car nose va ignorer les erreurs
-# produites par ce module !!!
-from nose.twistedtools import reactor, deferred
+
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
 from twisted.internet import defer
 
 from vigilo.correlator.db_insertion import merge_aggregates
@@ -20,8 +20,7 @@ from vigilo.correlator.test import helpers
 
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
-from vigilo.models.tables import Event, CorrEvent
-from vigilo.models.tables import LowLevelService, Host, StateName
+from vigilo.models.tables import CorrEvent
 
 def create_topology_and_events():
     """

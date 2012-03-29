@@ -6,8 +6,11 @@
 """Suite de tests pour la classe 'MemcachedConnection"""
 
 import unittest
-from nose.twistedtools import reactor, deferred
-from twisted.internet import defer, reactor, protocol, error
+
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
+from twisted.internet import defer, protocol, error
 from twisted.protocols.memcache import MemCacheProtocol
 
 try:
@@ -15,7 +18,7 @@ try:
 except ImportError:
     import pickle
 
-import helpers
+from vigilo.correlator.test import helpers
 from vigilo.correlator.memcached_connection import MemcachedConnection
 
 from vigilo.common.logging import get_logger

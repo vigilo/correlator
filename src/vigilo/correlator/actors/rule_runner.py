@@ -16,6 +16,7 @@ from vigilo.correlator.rule import ThreadWrapper
 
 _ = translate(__name__)
 
+
 class RuleRunner(object):
     def __init__(self, dispatcher, rule_name, rule_obj):
         self._name = rule_name

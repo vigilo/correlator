@@ -2,6 +2,9 @@
 # Copyright (C) 2006-2011 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
+# pylint: disable-msg=W0603
+# W0603: Using the global statement
+
 """
 Classes et fonctions pour aider aux tests unitaires
 """
@@ -13,7 +16,7 @@ import time
 import socket
 import nose
 
-from twisted.internet import defer, reactor
+from twisted.internet import defer
 from mock import Mock
 
 from vigilo.common.conf import settings
@@ -29,7 +32,6 @@ from vigilo.correlator.context import Context
 from vigilo.correlator.memcached_connection import MemcachedConnection
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.correlator.actors.rule_dispatcher import RuleDispatcher
-from vigilo.correlator.actors.executor import Executor
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
@@ -69,7 +71,6 @@ def setup_mc():
     settings['correlator']['memcached_port'] = port
     env = os.environ.copy()
     env["PATH"] += ":/usr/sbin" # Sur mandriva, memcached est dans /usr/sbin
-    memcached_bin = None
     LOGGER.info("Configuring memcached to run on port %d", port)
     mc_pid = subprocess.Popen(["memcached", "-l", "127.0.0.1", "-p", str(port)],
                                env=env, close_fds=True).pid
@@ -129,32 +130,38 @@ class ConnectionStub(object):
         super(ConnectionStub, self).__init__(*args, **kwargs)
 
     def get(self, key, transaction=True):
-        # pylint: disable-msg=E0202
-        # An attribute inherited from TestApiFunctions hide this method (Mock)
+        # pylint: disable-msg=E0202,W0613
+        # E0202: An attribute inherited from TestApiFunctions hide this method (Mock)
+        # W0613: Unused argument 'transaction'
         print "GETTING: %r = %r" % (key, self.data.get(key))
         value = self.data.get(key)
         return self._must_defer and defer.succeed(value) or value
 
     def set(self, key, value, transaction=True, **kwargs):
+        # pylint: disable-msg=W0613
+        # W0613: Unused argument 'transaction' and 'kwargs'
         print "SETTING: %r = %r" % (key, value)
         self.data[key] = value
         if self._must_defer:
             return defer.succeed(None)
 
     def delete(self, key, transaction=True):
-        # pylint: disable-msg=E0202
-        # An attribute inherited from TestApiFunctions hide this method (Mock)
+        # pylint: disable-msg=E0202,W0613
+        # E0202: An attribute inherited from TestApiFunctions hide this method (Mock)
+        # W0613: Unused argument 'transaction'
         print "DELETING: %r = %r" % (key, self.data[key])
         del self.data[key]
         if self._must_defer:
             return defer.succeed(None)
 
     def topology(self):
-        topology = self.get('vigilo:topology')
+        return self.get('vigilo:topology')
 
 
 class ContextStub(Context):
     def __init__(self, msgid, timeout=None, must_defer=True):
+        # pylint: disable-msg=W0231
+        # W0231: __init__ method from base class is not called
         self._connection = ConnectionStub(must_defer=must_defer)
         self._id = str(msgid)
         if timeout is None:
@@ -169,6 +176,8 @@ class ContextStubFactory(object):
         self.contexts = {}
 
     def __call__(self, msgid, database=None, timeout=None, *args, **kwargs):
+        # pylint: disable-msg=W0613
+        # W0613: Unused argument
         if msgid not in self.contexts:
             print "CREATING CONTEXT FOR", msgid
             must_defer = kwargs.pop('must_defer', True)
@@ -204,6 +213,8 @@ class RuleDispatcherStub(RuleDispatcher):
         self.buffer = []
 
     def registerCallback(self, fn, *args, **kwargs):
+        # pylint: disable-msg=W0221
+        # W0221: Arguments number differs from overridden method
         pass
 
     def doWork(self, f, *args, **kwargs):

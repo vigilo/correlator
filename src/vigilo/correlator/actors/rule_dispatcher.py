@@ -29,7 +29,6 @@ from twisted.python import threadpool
 from vigilo.common.logging import get_logger, get_error_message
 from vigilo.common.gettext import translate
 
-from vigilo.models.session import DBSession
 from vigilo.models.tables import SupItem, Version
 
 from vigilo.connector.options import parseSubscriptions
@@ -278,7 +277,7 @@ class RuleDispatcher(MessageHandler):
 
         d = defer.Deferred()
 
-        def prepare_ctx(res, ctx_name, value):
+        def prepare_ctx(_res, ctx_name, value):
             return ctx.set(ctx_name, value)
         def eb(failure):
             if failure.check(defer.TimeoutError, error.ConnectionDone):
@@ -302,7 +301,7 @@ class RuleDispatcher(MessageHandler):
         return d
 
 
-    def _insert_state(self, result, info_dictionary):
+    def _insert_state(self, _result, info_dictionary):
         LOGGER.debug(_('Inserting state'))
         d = self._do_in_transaction(
             _("Error while saving state"),
@@ -360,11 +359,11 @@ class RuleDispatcher(MessageHandler):
         LOGGER.debug(_('Actual correlation'))
 
         d = defer.Deferred()
-        d.addCallback(lambda result: ctx.set('payload', info_dictionary))
-        d.addCallback(lambda result: ctx.set('previous_state', previous_state))
+        d.addCallback(lambda _result: ctx.set('payload', info_dictionary))
+        d.addCallback(lambda _result: ctx.set('previous_state', previous_state))
 
         if raw_event_id:
-            d.addCallback(lambda result: ctx.set('raw_event_id', raw_event_id))
+            d.addCallback(lambda _result: ctx.set('raw_event_id', raw_event_id))
 
         def start_correl(_ignored, defs):
             tree_start, self.tree_end = defs
@@ -398,14 +397,14 @@ class RuleDispatcher(MessageHandler):
         return d
 
 
-    def _send_result(self, result, info_dictionary):
+    def _send_result(self, _result, info_dictionary):
         """
         Traite le résultat de l'exécution de TOUTES les règles
         de corrélation.
 
-        @param result: Résultat de la corrélation (transmis automatiquement par
+        @param _result: Résultat de la corrélation (transmis automatiquement par
             Twisted, vaut toujours None chez nous).
-        @type  result: C{None}
+        @type  _result: C{None}
         @param info_dictionary: Informations extraites du message XML.
         @param info_dictionary: C{dict}
         """
@@ -423,7 +422,7 @@ class RuleDispatcher(MessageHandler):
             d.callback(None)
             return d
 
-        def cb(result, *args, **kwargs):
+        def cb(_result, *args, **kwargs):
             assert self.correvent_builder is not None
             return self.correvent_builder.make_correvent(*args, **kwargs)
         def eb(failure):

@@ -10,13 +10,11 @@ import time
 
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                     OldStateReceived, NoProblemException
-from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.correlator.test import helpers
 
 from vigilo.models.demo import functions
 from vigilo.models.tables import State, StateName, Event, SupItem, \
-                            LowLevelService, HighLevelService, Host, \
-                            CorrEvent
+                            LowLevelService, Host
 from vigilo.models.session import DBSession
 
 
@@ -174,82 +172,6 @@ class TestDbInsertion(unittest.TestCase):
             StateName.value_to_statename(state.state))
         self.assertEquals('DOWN: No ping response', state.message)
 
-
-#    def test_history_on_modification(self):
-#        """
-#        Teste si une entrée est correctement ajoutée à
-#        l'historique lorsqu'un évènement est modifié.
-#        """
-#        xml = """
-#<correvent xmlns="http://www.projet-vigilo.org/messages">
-#    <timestamp>1239104006</timestamp>
-#    <host>server.example.com</host>
-#    <ip>192.168.1.2</ip>
-#    <service>Load</service>
-#    <state>WARNING</state>
-#    <message>WARNING: Load average is above 4 (5.2)</message>
-#    <impact count="130">
-#        <host>server2.example.com</host>
-#        <host>server3.example.com</host>
-#    </impact>
-#    <highlevel>
-#        <service>WAN</service>
-#        <service>LAN</service>
-#    </highlevel>
-#    <priority>5</priority>
-#</correvent>"""
-#        nodetodbfw.handleCorrEvent(parseXml(xml), u"bar")
-
-#        # Modification de l'état (state).
-#        xml = """
-#<correvent update="bar" xmlns="http://www.projet-vigilo.org/messages">
-#    <timestamp>1239104008</timestamp>
-#    <host>server.example.com</host>
-#    <ip>192.168.1.2</ip>
-#    <service>Load</service>
-#    <state>OK</state>
-#    <message>RECOVERY: Load average is below 4 (3.2)</message>
-#    <impact count="130">
-#        <host>server2.example.com</host>
-#        <host>server3.example.com</host>
-#    </impact>
-#    <highlevel>
-#        <service>WAN</service>
-#        <service>LAN</service>
-#    </highlevel>
-#</correvent>"""
-#        nodetodbfw.handleCorrEvent(parseXml(xml), u"bar")
-
-#        history = DBSession.query(EventHistory).all()
-#        self.assertEquals(1, len(history),
-#            "Expected 1 entry in history, got %d" % len(history))
-
-#        # Modification de l'état et de la gravité (state & priority).
-#        # On doit prendre en compte l'entrée déjà ajoutée auparavant.
-#        xml = """
-#<correvent update="bar" xmlns="http://www.projet-vigilo.org/messages">
-#    <timestamp>1239104010</timestamp>
-#    <host>server.example.com</host>
-#    <ip>192.168.1.2</ip>
-#    <service>Load</service>
-#    <state>CRITICAL</state>
-#    <message>CRITICAL: Load average is above 5 (5.2)</message>
-#    <impact count="130">
-#        <host>server2.example.com</host>
-#        <host>server3.example.com</host>
-#    </impact>
-#    <highlevel>
-#        <service>WAN</service>
-#        <service>LAN</service>
-#        <service>SMTP</service>
-#    </highlevel>
-#    <priority>7</priority>
-#</correvent>"""
-#        nodetodbfw.handle_correlated_event(parseXml(xml), u"bar")
-
-#        history = DBSession.query(EventHistory).all()
-#        self.assertEquals(3, len(history),
-#            "Expected 3 entries in history, got %d" % len(history))
 
 
     def test_insert_old_state(self):

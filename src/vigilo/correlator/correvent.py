@@ -10,7 +10,6 @@ Création des événements corrélés dans la BDD et transmission au bus.
 from sqlalchemy import not_ , and_
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import aliased
-from sqlalchemy.sql import functions
 import logging
 
 from twisted.internet import defer
@@ -192,7 +191,7 @@ class CorrEventBuilder(object):
                 # Pour chaque agrégat dont l'alerte dépend,
                 for predecessing_aggregate_id in predecessing_aggregates_id:
                     try:
-                        predecessing_aggregate = yield self.database.run(
+                        yield self.database.run(
                             DBSession.query(CorrEvent).filter(
                                 CorrEvent.idcorrevent ==
                                     int(predecessing_aggregate_id)

@@ -7,10 +7,6 @@ Context objects.
 """
 __all__ = ( 'Context', )
 
-from datetime import datetime
-
-from twisted.internet import defer
-
 from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate

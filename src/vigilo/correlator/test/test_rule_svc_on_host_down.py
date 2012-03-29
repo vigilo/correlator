@@ -10,7 +10,9 @@ Teste la règle de gestion des services sur un hôte DOWN
 from datetime import datetime
 import unittest
 
-from nose.twistedtools import reactor, deferred
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
 from twisted.internet import defer
 from mock import Mock
 

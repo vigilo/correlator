@@ -13,7 +13,8 @@ import time
 from datetime import datetime
 import unittest
 
-from nose.twistedtools import reactor, deferred
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
 from twisted.internet import defer
 
 from mock import Mock
@@ -41,6 +42,7 @@ class TestCorrevents3(unittest.TestCase):
         self.context_factory = helpers.ContextStubFactory()
         self.corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
         self.corrbuilder.context_factory = self.context_factory
+        self.host = None
         return defer.succeed(None)
 
     @deferred(timeout=30)

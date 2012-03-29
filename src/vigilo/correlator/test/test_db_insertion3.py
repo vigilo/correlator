@@ -9,8 +9,7 @@ import unittest
 import time
 
 from vigilo.correlator.db_insertion import insert_event
-from vigilo.correlator.db_thread import DummyDatabaseWrapper
-import helpers
+from vigilo.correlator.test import helpers
 
 from vigilo.models.tables import StateName, Event, SupItem, Host, CorrEvent
 from vigilo.models.session import DBSession

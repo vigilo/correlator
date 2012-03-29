@@ -1,13 +1,20 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
-# pylint: disable-msg=C0111,W0212,R0904
 # Copyright (C) 2006-2011 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
+
+# pylint: disable-msg=C0111,W0212,R0904,W0201
+# - C0111: Missing docstring
+# - W0212: Access to a protected member of a client class
+# - R0904: Too many public methods
+# - W0201: Attribute defined outside __init__
 
 import time
 from datetime import datetime
 import unittest
 
-from nose.twistedtools import reactor, deferred
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
 from twisted.internet import defer
 
 from mock import Mock

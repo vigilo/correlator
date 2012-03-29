@@ -13,10 +13,8 @@ from time import mktime
 
 from vigilo.correlator.publish_messages import MessagePublisher
 
-from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
-from vigilo.models.tables import Host, HighLevelService, LowLevelService
-from vigilo.models.tables import State, StateName
+from vigilo.models.tables import StateName
 
 from mock import Mock
 

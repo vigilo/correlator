@@ -39,6 +39,8 @@ _ = translate(__name__)
 
 @defer.inlineCallbacks
 def on_host_down(result, forwarder, database, idnt, ctx=None):
+    # pylint: disable-msg=W0613
+    # W0613: Unused arguments 'forwarder', 'result'
     if ctx is None: # pour les tests unitaires
         ctx = Context(idnt)
     hostname = yield ctx.get("hostname")

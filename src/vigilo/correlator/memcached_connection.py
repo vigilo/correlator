@@ -41,6 +41,9 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
     Factory pour le protocole memcached supportant les reconnexions
     automatiques.
     """
+    # pylint: disable-msg=W0232
+    # W0232: Class has no __init__ method
+
     maxDelay = 10
     _waiting = []
     _instance = None
@@ -49,22 +52,22 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
     # trop rapidement (ce qui arrive avec la valeur par défaut).
     factor = 1.6180339887498948
 
-    def clientConnectionMade(self, protocol):
+    def clientConnectionMade(self, proto):
         """
         Méthode appelée lorsque le protocole sous-jacent est prêt.
         Cette méthode déclenche l'exécution des C{Deferred} qui
         dépendent du protocole.
 
-        @param protocol: Instance (initialisée) du protocole.
+        @param proto: Instance (initialisée) du protocole.
         @rtype: L{VigiloMemCacheProtocol}
         """
         self.resetDelay()
         LOGGER.info(_("Connected to memcached (%s)"),
-            protocol.transport.getPeer())
-        self._instance = protocol
+            proto.transport.getPeer())
+        self._instance = proto
         for d in self._waiting:
             try:
-                d.callback(protocol)
+                d.callback(proto)
             except defer.AlreadyCalledError:
                 # @FIXME: est-ce qu'on devrait vraiment ignorer l'erreur ?
                 # Pour le moment je n'ai eu cette erreur que dans les tests.
@@ -116,6 +119,8 @@ class MemcachedClientFactory(protocol.ReconnectingClientFactory):
         if self._instance is not None:
             # Si on est en Twisted >= 9.0, il faut en plus vérifier que le
             # protocole n'est pas déconnecté
+            # pylint: disable-msg=W0212
+            # W0212: Access to a protected member _disconnected of a client class
             if not (hasattr(self._instance, "_disconnected")
                     and self._instance._disconnected):
                 return defer.succeed(self._instance)
@@ -208,6 +213,8 @@ class MemcachedConnection(object):
             Cette méthode n'existe que pour faciliter le travail des
             tests unitaires de cette classe.
         """
+        # pylint: disable-msg=W0212
+        # W0212: Access to a protected member of a client class
         if cls.instance is None:
             return
         if cls.instance._connector:
@@ -281,7 +288,7 @@ class MemcachedConnection(object):
                             'txn': transaction,
                         })
 
-        def _check_result(result, key, txn, flags):
+        def _check_result(result, _key, _txn, _flags):
             # Idéalement, on voudrait pouvoir traiter ce cas différemment,
             # mais le rule_dispatcher ne définit pas forcément à l'avance
             # tous les attributs du contexte qu'il est susceptible d'utiliser.

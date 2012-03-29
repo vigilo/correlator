@@ -6,7 +6,9 @@
 import unittest
 from datetime import datetime
 
-from nose.twistedtools import reactor, deferred
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
 from twisted.internet import defer
 from mock import Mock
 
@@ -62,7 +64,7 @@ class RuleDispatcherTestCase(unittest.TestCase):
                 }
         d = self.rd._processMessage(msg)
 
-        def cb(result):
+        def cb(_result):
             self.assertEqual(DBSession.query(tables.Event).count(), 0,
                 "L'événement ne doit pas avoir été inséré")
             self.assertEqual(DBSession.query(tables.EventHistory).count(), 0,

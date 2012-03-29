@@ -1,23 +1,29 @@
 # -*- coding: utf-8 -*-
-# pylint: disable-msg=C0111,W0212,R0904
 # Copyright (C) 2006-2011 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
 """Suite de tests des logs du corrélateur"""
 
+# pylint: disable-msg=C0111,W0212,R0904,W0201
+# - C0111: Missing docstring
+# - W0212: Access to a protected member of a client class
+# - R0904: Too many public methods
+# - W0201: Attribute defined outside __init__
+
 import unittest
 from datetime import datetime
 import logging
 
-from nose.twistedtools import reactor, deferred
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
 from twisted.internet import defer
 
 from mock import Mock
 
 from vigilo.models.session import DBSession
 from vigilo.models.demo import functions
-from vigilo.models.tables import LowLevelService, Host, \
-                                    Event, Change, SupItem, State
+from vigilo.models.tables import Event, Change, SupItem, State
 
 from vigilo.correlator.db_insertion import insert_event, insert_state
 from vigilo.correlator.correvent import CorrEventBuilder
@@ -173,7 +179,6 @@ class TestLogging(unittest.TestCase):
 
         # On force le traitement du message, par la fonction make_correvent,
         # comme s'il avait été traité au préalable par le rule_dispatcher.
-        rd = helpers.RuleDispatcherStub()
         corrbuilder = CorrEventBuilder(Mock(), DummyDatabaseWrapper(True))
         corrbuilder.context_factory = self.context_factory
 
@@ -219,7 +224,6 @@ class TestLogging(unittest.TestCase):
         host_name = self.host.name
 
         lls_name = self.lls.servicename
-        lls_id = self.lls.idservice
 
         # Partie 1 : test le syslog sur la création d'un événement corrélé.
 

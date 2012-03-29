@@ -8,19 +8,20 @@
 import random
 import unittest
 
-from nose.twistedtools import reactor, deferred
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
 from twisted.internet import defer
 
-import helpers
+from vigilo.correlator.test import helpers
 
-from vigilo.models.session import DBSession
 from vigilo.correlator.context import Context
 from vigilo.correlator.test.helpers import ConnectionStub, \
                                             MemcachedConnectionStub
-from vigilo.correlator.db_thread import DummyDatabaseWrapper
 
 from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
+
 
 class TestApiFunctions(unittest.TestCase):
     """

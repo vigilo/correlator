@@ -1,5 +1,4 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
-# pylint: disable-msg=C0111,W0212,R0904
 # Copyright (C) 2006-2011 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
@@ -7,11 +6,20 @@
 Teste la désaggrégation d'un événement corrélé (#467).
 """
 
+# pylint: disable-msg=C0111,W0212,R0904,W0201
+# - C0111: Missing docstring
+# - W0212: Access to a protected member of a client class
+# - R0904: Too many public methods
+# - W0201: Attribute defined outside __init__
+
+
 import time
 from datetime import datetime
 import unittest
 
-from nose.twistedtools import reactor, deferred
+from nose.twistedtools import reactor  # pylint: disable-msg=W0611
+from nose.twistedtools import deferred
+
 from twisted.internet import defer
 
 from mock import Mock
@@ -371,7 +379,7 @@ class TestCorrevents4(unittest.TestCase):
         # Simule la remontée de "Host 1" : l'événement brut concernant "Host 3"
         # doit être retiré des agrégats de l'hôte 1 et de l'hôte 2.
         # Un nouvel agrégat doit avoir été créé pour l'accueillir.
-        res, idcorrevent = yield self.handle_alert(self.hosts[1], 'UP')
+        res, _idcorrevent = yield self.handle_alert(self.hosts[1], 'UP')
         print "Finished step 2\n"
         self.assertNotEquals(res, None)
         # On s'attend à trouver 3 événements bruts et 3 agrégats.
@@ -393,7 +401,7 @@ class TestCorrevents4(unittest.TestCase):
             ).one()
 
         # "Host 2" remonte : rien ne change.
-        res, idcorrevent = yield self.handle_alert(self.hosts[2], 'UP')
+        res, _idcorrevent = yield self.handle_alert(self.hosts[2], 'UP')
         print "Finished step 3\n"
         self.assertNotEquals(res, None)
         # On s'attend à trouver 3 événements bruts et 3 agrégats.

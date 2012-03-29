@@ -124,15 +124,15 @@ class Executor(object):
 
         d = defer.Deferred()
 
-        def cb(result, msgid):
+        def cb(_result, msgid):
             d.callback(msgid)
 
-        def eb(failure, rule_name, *args):
+        def eb(failure):
             d.errback(failure)
 
         work = self.__dispatcher.doWork(self._runners[rule_name].run, msgid)
         work.addCallback(cb, msgid)
-        work.addErrback(eb, rule_name)
+        work.addErrback(eb)
         return d
 
     def getStats(self):

@@ -11,14 +11,14 @@ import signal
 
 
 
-def log_debug_info(*args):
+def log_debug_info(*_args):
     from vigilo.common.logging import get_logger
     logger = get_logger(__name__)
     logger.debug('pid: %d', os.getpid())
     logger.debug('threads: %s', threading.enumerate())
 
 
-def sighup_handler(*args):
+def sighup_handler(*_args):
     """
     Definit une routine pour le traitement du signal SIGHUP (rechargement).
     """
@@ -63,9 +63,6 @@ def makeService(options):
     from twisted.internet import reactor
     from twisted.application import service
 
-    from vigilo.common.logging import get_logger
-    LOGGER = get_logger(__name__)
-
     # Configuration de l'accès à la base de données.
     from vigilo.correlator.db_thread import DatabaseWrapper
     database = DatabaseWrapper(settings['database'])
@@ -96,7 +93,6 @@ def makeService(options):
 
     # Statistiques
     from vigilo.connector.status import statuspublisher_factory
-    status_publisher = statuspublisher_factory(settings, client,
-            providers=(msg_handler,))
+    statuspublisher_factory(settings, client, providers=(msg_handler,))
 
     return root_service

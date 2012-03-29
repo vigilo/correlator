@@ -8,7 +8,6 @@ Traite l'insertion en base de données.
 
 from sqlalchemy import not_, and_, or_
 from sqlalchemy.orm import aliased
-from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from twisted.internet import defer
 from datetime import datetime
@@ -271,7 +270,7 @@ def add_to_aggregate(idevent, idcorrevent, database, ctx, idsupitem, merging):
         transaction=False
     )
 
-    def _update_cache(result):
+    def _update_cache(_result):
         """
         Met à jour l'entrée dans memcached qui indique l'événement corrélé
         ouvert qui impacte cet élément supervisé.
@@ -386,7 +385,7 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid, database, ctx):
             ).update({"idcorrevent": destinationaggregateid})
         DBSession.flush()
 
-    def _delete(result):
+    def _delete(_result):
         """Supprime l'agrégat source de la base de données."""
         return database.run(
             DBSession.query(CorrEvent).filter(

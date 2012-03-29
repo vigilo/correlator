@@ -91,7 +91,7 @@ class DatabaseWrapper(object):
                 result = d.callback, func(*args, **kwargs)
                 if txn:
                     transaction.commit()
-            except:
+            except Exception:
                 if txn:
                     transaction.abort()
                 result = d.errback, Failure()
