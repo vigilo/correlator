@@ -4,7 +4,7 @@ EPYDOC_PARSE := vigilo\.correlator
 
 all: build settings.ini
 
-include buildenv/Makefile.common
+include buildenv/Makefile.common.python
 
 settings.ini: settings.ini.in
 	sed -e 's,@LOCALSTATEDIR@,$(LOCALSTATEDIR),g' -e 's,@SYSCONFDIR@,$(SYSCONFDIR),g' settings.ini.in > settings.ini
@@ -41,7 +41,6 @@ install_permissions:
 
 clean: clean_python
 	rm -f settings.ini
-	rm -f src/twisted/plugins/dropin.cache
 
 lint: lint_pylint
 tests: tests_nose
