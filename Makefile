@@ -1,6 +1,5 @@
 NAME := correlator
 USER := vigilo-correlator
-EPYDOC_PARSE := vigilo\.correlator
 
 all: build settings.ini
 

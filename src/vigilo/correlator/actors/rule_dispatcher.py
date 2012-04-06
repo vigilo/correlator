@@ -410,10 +410,6 @@ class RuleDispatcher(MessageHandler):
         """
         LOGGER.debug(_('Handling correlation results'))
 
-        # On publie sur le bus l'état de l'hôte
-        # ou du service concerné par l'alerte courante.
-        self.bus_publisher.publish_state(info_dictionary)
-
         d = defer.Deferred()
 
         # Pour les services de haut niveau, on s'arrête ici,

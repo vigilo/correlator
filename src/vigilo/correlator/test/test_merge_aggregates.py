@@ -94,14 +94,15 @@ class TestMergeAggregateFunction(unittest.TestCase):
                         ).filter(CorrEvent.idcorrevent == aggregates_id[0]
                         ).first()
 
-            # On vérifie que l'agrégat 1 a bien été supprimé
+            # On vérifie que l'agrégat 1 a bien été supprimé.
             self.assertTrue(aggregate1 is None)
 
             aggregate2 = DBSession.query(CorrEvent
                         ).filter(CorrEvent.idcorrevent == aggregates_id[1]
                         ).first()
 
-            # On vérifie que la cause de l'agrégat 2 est toujours l'événement 4
+            # On vérifie que la cause de l'agrégat 2
+            # est toujours l'événement 4.
             self.assertTrue(aggregate2)
             self.assertEqual(aggregate2.idcause, events_id[3])
 
@@ -109,7 +110,7 @@ class TestMergeAggregateFunction(unittest.TestCase):
             events_id.sort()
 
             # On vérifie que l'agrégat 2 regroupe
-            # bien les événements 1, 2, 3 et 4
+            # bien les événements 1, 2, 3 et 4.
             self.assertEqual(events_id,
                 [events_id[0], events_id[1], events_id[2], events_id[3]])
 

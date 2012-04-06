@@ -11,15 +11,12 @@ import unittest
 from datetime import datetime
 from time import mktime
 
-from vigilo.correlator.publish_messages import MessagePublisher
-
-from vigilo.models.demo import functions
-from vigilo.models.tables import StateName
-
 from mock import Mock
 
-from vigilo.correlator.test import helpers
+from vigilo.models.demo import functions
+from vigilo.correlator.publish_messages import MessagePublisher
 
+from vigilo.correlator.test import helpers
 
 
 class MessagePublisherTestCase(unittest.TestCase):
@@ -70,89 +67,3 @@ class MessagePublisherTestCase(unittest.TestCase):
         print self.mp.sendMessage.call_args
         self.assertEqual(self.mp.sendMessage.call_args[0][0],
                 {'aggregates': [1, 2], 'type': 'delaggr'})
-
-
-    def test_publish_state_host(self):
-        """Publication de l'état d'un hôte"""
-        # Ajout de l'état du host1 dans la BDD
-        state1 = functions.add_host_state(
-                    self.host1, u'UNREACHABLE', 'UNREACHABLE: Host1',
-                    self.timestamp)
-
-        info_dictionary = {"host": "host1.example.com",
-                           "service": None,
-                           "timestamp": state1.timestamp,
-                           "state": StateName.value_to_statename(state1.state),
-                           "message": state1.message}
-
-        # On publie l'état du host1 sur le bus
-        self.mp.publish_state(info_dictionary)
-
-        message = {'type': 'state',
-                   'timestamp': self.int_timestamp,
-                   'host': 'host1.example.com',
-                   'message': 'UNREACHABLE: Host1',
-                   'state': u'UNREACHABLE'
-                   }
-
-        # On vérifie que le message publié sur le bus concernant
-        # l'état du host1 est bien celui attendu.
-        self.assertEqual(self.mp.sendMessage.call_args[0][0], message)
-
-    def test_publish_state_hls(self):
-        # Ajout de l'état du hls1 dans la BDD
-        state2 = functions.add_svc_state(
-                    self.hls1, u'UNKNOWN',
-                    'UNKNOWN: Connection is in an unknown state',
-                    self.timestamp)
-
-        info_dictionary = {"host":
-                            helpers.settings['correlator']['nagios_hls_host'],
-                           "service": "Connexion",
-                           "timestamp": state2.timestamp,
-                           "state": StateName.value_to_statename(state2.state),
-                           "message": state2.message}
-
-        # On publie l'état du hls1 sur le bus
-        self.mp.publish_state(info_dictionary)
-
-        message = {'type': 'state',
-                   'timestamp': self.int_timestamp,
-                   'host': helpers.settings['correlator']['nagios_hls_host'],
-                   'service': 'Connexion',
-                   'state': u'UNKNOWN',
-                   'message': 'UNKNOWN: Connection is in an unknown state',
-                   }
-
-        # On vérifie que le message publié sur le bus concernant
-        # l'état du hls1 est bien celui attendu.
-        self.assertEqual(self.mp.sendMessage.call_args[0][0], message)
-
-    def test_publish_state_lls(self):
-        # Ajout de l'état du lls1 dans la BDD
-        state3 = functions.add_svc_state(
-                    self.lls1, u'UNKNOWN',
-                    'UNKNOWN: Processes are in an unknown state',
-                    self.timestamp)
-
-        info_dictionary = {"host": "host1.example.com",
-                           "service": "Processes",
-                           "timestamp": state3.timestamp,
-                           "state": StateName.value_to_statename(state3.state),
-                           "message": state3.message}
-
-        # On publie l'état du lls1 sur le bus
-        self.mp.publish_state(info_dictionary)
-
-        message = {'type': 'state',
-                   'host': 'host1.example.com',
-                   'service': 'Processes',
-                   'timestamp': self.int_timestamp,
-                   'state': u'UNKNOWN',
-                   'message': 'UNKNOWN: Processes are in an unknown state',
-                   }
-
-        # On vérifie que le message publié sur le bus concernant
-        # l'état du lls1 est bien celui attendu.
-        self.assertEqual(self.mp.sendMessage.call_args[0][0], message)
-

@@ -4,19 +4,22 @@
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
 """
-Fonctions permettant la publication de messages divers sur le bus.
+Module de publication de messages divers vers le bus Vigilo.
 """
-
-from time import mktime
 
 from vigilo.connector.handlers import BusPublisher
 
 
-
 class MessagePublisher(BusPublisher):
-
+    """
+    Classe permettant d'envoyer certains types de messages
+    sur le bus d'échange de Vigilo.
+    """
 
     def __init__(self, nagios_hls_host, publications):
+        """
+        Construit une nouvelle instance de publication des messages.
+        """
         super(MessagePublisher, self).__init__(publications)
         self.nagios_hls_host = nagios_hls_host
 
@@ -44,7 +47,8 @@ class MessagePublisher(BusPublisher):
     def delete_published_aggregates(self, aggregate_id_list):
         """
         Publie sur le bus un message signifiant la suppression des
-        agrégats (alertes corrélées) dont l'id est passé en paramètre.
+        agrégats (alertes corrélées) dont l'identifiant est passé
+        en paramètre.
 
         @type aggregate_id_list: Liste de C{int}
         """
@@ -52,31 +56,4 @@ class MessagePublisher(BusPublisher):
         msg = { "type": "delaggr",
                 "aggregates": aggregate_id_list,
                 }
-        return self.sendMessage(msg)
-
-
-    def publish_state(self, info_dictionary):
-        """
-        Publie sur le bus un message d'état correspondant
-        correspondant au infos passées en paramètre.
-
-        @param info_dictionary: Dictionnaire contenant les informations
-        extraites du message d'alerte reçu par le rule dispatcher.
-        @type info_dictionary: C{dictionary}
-        """
-        # Création du message à publier sur le bus
-        msg = { "type": "state" }
-
-        msg["timestamp"] = int(mktime(info_dictionary["timestamp"].timetuple()))
-
-        if not info_dictionary["host"]:
-            info_dictionary["host"] = self.nagios_hls_host
-        msg["host"] = info_dictionary["host"]
-
-        if info_dictionary["service"]:
-            msg["service"] = info_dictionary["service"]
-
-        msg["state"] = info_dictionary["state"]
-        msg["message"] = info_dictionary["message"]
-
         return self.sendMessage(msg)

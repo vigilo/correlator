@@ -173,7 +173,8 @@ class TestCorrevents4(unittest.TestCase):
         functions.add_dependency(dep_group, self.hosts[1], 2)
 
         # 1. Un 1er agrégat doit avoir été créé.
-        res, idcorrevent1 = yield self.handle_alert(self.hosts[2], 'UNREACHABLE')
+        res, idcorrevent1 = yield self.handle_alert(
+            self.hosts[2], 'UNREACHABLE')
         print "Finished step 1\n"
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
@@ -289,7 +290,8 @@ class TestCorrevents4(unittest.TestCase):
         db_correvents.sort(key=lambda x: x.cause.supitem.name)
         # L'un porte sur l'hôte 1 qui doit être dans l'état "UP"
         # et ne contient qu'un seul événement brut sur host 1.
-        self.assertEquals(self.hosts[1].idhost, db_correvents[0].cause.idsupitem)
+        self.assertEquals(self.hosts[1].idhost,
+                          db_correvents[0].cause.idsupitem)
         self.assertEquals(
             u'UP',
             tables.StateName.value_to_statename(
@@ -301,7 +303,8 @@ class TestCorrevents4(unittest.TestCase):
         )
         # Le second porte sur l'hôte 2, qui se trouve toujours dans
         # l'état "UNREACHABLE" et n'a qu'un seul événement brut (host 2).
-        self.assertEquals(self.hosts[2].idhost, db_correvents[1].cause.idsupitem)
+        self.assertEquals(self.hosts[2].idhost,
+                         db_correvents[1].cause.idsupitem)
         self.assertEquals(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
@@ -314,7 +317,8 @@ class TestCorrevents4(unittest.TestCase):
         # Le dernier des agrégats porte sur l'hôte 4
         # qui se trouve dans l'état UNREACHABLE et
         # contient 2 événements bruts (host 4 et host 3).
-        self.assertEquals(self.hosts[4].idhost, db_correvents[2].cause.idsupitem)
+        self.assertEquals(self.hosts[4].idhost,
+                          db_correvents[2].cause.idsupitem)
         self.assertEquals(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
@@ -347,8 +351,9 @@ class TestCorrevents4(unittest.TestCase):
         functions.add_dependency(dep_group, self.hosts[1], 1)
         functions.add_dependency(dep_group, self.hosts[2], 2)
 
-        # Simule la chute des hôtes "Host 1" et "Host 2", puis l'indisponibilité
-        # de l'hôte "Host 3" qui dépend des 2 autres topologiquement.
+        # Simule la chute des hôtes "Host 1" et "Host 2",
+        # puis l'indisponibilité de l'hôte "Host 3"
+        # qui dépend des 2 autres topologiquement.
         res, idcorrevent1 = yield self.handle_alert(self.hosts[1], 'DOWN')
         self.assertNotEquals(res, None)
         res, idcorrevent2 = yield self.handle_alert(self.hosts[2], 'DOWN')
@@ -376,8 +381,9 @@ class TestCorrevents4(unittest.TestCase):
         correvent = DBSession.query(tables.CorrEvent).get(idcorrevent2)
         self.assertTrue(event3 in correvent.events)
 
-        # Simule la remontée de "Host 1" : l'événement brut concernant "Host 3"
-        # doit être retiré des agrégats de l'hôte 1 et de l'hôte 2.
+        # Simule la remontée de "Host 1" :
+        # l'événement brut concernant "Host 3" doit être retiré
+        # des agrégats de l'hôte 1 et de l'hôte 2.
         # Un nouvel agrégat doit avoir été créé pour l'accueillir.
         res, _idcorrevent = yield self.handle_alert(self.hosts[1], 'UP')
         print "Finished step 2\n"

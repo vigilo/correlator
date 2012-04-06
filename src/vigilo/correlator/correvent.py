@@ -45,7 +45,7 @@ DATA_LOG_MESSAGE = 7
 
 class CorrEventBuilder(object):
 
-    context_factory=Context
+    context_factory = Context
 
 
     def __init__(self, publisher, database):

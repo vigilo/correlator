@@ -71,9 +71,12 @@ class TestAggregates(unittest.TestCase):
 
         # Host1 et Host3 dépendent de Host2.
         # Host2 dépend de Host4.
-        dg1 = tables.DependencyGroup(operator=u'|', role=u'topology', dependent=hosts[0])
-        dg2 = tables.DependencyGroup(operator=u'|', role=u'topology', dependent=hosts[2])
-        dg3 = tables.DependencyGroup(operator=u'|', role=u'topology', dependent=hosts[1])
+        dg1 = tables.DependencyGroup(operator=u'|', role=u'topology',
+                                     dependent=hosts[0])
+        dg2 = tables.DependencyGroup(operator=u'|', role=u'topology',
+                                     dependent=hosts[2])
+        dg3 = tables.DependencyGroup(operator=u'|', role=u'topology',
+                                     dependent=hosts[1])
         DBSession.add(dg1)
         DBSession.add(dg2)
         DBSession.add(dg3)
