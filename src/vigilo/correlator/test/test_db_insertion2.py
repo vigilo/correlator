@@ -25,20 +25,20 @@ from vigilo.models.session import DBSession
 class TestDbInsertion2(unittest.TestCase):
     """Teste l'insertion de données dans la BDD."""
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         super(TestDbInsertion2, self).setUp()
         helpers.setup_db()
         helpers.populate_statename()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         helpers.teardown_db()
         super(TestDbInsertion2, self).tearDown()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_add_to_agregate(self):
         """Ajout d'un événement brut à un évènement corrélé déjà existant"""

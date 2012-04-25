@@ -18,7 +18,7 @@ import helpers
 
 class RuleDispatcherTestCase(unittest.TestCase):
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         helpers.setup_db()
         helpers.populate_statename()
@@ -27,7 +27,7 @@ class RuleDispatcherTestCase(unittest.TestCase):
         self.rd = helpers.RuleDispatcherStub()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         helpers.teardown_db()
         return defer.succeed(None)
@@ -38,7 +38,7 @@ class RuleDispatcherTestCase(unittest.TestCase):
         functions.add_lowlevelservice(host, u'Load')
         functions.add_highlevelservice(u'Load')
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_recv_old_state(self):
         """Abandon du traitement d'un état ancien"""
         ts_old = "1239104006"

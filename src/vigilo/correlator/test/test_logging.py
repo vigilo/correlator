@@ -165,7 +165,7 @@ class TestLogging(unittest.TestCase):
         self.host = functions.add_host(u'Host')
         self.lls = functions.add_lowlevelservice(self.host, u'LLS')
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """Initialisation des tests"""
 
@@ -195,7 +195,7 @@ class TestLogging(unittest.TestCase):
         self.XMPP_id = 0
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
         # On dissocie le handler du logger.
@@ -203,7 +203,7 @@ class TestLogging(unittest.TestCase):
         helpers.teardown_db()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_syslog_and_correvent(self):
         """

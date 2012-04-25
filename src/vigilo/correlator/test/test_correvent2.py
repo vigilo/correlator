@@ -26,7 +26,7 @@ from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
 class TestAggregates(unittest.TestCase):
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """."""
         super(TestAggregates, self).setUp()
@@ -36,7 +36,7 @@ class TestAggregates(unittest.TestCase):
         self.context_factory = helpers.ContextStubFactory()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """."""
         super(TestAggregates, self).tearDown()
@@ -44,7 +44,7 @@ class TestAggregates(unittest.TestCase):
         self.context_factory.reset()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_aggregation_scenario(self):
         """

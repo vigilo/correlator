@@ -31,7 +31,7 @@ from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
 class TestCorrevents4(unittest.TestCase):
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """Initialise la BDD au début de chaque test."""
         super(TestCorrevents4, self).setUp()
@@ -43,7 +43,7 @@ class TestCorrevents4(unittest.TestCase):
         self.ts = int(time.time()) - 10
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Nettoie la BDD à la fin de chaque test."""
         super(TestCorrevents4, self).tearDown()
@@ -158,7 +158,7 @@ class TestCorrevents4(unittest.TestCase):
         DBSession.expunge_all()
         defer.returnValue( (res, idcorrevent) )
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_desaggregate(self):
         """Désagrégation des événements corrélés (#467)."""
@@ -333,7 +333,7 @@ class TestCorrevents4(unittest.TestCase):
         )
 
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_pseudo_triangle(self):
         """

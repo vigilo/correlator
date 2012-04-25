@@ -28,7 +28,7 @@ from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
 class TestCorrevents(unittest.TestCase):
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """Initialise MemcacheD et la BDD au début de chaque test."""
         super(TestCorrevents, self).setUp()
@@ -39,7 +39,7 @@ class TestCorrevents(unittest.TestCase):
         self.make_deps()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Nettoie MemcacheD et la BDD à la fin de chaque test."""
         super(TestCorrevents, self).tearDown()
@@ -59,7 +59,7 @@ class TestCorrevents(unittest.TestCase):
         DBSession.add(self.host)
         DBSession.flush()
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_ignore_obsolete_updates(self):
         """

@@ -30,13 +30,13 @@ class TestApiFunctions(unittest.TestCase):
     de la base soit réalisée dans le même threads que les accès dans les tests.
     """
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """Initialisation d'un contexte préalable à chacun des tests."""
         helpers.setup_db()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Nettoyage du contexte à la fin de chaque test."""
         helpers.teardown_db()
@@ -48,7 +48,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(name)
         assert ctx
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_set_get(self):
         """set/get"""
@@ -58,7 +58,7 @@ class TestApiFunctions(unittest.TestCase):
         foo = yield ctx.get("foo")
         self.assertEquals(foo, "bar")
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_context_specific(self):
         """
@@ -73,7 +73,7 @@ class TestApiFunctions(unittest.TestCase):
         foo = yield ctx2.get("foo")
         self.assertEquals(foo, None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_delete(self):
         """La suppression doit fonctionner correctement"""
@@ -84,7 +84,7 @@ class TestApiFunctions(unittest.TestCase):
         foo = yield ctx.get("foo")
         self.assertEquals(foo, None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_shared_set_get(self):
         """set/get d'un attribut partagé"""
@@ -94,7 +94,7 @@ class TestApiFunctions(unittest.TestCase):
         foo = yield ctx.getShared("foo")
         self.assertEquals(foo, "bar")
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_shared_visibility(self):
         """Visibilité des attributs partagés"""
@@ -109,7 +109,7 @@ class TestApiFunctions(unittest.TestCase):
         foo = yield ctx2.getShared("foo")
         self.assertEquals(foo, None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_get_unicode(self):
         """Get sur le contexte (support d'unicode)"""
         ctx = Context(42)
@@ -124,7 +124,7 @@ class TestApiFunctions(unittest.TestCase):
         d.addCallback(check)
         return d
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_set_unicode(self):
         """Set sur le contexte (support d'unicode)"""
         ctx = Context(42)
@@ -139,7 +139,7 @@ class TestApiFunctions(unittest.TestCase):
         d.addCallback(check)
         return d
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_delete_unicode(self):
         """Delete sur le contexte (support d'unicode)"""
         ctx = Context(42)
@@ -155,7 +155,7 @@ class TestApiFunctions(unittest.TestCase):
         d.addCallback(check)
         return d
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_getshared_unicode(self):
         """Get partagé sur le contexte (support d'unicode)"""
         ctx = Context(42)
@@ -171,7 +171,7 @@ class TestApiFunctions(unittest.TestCase):
         d.addCallback(check)
         return d
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_setShared_unicode(self):
         """Set partagé sur le contexte (support d'unicode)"""
         ctx = Context(42)
@@ -187,7 +187,7 @@ class TestApiFunctions(unittest.TestCase):
         d.addCallback(check)
         return d
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_deleteshared_unicode(self):
         """Delete partagé sur le contexte (support d'unicode)"""
         ctx = Context(42)

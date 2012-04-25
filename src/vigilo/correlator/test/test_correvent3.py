@@ -32,7 +32,7 @@ from vigilo.common.logging import get_logger
 LOGGER = get_logger(__name__)
 
 class TestCorrevents3(unittest.TestCase):
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """Initialise la BDD au début de chaque test."""
         super(TestCorrevents3, self).setUp()
@@ -42,7 +42,7 @@ class TestCorrevents3(unittest.TestCase):
         self.context_factory = ContextStubFactory()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Nettoie la BDD à la fin de chaque test."""
         super(TestCorrevents3, self).tearDown()
@@ -139,7 +139,7 @@ class TestCorrevents3(unittest.TestCase):
         DBSession.flush()
         defer.returnValue( (res, idcorrevent) )
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_ack(self):
         """
@@ -171,7 +171,7 @@ class TestCorrevents3(unittest.TestCase):
         self.assertNotEquals(open_aggr, 0)
         defer.returnValue(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_reactivate_aaclosed(self):
         """
@@ -203,7 +203,7 @@ class TestCorrevents3(unittest.TestCase):
         self.assertNotEquals(open_aggr, 0)
         defer.returnValue(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_close_aaclosed(self):
         """
