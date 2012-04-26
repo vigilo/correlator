@@ -67,21 +67,21 @@ def create_topology_and_events():
 class TestMergeAggregateFunction(unittest.TestCase):
     """Suite de tests de la fonction"""
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
         helpers.setup_db()
         self.context_factory = helpers.ContextStubFactory()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
         helpers.teardown_db()
         self.context_factory.reset()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def test_aggregates_merging(self):
         """Fusion de 2 agrégats"""
 

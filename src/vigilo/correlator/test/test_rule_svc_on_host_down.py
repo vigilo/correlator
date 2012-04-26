@@ -34,7 +34,7 @@ class TestSvcHostDownRule(unittest.TestCase):
     """
 
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         super(TestSvcHostDownRule, self).setUp()
 
@@ -52,7 +52,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         self.message_id = 42
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         super(TestSvcHostDownRule, self).tearDown()
         DBSession.flush()
@@ -83,7 +83,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         return res
 
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_host_down(self):
         """Callback requis pour passer les services d'un hôte DOWN à UNKNOWN"""
@@ -98,7 +98,7 @@ class TestSvcHostDownRule(unittest.TestCase):
             on_host_down)
 
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_on_host_down(self):
         """Fonction de passage à UNKNOWN des services d'un hôte DOWN"""
@@ -117,7 +117,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         self.assertEqual(self.lls.state.name.statename, u"UNKNOWN")
 
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_host_up(self):
         """Demander les états des services d'un hôte qui passe UP"""
@@ -135,7 +135,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         self.assertEqual(recv, expected)
 
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_host_up_many_services(self):
         """Demander les états de tous les services d'un hôte qui passe UP"""

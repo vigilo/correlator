@@ -32,7 +32,7 @@ class TestMemcachedConnection(unittest.TestCase):
     de la base soit réalisée dans le même threads que les accès dans les tests.
     """
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         super(TestMemcachedConnection, self).setUp()
         helpers.setup_db()
@@ -40,7 +40,7 @@ class TestMemcachedConnection(unittest.TestCase):
         self.cache = MemcachedConnection()
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Arrêt du serveur Memcached à la fin de chaque test."""
         super(TestMemcachedConnection, self).tearDown()
@@ -68,7 +68,7 @@ class TestMemcachedConnection(unittest.TestCase):
             ).connectTCP(host, port)
         return d_connection
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_set(self):
         """Association d'une valeur à une clé"""
@@ -87,7 +87,7 @@ class TestMemcachedConnection(unittest.TestCase):
         LOGGER.info("Received: %r", received)
         self.assertEqual(pickle.loads(received[-1]), value)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_get(self):
         """Récupération de la valeur associée à une clé"""
@@ -108,7 +108,7 @@ class TestMemcachedConnection(unittest.TestCase):
         # On vérifie que la méthode get retourne bien 'value'.
         self.assertEqual(result, value)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_delete(self):
         """Suppression d'une clé"""
@@ -129,7 +129,7 @@ class TestMemcachedConnection(unittest.TestCase):
         value = yield connection.get(key)
         self.assertEquals(None, value[-1])
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_key_spaces(self):
         """Gestion des espaces dans une clé"""
@@ -144,7 +144,7 @@ class TestMemcachedConnection(unittest.TestCase):
         yield self.cache.delete(key)
         LOGGER.info("'%s' deleted", key)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_reconnection(self):
         """Reconnexion automatique à memcached"""

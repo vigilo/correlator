@@ -25,7 +25,7 @@ from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.correlator.test import helpers
 
 class TopologyTestHelpers(object):
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def setUp(self):
         """Initialisation de la BDD préalable à chacun des tests"""
         helpers.setup_db()
@@ -45,7 +45,7 @@ class TopologyTestHelpers(object):
         self.database = DummyDatabaseWrapper(True, async=False)
         return defer.succeed(None)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     def tearDown(self):
         """Nettoyage de la BDD à la fin de chaque test"""
         self.context_factory.reset()
@@ -117,7 +117,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         edge_list.sort()
         self.assertEqual(edges, edge_list)
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_first_predecessors_aggregates(self):
         """Récupération des premiers agrégats dont dépend une alerte brute"""
@@ -151,7 +151,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         # On vérifie que le service 2 dépend bien de l'agrégat 2
         self.assertEqual(aggregates, [self.events_aggregate2.idcorrevent])
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_first_successors_aggregates(self):
         """Récupération des premiers agrégats dépendant d'une alerte brute"""
@@ -204,7 +204,7 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
         self.event1 = functions.add_event(self.service3, u'WARNING', 'WARNING: RAM is overloaded')
         self.events_aggregate1 = functions.add_correvent([self.event1])
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_first_predecessors_aggregates(self):
         """Pas d'agrégats prédecesseurs s'il existe un chemin "vivant"."""

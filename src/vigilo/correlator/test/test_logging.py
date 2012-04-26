@@ -204,7 +204,7 @@ class TestLogging(unittest.TestCase):
         self.lls = functions.add_lowlevelservice(self.host, u'LLS')
 
 
-    @deferred(timeout=30)
+    @deferred(timeout=60)
     @defer.inlineCallbacks
     def test_syslog_and_correvent(self):
         """
