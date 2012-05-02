@@ -3,8 +3,9 @@
 %define pyver 26
 %define pybasever 2.6
 %define __python /usr/bin/python%{pybasever}
-%define __os_install_post %{__python26_os_install_post}
-%{!?python26_sitelib: %define python26_sitelib %(python26 -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+# Turn off the brp-python-bytecompile script
+%define __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:       vigilo-%{module}
 Summary:    @SUMMARY@
@@ -90,15 +91,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(640,root,%{name}) %config(noreplace) %{_sysconfdir}/vigilo/%{module}/settings.ini
 %dir %{_sysconfdir}/vigilo/%{module}/plugins
 %config(noreplace) %{_sysconfdir}/sysconfig/%{name}
-%{python26_sitelib}/vigilo*
-%{python26_sitelib}/twisted*
+%{python_sitelib}/vigilo*
+%{python_sitelib}/twisted*
 %dir %{_localstatedir}/lib/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/lib/vigilo/%{module}
 %dir %{_localstatedir}/log/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/log/vigilo/%{module}
 %attr(-,%{name},%{name}) %{_localstatedir}/run/%{name}
-
-
-%changelog
-* Mon Feb 08 2010 Aurelien Bompard <aurelien.bompard@c-s.fr>
-- initial package
