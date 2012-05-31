@@ -195,6 +195,11 @@ class RuleDispatcherStub(RuleDispatcher):
         self._database = DummyDatabaseWrapper(True)
         self._executor = Executor(self)
         self.buffer = []
+        # Nécessaire à cause de HighLevelServiceDepsRule:_send_states()
+        # qui a besoin de contourner le ThreadWrapper (qui n'existe pas
+        # durant les tests unitaires). On se contente de reproduire l'API
+        # de ThreadWrapper ici.
+        self._obj = self
 
     def sendItem(self, item):
         """Simule l'écriture d'un message sur la file"""
