@@ -515,7 +515,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
     # Si un ou plusieurs agrégats dépendant de l'alerte sont
     # spécifiés dans le contexte par la règle de corrélation
     # topologique des services de bas niveau (lls_dep), alors
-    # on rattache ces agrégats à l'aggrégat nouvellement créé.
+    # on rattache ces agrégats à l'agrégat nouvellement créé.
     aggregates_id = yield ctx.get('successors_aggregates')
     if aggregates_id:
         event_id_list = []

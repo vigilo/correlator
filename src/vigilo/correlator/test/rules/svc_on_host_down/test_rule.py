@@ -23,7 +23,7 @@ from vigilo.pubsub.xml import NS_COMMAND
 from vigilo.correlator.rules.svc_on_host_down import SvcHostDown, NAGIOS_MESSAGE
 from vigilo.correlator.rules.svc_on_host_down import on_host_down
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
-import helpers
+from vigilo.correlator.test import helpers
 
 class TestSvcHostDownRule(unittest.TestCase):
     """
