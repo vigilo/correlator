@@ -428,3 +428,47 @@ class TestCorrevents4(unittest.TestCase):
                     tables.CorrEvent.idcause),
             ).filter(tables.Event.idsupitem == self.hosts[3].idhost
             ).one()
+
+    @deferred(timeout=60)
+    @defer.inlineCallbacks
+    def test_desaggregate2(self):
+        """Désagrégation d'une vraie alerte d'un agrégat OK/UP (#1027)."""
+        # Ajout des dépendances topologiques :
+        # - Host 3 dépend de Host 1.
+        dep_group = functions.add_dependency_group(
+                        self.hosts[3], None, u'topology', u'|')
+        functions.add_dependency(dep_group, self.hosts[1], 1)
+
+        # Host 1 est dans l'état UP (pour cela, on génère déjà une alerte
+        # DOWN qu'on fait ensuite repasser UP).
+        res, idcorrevent1 = yield self.handle_alert(self.hosts[1], 'DOWN')
+        self.assertNotEquals(res, None)
+        res, idcorrevent1 = yield self.handle_alert(self.hosts[1], 'UP')
+        self.assertNotEquals(res, None)
+        # Host 3 est DOWN.
+        event = functions.add_event(self.hosts[3], 'DOWN', 'DOWN')
+        functions.add_host_state(self.hosts[3], 'DOWN')
+        # Par erreur, l'alerte sur Host 3 s'est retrouvée masquée
+        # par celle sur Host 1 (#1027).
+        correvent = DBSession.query(tables.CorrEvent).filter(
+            tables.CorrEvent.idcorrevent == idcorrevent1).one()
+        correvent.events.append(event)
+        DBSession.flush()
+
+        # On reçoit une notification sur Host 3 qui confirme le problème.
+        # L'événement doit être retiré de l'agrégat d'Host 1 et placé
+        # dans un nouvel agrégat.
+        res, idcorrevent2 = yield self.handle_alert(self.hosts[3], 'DOWN')
+        self.assertNotEquals(res, None)
+        self.assertNotEquals(idcorrevent2, idcorrevent1)
+
+        # On vérifie que les événements sont bien dans les bons agrégats.
+        correvent = DBSession.query(tables.CorrEvent).filter(
+            tables.CorrEvent.idcorrevent == idcorrevent1).one()
+        self.assertEquals(len(correvent.events), 1)
+        correvent2 = DBSession.query(tables.CorrEvent).filter(
+            tables.CorrEvent.idcorrevent == idcorrevent2).one()
+        self.assertEquals(
+            [event.idevent],
+            [e.idevent for e in correvent2.events]
+        )

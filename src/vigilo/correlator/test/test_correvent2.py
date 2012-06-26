@@ -28,7 +28,7 @@ LOGGER = get_logger(__name__)
 class TestAggregates(unittest.TestCase):
     @deferred(timeout=60)
     def setUp(self):
-        """."""
+        """Initialisation avant chaque test."""
         super(TestAggregates, self).setUp()
         helpers.setup_db()
         helpers.populate_statename()
@@ -38,7 +38,7 @@ class TestAggregates(unittest.TestCase):
 
     @deferred(timeout=60)
     def tearDown(self):
-        """."""
+        """Finalisation après chaque test."""
         super(TestAggregates, self).tearDown()
         helpers.teardown_db()
         self.context_factory.reset()

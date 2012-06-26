@@ -18,7 +18,8 @@ from twisted.internet import defer
 
 from vigilo.pubsub.xml import namespaced_tag, NS_EVENT
 from vigilo.correlator.context import Context
-from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates
+from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates, \
+                                            remove_from_all_aggregates
 from vigilo.correlator.publish_messages import publish_aggregate, \
                                             delete_published_aggregates
 
@@ -245,7 +246,12 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
             defer.returnValue(None)
 
         LOGGER.debug(_('Creating a new correlated event'))
+        # Lorsqu'un nouvel agrégat doit être créé, il se peut que la cause
+        # ait anciennement fait partie d'autres agrégats désormais OK/UP.
+        # On doit supprimer ces associations avant de poursuivre (cf. #1027).
+        yield remove_from_all_aggregates(raw_event_id, database)
 
+        # Création du nouvel agrégat à partir de son événement cause.
         correvent = CorrEvent()
         correvent.idcause = raw_event_id
 
@@ -350,7 +356,7 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
         if state in ('OK', 'UP'):
             cause = aliased(Event)
             others = aliased(Event)
-            # On déterminer les causes des nouveaux événements corrélés
+            # On détermine les causes des nouveaux événements corrélés
             # (ceux obtenus par désagrégation de l'événement courant).
             new_causes = yield database.run(
                 DBSession.query(
@@ -381,6 +387,8 @@ def make_correvent(forwarder, database, dom, idnt, info_dictionary, context_fact
                                     'supitem': new_cause.iddependent,
                                 })
 
+                # Inutile d'appeler remove_from_all_aggregates() ici
+                # car on désagrège déjà manuellement l'agrégat initial.
                 new_correvent = CorrEvent(
                     idcause=new_cause.idevent,
                     priority=settings['correlator'].as_int(
