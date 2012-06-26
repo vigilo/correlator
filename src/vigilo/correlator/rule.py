@@ -22,6 +22,9 @@ class ThreadWrapper(object):
             self._cls = None
 
     def __getattr__(self, attr):
+        # Permet d'accéder à l'objet "brut" (sans enrobage).
+        if attr == '_obj':
+            return self._obj
         ret = getattr(self._obj, attr)
         if callable(ret):
             return self.FunctionWrapper(self, ret)
