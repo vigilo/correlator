@@ -133,12 +133,13 @@ def insert_event(info_dictionary):
     new_state_value = StateName.statename_to_value(info_dictionary['state'])
     is_new_event = event.idevent is None
 
-    # Détermine si on doit ajouter une entrée dans l'historique.
-    # On ajoute une entrée s'il s'agit d'un nouvel événement
-    # ou si un champ autre que le timestamp a changé.
-    add_history = is_new_event or \
-                    event.current_state != new_state_value or \
-                    event.message != info_dictionary['message']
+    # S'agit-il d'un événement important ?
+    # Un événement est important s'il s'agit d'un nouvel événement
+    # ou si un champ autre que le timestamp ou le message a changé.
+    info_dictionary['important'] = is_new_event or \
+                                    event.current_state != new_state_value or \
+                                    event.message != info_dictionary['message']
+
 
     # Mise à jour de l'évènement.
     event.timestamp = info_dictionary['timestamp']
@@ -148,7 +149,9 @@ def insert_event(info_dictionary):
     # Sauvegarde de l'évènement.
     DBSession.add(event)
 
-    if add_history:
+    # Les événements importants donnent lieu à l'ajout
+    # d'une entrée dans l'historique.
+    if info_dictionary['important']:
         history = EventHistory()
 
         history.type_action = is_new_event and \
