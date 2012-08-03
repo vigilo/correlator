@@ -25,8 +25,6 @@ from vigilo.correlator.rules.svc_on_host_down import on_host_down
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.correlator.test import helpers
 
-
-
 class TestSvcHostDownRule(unittest.TestCase):
     """
     Le setUp et le tearDown sont décorés par @deferred() pour que la création

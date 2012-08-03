@@ -319,6 +319,24 @@ def add_to_aggregate(idevent, idcorrevent, database, ctx, idsupitem, merging):
     entry.addCallback(_add_if_absent)
     return entry
 
+def remove_from_all_aggregates(idevent, database):
+    """
+    Supprime un événement de tous les agrégats où il apparaissait.
+
+    @param idevent: Identifiant de l'événement à supprimer des agrégats.
+    @type idevent: C{int}
+    @param database: Objet qui encapsule les échanges avec la base de données.
+    @type database: L{DatabaseWrapper}
+    """
+    # Ici, on n'utilise pas la forme ORM de delete() car EVENTSAGGREGATE_TABLE
+    # n'est pas une table définie déclarativement.
+    entry = database.run(
+        EVENTSAGGREGATE_TABLE.delete(EVENTSAGGREGATE_TABLE.c.idevent == idevent
+            ).execute,
+        transaction=False
+    )
+    return entry
+
 def merge_aggregates(sourceaggregateid, destinationaggregateid, database, ctx):
     """
     Fusionne deux agrégats. Renvoie la liste des identifiants

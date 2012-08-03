@@ -189,10 +189,10 @@ def get_open_aggregate(ctx, database, item_id):
             ).join(
                 (Event, CorrEvent.idcause == Event.idevent)
             ).filter(
-                not_(and_(
-                    Event.current_state.in_([state_ok, state_up]),
-                    CorrEvent.ack == CorrEvent.ACK_CLOSED
-                ))
+                # Ici, on ne prend pas en compte l'état d'acquittement :
+                # on n'agrège jamais une alerte dans un agrégat OK/UP
+                # (voir le ticket #1027 pour plus d'information).
+                not_(Event.current_state.in_([state_ok, state_up]))
             ).filter(Event.idsupitem == item_id
             ).scalar)
 

@@ -15,7 +15,8 @@ import logging
 from twisted.internet import defer
 
 from vigilo.correlator.context import Context
-from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates
+from vigilo.correlator.db_insertion import add_to_aggregate, merge_aggregates, \
+                                            remove_from_all_aggregates
 
 from vigilo.models.session import DBSession
 from vigilo.models.tables import CorrEvent, Event, EventHistory
@@ -64,8 +65,7 @@ class CorrEventBuilder(object):
             - VIGILO_EXIG_VIGILO_COR_0040,
             - VIGILO_EXIG_VIGILO_COR_0060.
         """
-        idnt = info_dictionary["id"]
-        ctx = self.context_factory(idnt, transaction=False)
+        ctx = self.context_factory(info_dictionary["id"], transaction=False)
         raw_event_id = yield ctx.get('raw_event_id')
 
         # Il peut y avoir plusieurs raisons à l'absence d'un ID d'évenement brut :
@@ -251,7 +251,12 @@ class CorrEventBuilder(object):
                 defer.returnValue(None)
 
             LOGGER.debug(_('Creating a new correlated event'))
+            # Lorsqu'un nouvel agrégat doit être créé, il se peut que la cause
+            # ait anciennement fait partie d'autres agrégats désormais OK/UP.
+            # On doit supprimer ces associations avant de poursuivre (cf. #1027).
+            yield remove_from_all_aggregates(raw_event_id, self.database)
 
+            # Création du nouvel agrégat à partir de son événement cause.
             correvent = CorrEvent()
             correvent.idcause = raw_event_id
 
@@ -355,7 +360,7 @@ class CorrEventBuilder(object):
             if state in ('OK', 'UP'):
                 cause = aliased(Event)
                 others = aliased(Event)
-                # On déterminer les causes des nouveaux événements corrélés
+                # On détermine les causes des nouveaux événements corrélés
                 # (ceux obtenus par désagrégation de l'événement courant).
                 new_causes = yield self.database.run(
                     DBSession.query(
@@ -385,6 +390,8 @@ class CorrEventBuilder(object):
                                         'cause': new_cause.idevent,
                                         'supitem': new_cause.iddependent,
                                     })
+                    # Inutile d'appeler remove_from_all_aggregates() ici
+                    # car on désagrège déjà manuellement l'agrégat initial.
                     new_correvent = CorrEvent(
                         idcause=new_cause.idevent,
                         priority=settings['correlator'].as_int(
@@ -450,7 +457,6 @@ class CorrEventBuilder(object):
                         new_cause.iddependent,
                         merging=False
                     )
-
                     # @XXX: redemander l'état de l'équipement à Nagios ?
                 # Prise en compte des modifications précédentes.
                 yield self.database.run(DBSession.flush, transaction=False)
@@ -516,7 +522,7 @@ class CorrEventBuilder(object):
         # Si un ou plusieurs agrégats dépendant de l'alerte sont
         # spécifiés dans le contexte par la règle de corrélation
         # topologique des services de bas niveau (lls_dep), alors
-        # on rattache ces agrégats à l'aggrégat nouvellement créé.
+        # on rattache ces agrégats à l'agrégat nouvellement créé.
         aggregates_id = yield ctx.get('successors_aggregates')
         if aggregates_id:
             event_id_list = []
