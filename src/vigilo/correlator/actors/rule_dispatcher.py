@@ -47,7 +47,6 @@ LOGGER = get_logger(__name__)
 _ = translate(__name__)
 
 
-
 class RuleDispatcher(MessageHandler):
     """
     Cette classe corrèle les messages reçus depuis le bus
@@ -256,6 +255,11 @@ class RuleDispatcher(MessageHandler):
         if info_dictionary["host"] == self.nagios_hls_host:
             info_dictionary["host"] = None
 
+        # Le message vaut None lorsqu'on force l'envoi d'une notification
+        # sur un service qui se trouve dans l'état PENDING côté Nagios (#1085).
+        if info_dictionary["message"] is None:
+            info_dictionary["message"] = u''
+
         return info_dictionary
 
 
@@ -338,11 +342,8 @@ class RuleDispatcher(MessageHandler):
                 insert_event, info_dictionary
             )
 
-        def commit(res):
-            transaction.commit()
-            return res
-        d.addCallback(commit)
         d.addCallback(self._do_correl, previous_state, info_dictionary, ctx)
+        d.addCallback(self._commit)
 
         def no_problem(fail):
             """
@@ -354,6 +355,9 @@ class RuleDispatcher(MessageHandler):
         d.addErrback(no_problem)
         return d
 
+    def _commit(self, res):
+        transaction.commit()
+        return res
 
     def _do_correl(self, raw_event_id, previous_state, info_dictionary, ctx):
         LOGGER.debug(_('Actual correlation'))
