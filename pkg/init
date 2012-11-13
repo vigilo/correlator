@@ -68,7 +68,7 @@ start() {
                 RETVAL=1
                 break
             fi
-            let "i += 1"
+            i=$(($i + 1))
             echo -n "."
         done
         [ $RETVAL -eq 0 ] && success || failure
