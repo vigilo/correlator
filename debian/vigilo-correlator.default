@@ -1,0 +1,16 @@
+# Configuration du script de démarrage pour vigilo-correlator
+
+# Options du correlator: voir la commande :
+# vigilo-correlator vigilo-correlator --help
+#OPTIONS=""
+
+# options twistd(1)
+#TWISTD_OPTIONS=""
+
+# Utilisateur système pour le corrélateur
+#USER="vigilo-correlator"
+
+# Remplacer par "true" pour que le corrélateur
+# soit lancé automatiquement au démarrage.
+START="false"
+
