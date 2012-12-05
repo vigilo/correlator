@@ -12,7 +12,7 @@ d'émettre de nouveaux messages XML à destination du bus (par exemple,
 des commandes pour Nagios).
 """
 
-import time
+import time, itertools
 from datetime import datetime
 
 try:
@@ -536,12 +536,22 @@ class RuleDispatcher(MessageHandler):
             p_stats_d.addCallback(update)
             return p_stats_d
         def add_exec_stats(stats):
-            rule_stats = self._executor.getStats()
+            # En cas d'absence de messages durant la dernière minute,
+            # le temps d'exécution de chacune des règles est de 0.0 seconde.
+            rule_stats = dict(zip(
+                ["rule-%s" % rule for rule in
+                 registry.get_registry().rules.keys()],
+                itertools.repeat(0.0)
+            ))
+            # On met à jour le dictionnaire avec les vraies stats d'exécution.
+            rule_stats.update(self._executor.getStats())
             stats.update(rule_stats)
             if self._correl_times:
                 stats["rule-total"] = round(sum(self._correl_times) /
                                             len(self._correl_times), 5)
                 self._correl_times = []
+            else:
+                stats["rule-total"] = 0.0
             return stats
         d = super(RuleDispatcher, self).getStats()
         d.addCallback(add_publisher_stats)
