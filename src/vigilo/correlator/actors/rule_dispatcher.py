@@ -57,7 +57,8 @@ class RuleDispatcher(MessageHandler):
 
 
     def __init__(self, database, nagios_hls_host, timeout, min_runner,
-                 max_runner, max_idle):
+                 max_runner, max_idle, instance):
+        self.instance = instance
         super(RuleDispatcher, self).__init__()
         self.tree_end = None
         self._database = database
@@ -130,7 +131,7 @@ class RuleDispatcher(MessageHandler):
         if msgid is None:
             LOGGER.error(_("Received invalid item ID (None)"))
             return defer.succeed(None)
-        content["id"] = msgid
+        content["id"] = "%s.%s" % (msgid, self.instance)
         d = defer.maybeDeferred(self.processMessage, content)
         d.addCallbacks(self.processingSucceeded, self.processingFailed,
                        callbackArgs=(msg, ))
@@ -580,13 +581,16 @@ def ruledispatcher_factory(settings, database, client):
     min_runner = settings['correlator'].as_int('min_rule_runners')
     max_runner = settings['correlator'].as_int('max_rule_runners')
 
+    # Identifiant (supposé) unique de l'instance.
+    instance = settings['instance']
+
     try:
         max_idle = settings['correlator'].as_int('rule_runners_max_idle')
     except KeyError:
         max_idle = 20
 
     msg_handler = RuleDispatcher(database, nagios_hls_host, timeout,
-                                 min_runner, max_runner, max_idle)
+                                 min_runner, max_runner, max_idle, instance)
     msg_handler.check_database_connectivity()
     msg_handler.setClient(client)
     subs = parseSubscriptions(settings)

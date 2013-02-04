@@ -53,7 +53,7 @@ start() {
         TWISTD_OPTIONS="$TWISTD_OPTIONS --logfile /dev/null"
         OUTPUT=">/dev/null 2>&1"
     fi
-    [ -n "$NUM" ] && CONFIG="--config /etc/vigilo/correlator/settings-${NUM}.ini"
+    [ -n "$NUM" ] && CONFIG="--config /etc/vigilo/correlator/settings-${NUM}.ini --id ${NUM}"
 
     echo -n "Starting ${NAME}${NUM}: "
     su -s /bin/bash - $USER -c "$DAEMON --pidfile $PID_FILE $TWISTD_OPTIONS $TAPNAME $CONFIG $OPTIONS $OUTPUT"
