@@ -117,6 +117,12 @@ svc_on_host_down = vigilo.correlator.rules.svc_on_host_down:SvcHostDown
 [publications]
 # Types de messages et le nom de l'exchange à utiliser pour leur publication.
 # Par défaut, un exchange du même nom que le type est utilisé.
+# Les entrées dans cette section sont de la forme :
+#     test = foo[:1200]
+#     Pour le type de message "test" le message sera publié sur l'exchange foo
+#     et aura une durée de vie de 1200 secondes.
+#     Note : le paramètre durée de vie est optionnel.
+#----------------------------------------------------
 event = correlation
 aggr = correlation
 delaggr = correlation

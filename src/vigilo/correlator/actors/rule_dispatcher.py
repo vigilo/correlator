@@ -31,7 +31,7 @@ from vigilo.common.gettext import translate
 
 from vigilo.models.tables import SupItem, Version
 
-from vigilo.connector.options import parseSubscriptions
+from vigilo.connector.options import parseSubscriptions, parsePublications
 from vigilo.connector.handlers import MessageHandler
 from vigilo.correlator.correvent import CorrEventBuilder
 from vigilo.correlator.publish_messages import MessagePublisher
@@ -594,10 +594,12 @@ def ruledispatcher_factory(settings, database, client):
     msg_handler.check_database_connectivity()
     msg_handler.setClient(client)
     subs = parseSubscriptions(settings)
-    msg_handler.subscribe(settings["bus"]["queue"], subs)
+    queue = settings["bus"]["queue"]
+    queue_message_ttl = int(settings['bus'].get('queue_messages_ttl', 0))
+    msg_handler.subscribe(queue, queue_message_ttl, subs)
 
     # Expéditeur de messages
-    publications = settings.get('publications', {}).copy()
+    publications = parsePublications(settings.get('publications', {}).copy())
     publisher = MessagePublisher(nagios_hls_host, publications)
     publisher.setClient(client)
     msg_handler.bus_publisher = publisher
