@@ -51,30 +51,30 @@ class RegistryDict(object):
         """
 
         if not isinstance(item, Named):
-            raise TypeError
+            raise TypeError()
         if not isinstance(item, self.__pytype):
-            raise TypeError
+            raise TypeError()
 
         if item.name in self.__dict:
-            LOGGER.info(_(u'Rule %(name)s (%(class)s) has already been '
+            LOGGER.info(_('Rule %(name)s (%(class)s) has already been '
                            'registered, ignoring attempt to re-register it.'),
                         {"name": item.confkey, "class": item.__class__})
             return
 
         self.__graph.add_node(item.name)
-
         for dep in item.depends:
-            if dep not in self.__dict:
-                LOGGER.error(_(u'The rule %(depended)r must be loaded '
-                                'before %(dependent)r.') % {
-                                    'dependent': item.name,
-                                    'depended': dep,
+            if self.__graph.has_node(dep):
+                path = networkx.shortest_path(self.__graph, dep, item.name)
+                if path:
+                    path.append(path[0])
+                    LOGGER.error(_('Cyclic dependencies found: %(path)s') % {
+                                    'path': " -> ".join(path),
                                 })
-                raise RuntimeError()
+                    raise RuntimeError()
             self.__graph.add_edge(item.name, dep)
 
         self.__dict[item.name] = item
-        LOGGER.debug(_(u'Successfully registered rule %r'), item.name)
+        LOGGER.debug(_('Successfully registered rule %r'), item.name)
 
     def clear(self):
         """Supprime toutes les règles actuellement enregistrées."""
@@ -139,8 +139,8 @@ class Registry(object):
     def __new__(cls):
         """Constructeur des instances de registres."""
         if hasattr(cls, '_global_instance'):
-            LOGGER.warning(_(u'Singleton has already been instanciated, '
-                            'ignoring attempt to create a new instance.'))
+            LOGGER.warning(_('Singleton has already been instanciated, '
+                             'ignoring attempt to create a new instance.'))
             return cls._global_instance
 
         inst = super(Registry, cls).__new__(cls)
@@ -166,6 +166,7 @@ class Registry(object):
         """Initialise le registre."""
         self.__rules = RegistryDict(Rule)
         self._load_from_settings()
+        self.check_dependencies()
 
     def _load_from_settings(self):
         """Charge le registre depuis le fichier de settings"""
@@ -195,6 +196,24 @@ class Registry(object):
             self.rules.register(rule(confkey=rule_name))
 
         del sys.path[-1]
+
+    def check_dependencies(self):
+        """
+        Vérifie que les dépendances des règles sont bien respectées.
+
+        Lève une RuntimeException si ce n'est pas le cas.
+        """
+        graph = self.__rules.rules_graph
+        diff = set(graph.nodes()) - set(self.__rules.keys())
+        for dependency in diff:
+            for rule in graph.predecessors(dependency):
+                LOGGER.error(_( 'The rule "%(rule)s" depends on the rule '
+                                '"%(dependency)s", which has not been '
+                                'loaded.') % {
+                                    'rule': rule,
+                                    'dependency': dependency,
+                                })
+            raise RuntimeError()
 
     @property
     def rules(self):

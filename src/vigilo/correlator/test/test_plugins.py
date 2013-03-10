@@ -28,8 +28,15 @@ class TestRuleWithNoDependencies(Rule):
 class TestRuleWithDependency(Rule):
     depends = ["TestRuleWithNoDependencies", ]
 
+class TestRuleWithCyclicDependency1(Rule):
+    depends = ["TestRuleWithCyclicDependency2"]
+
+class TestRuleWithCyclicDependency2(Rule):
+    depends = ["TestRuleWithCyclicDependency1"]
+
 class TestRule1(Rule):
     pass
+
 class TestRule2(Rule):
     pass
 
@@ -44,23 +51,42 @@ class TestRuleLoading(unittest.TestCase):
         settings.load_file('settings_tests.ini')
 
     def test_rules_loading(self):
-        """Chargement des règles de corrélation avec dépendances."""
+        """Chargement des règles de corrélation dans le désordre."""
         registry = get_registry()
+        # On charge volontairement la règle ayant une dépendance
+        # avant sa dépendance, pour vérifier que le corrélateur est
+        # capable de gérer le chargement dans n'importe quel ordre.
         rules = [
-            TestRuleWithNoDependencies,
             TestRuleWithDependency,
+            TestRuleWithNoDependencies,
         ]
 
         for rule in rules:
             registry.rules.register(rule())
-            self.assertEquals(registry.rules.lookup(
-                rule.__name__).name, rule.__name__)
+        # Validation des dépendances.
+        registry.check_dependencies()
 
-    def test_check_rule_loading_failure(self):
-        """Échec du chargement d'une règle à cause d'une dépendance."""
+        # On vérifie que toutes les règles demandées
+        # ont bien pu être chargées.
+        for rule in rules:
+            self.assertEquals(
+                registry.rules.lookup(rule.__name__).name,
+                rule.__name__
+            )
+
+    def test_missing_rule_dependency(self):
+        """Échec du chargement à cause d'une dépendance manquante."""
         settings.reset()
+        get_registry().rules.register(TestRuleWithDependency())
+        self.assertRaises(RuntimeError, get_registry().check_dependencies)
+
+    def test_cyclic_dependencies(self):
+        """Échec du chargement à cause d'une dépendance circulaire."""
+        settings.reset()
+        # La 1è règle dépend de la 2nde et vice-versa.
+        get_registry().rules.register(TestRuleWithCyclicDependency1())
         self.assertRaises(RuntimeError, get_registry().rules.register,
-            TestRuleWithDependency())
+                          TestRuleWithCyclicDependency2())
 
     def test_rule_confkey(self):
         """

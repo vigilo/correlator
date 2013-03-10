@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2012-01-06 11:55+0100\n"
+"PO-Revision-Date: 2013-03-12 10:20+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.4\n"
 
-#: src/twisted/plugins/vigilo_correlator.py:34
+#: src/vigilo/correlator/__init__.py:33
 msgid "The topology has been reloaded."
 msgstr "L'arbre topologique a été reconstruit."
 
-#: src/twisted/plugins/vigilo_correlator.py:51
+#: src/vigilo/correlator/__init__.py:53
 msgid ""
 "Could not set signal handlers. The correlator may not be able to shutdown"
 " cleanly"
@@ -30,7 +30,7 @@ msgstr ""
 "Impossible d'installer le gestionnaire de signaux. Le corrélateur risque "
 "de ne pas pouvoir être arrêté proprement"
 
-#: src/vigilo/correlator/correvent.py:84
+#: src/vigilo/correlator/correvent.py:93
 #, python-format
 msgid ""
 "Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
@@ -39,7 +39,7 @@ msgstr ""
 "Événement #%(idevent)d sur (%(host)r, %(service)r) ignoré à la demande "
 "des règles de corrélation"
 
-#: src/vigilo/correlator/correvent.py:148
+#: src/vigilo/correlator/correvent.py:156
 #, python-format
 msgid ""
 "Ignoring request to update correlated event %r: a more recent update "
@@ -48,51 +48,53 @@ msgstr ""
 "Demande de mise à jour de l'événement corrélé %r ignorée : une mise à "
 "jour plus récente existe déjà dans la base de données"
 
-#: src/vigilo/correlator/correvent.py:153
+#: src/vigilo/correlator/correvent.py:161
 #, python-format
 msgid "Updating existing correlated event (%r)"
 msgstr "Mise à jour d'un événement corrélé existant (%r)"
 
-#: src/vigilo/correlator/correvent.py:156
+#: src/vigilo/correlator/correvent.py:164
 #, python-format
 msgid "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr ""
 "L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à \"\n"
 "\"la BDD."
 
-#: src/vigilo/correlator/correvent.py:167
+#: src/vigilo/correlator/correvent.py:174
 #, python-format
 msgid "Raw event ignored. Reason: status = %r"
 msgstr "Événement brut ignoré. Raison : statut = %r"
 
-#: src/vigilo/correlator/correvent.py:195
+#: src/vigilo/correlator/correvent.py:202
 #, python-format
 msgid ""
 "Got a reference to a nonexistent correlated event (%r), skipping this "
 "aggregate"
 msgstr "L'événement corrélé référencé (%r) n'existe pas, l'agrégat est ignoré."
 
-#: src/vigilo/correlator/correvent.py:247
+#: src/vigilo/correlator/correvent.py:253
 msgid "Creating a new correlated event"
 msgstr "Création d'un nouvel événement corrélé"
 
-#: src/vigilo/correlator/correvent.py:366
+#: src/vigilo/correlator/correvent.py:386
 #, python-format
-msgid "Creating new aggregate with cause #%(cause)d from aggregate #%(original)d"
+msgid ""
+"Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
+"aggregate #%(original)d"
 msgstr ""
-"Création d'un nouvel agrégat avec la cause #%(cause)d à partir de "
-"l'agrégat #%(original)d"
+"Création d'un nouvel agrégat avec la cause #%(cause)d (#%(supitem)d) à "
+"partir de l'agrégat #%(original)d"
 
-#: src/vigilo/correlator/correvent.py:451
+#: src/vigilo/correlator/correvent.py:505
 msgid "Sending the correlated event to syslog"
 msgstr "Envoi de l'événement corrélé vers les journaux système"
 
-#: src/vigilo/correlator/db_insertion.py:58
+#: src/vigilo/correlator/db_insertion.py:57
 #, python-format
 msgid "Received request to add an event on HLS \"%s\""
 msgstr "Réception d'une requête demandant l'ajout d'un événement sur le SHN \"%s\""
 
-#: src/vigilo/correlator/db_insertion.py:63
+#: src/vigilo/correlator/db_insertion.py:62
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -101,7 +103,7 @@ msgstr ""
 "L'item référencé (%(host)r, %(service)r) n'existe pas, l'événement est "
 "ignoré"
 
-#: src/vigilo/correlator/db_insertion.py:117
+#: src/vigilo/correlator/db_insertion.py:113
 #, python-format
 msgid ""
 "Ignoring request to create a new event with state \"%s\" (nothing "
@@ -110,25 +112,25 @@ msgstr ""
 "Demande de création d'un nouvel événement avec l'état \"%s\" ignorée "
 "(rien d'alarmant)"
 
-#: src/vigilo/correlator/db_insertion.py:124
+#: src/vigilo/correlator/db_insertion.py:120
 msgid "Creating new event"
 msgstr "Création d'un nouvel événement"
 
-#: src/vigilo/correlator/db_insertion.py:129
+#: src/vigilo/correlator/db_insertion.py:125
 msgid "Multiple raw events found, using the first one available."
 msgstr "Plusieurs événements bruts trouvés, le premier sera utilisé."
 
-#: src/vigilo/correlator/db_insertion.py:134
+#: src/vigilo/correlator/db_insertion.py:130
 #, python-format
 msgid "Updating event %r"
 msgstr "Mise à jour de l'événement %r"
 
-#: src/vigilo/correlator/db_insertion.py:190
+#: src/vigilo/correlator/db_insertion.py:189
 #, python-format
 msgid "Got a reference to a non configured high-level service (%(service)r)"
 msgstr "Le service de haut niveau référencé (%(service)r) n'existe pas"
 
-#: src/vigilo/correlator/db_insertion.py:217
+#: src/vigilo/correlator/db_insertion.py:216
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -137,14 +139,14 @@ msgstr ""
 "L'élément référencé (%(host)r, %(service)r) n'existe pas, l'état est "
 "ignoré"
 
-#: src/vigilo/correlator/db_insertion.py:293
+#: src/vigilo/correlator/db_insertion.py:292
 #, python-format
 msgid "Adding event #%(event)d (supitem #%(supitem)d) to aggregate #%(aggregate)d"
 msgstr ""
 "Ajout de l'événement #%(event)d (élément supervisé #%(supitem)d) à "
 "l'agrégat #%(aggregate)d"
 
-#: src/vigilo/correlator/db_insertion.py:309
+#: src/vigilo/correlator/db_insertion.py:308
 #, python-format
 msgid ""
 "Event #%(event)d already belongs to aggregate #%(aggregate)d, refusing to"
@@ -153,17 +155,17 @@ msgstr ""
 "L'événement #%(event)d appartient déjà à l'agrégat #%(aggregate)d. Il ne "
 "sera pas ajouté une seconde fois"
 
-#: src/vigilo/correlator/db_insertion.py:342
+#: src/vigilo/correlator/db_insertion.py:359
 #, python-format
 msgid "Merging aggregate #%(src)d into aggregate #%(dest)d"
 msgstr "Fusion de l'agrégat #%(src)d dans l'agrégat #%(dest)d"
 
-#: src/vigilo/correlator/db_insertion.py:412
-#: src/vigilo/correlator/db_insertion.py:417
+#: src/vigilo/correlator/db_insertion.py:429
+#: src/vigilo/correlator/db_insertion.py:434
 msgid "Got a reference to a nonexistent aggregate, aborting"
 msgstr "L'agrégat référencé n'existe pas, abandon"
 
-#: src/vigilo/correlator/db_insertion.py:429
+#: src/vigilo/correlator/db_insertion.py:446
 #, python-format
 msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
@@ -214,41 +216,41 @@ msgstr ""
 msgid "handle_ticket: Event %r history updated successfully."
 msgstr "handle_ticket: L'historique de l'évenement %r a bien été mis à jour"
 
-#: src/vigilo/correlator/memcached_connection.py:62
+#: src/vigilo/correlator/memcached_connection.py:65
 #, python-format
 msgid "Connected to memcached (%s)"
 msgstr "Connecté à memcached (%s)"
 
-#: src/vigilo/correlator/memcached_connection.py:79
+#: src/vigilo/correlator/memcached_connection.py:82
 #, python-format
 msgid "Connecting to memcached server (%s)..."
 msgstr "Connexion au serveur memcached (%s) ..."
 
-#: src/vigilo/correlator/memcached_connection.py:88
+#: src/vigilo/correlator/memcached_connection.py:91
 #, python-format
 msgid "Connection to memcached (%(conn)s) lost: %(reason)s"
 msgstr "Connexion à memcached (%(conn)s) perdue : %(reason)s"
 
-#: src/vigilo/correlator/memcached_connection.py:101
+#: src/vigilo/correlator/memcached_connection.py:104
 #, python-format
 msgid "Connection to memcached (%(conn)s) failed: %(reason)s"
 msgstr "Échec de la connexion à memcached (%(conn)s) : %(reason)s"
 
-#: src/vigilo/correlator/memcached_connection.py:231
+#: src/vigilo/correlator/memcached_connection.py:242
 #, python-format
 msgid "Trying to set value '%(value)s' for key '%(key)s' (transaction=%(txn)r)."
 msgstr ""
 "Tentative d'affectation de la valeur '%(value)s' à la clé '%(key)s' "
 "(transaction=%(txn)r)."
 
-#: src/vigilo/correlator/memcached_connection.py:274
+#: src/vigilo/correlator/memcached_connection.py:285
 #, python-format
 msgid "Trying to get the value of the key '%(key)s' (transaction=%(txn)r)."
 msgstr ""
 "Tentative de récupération de la valeur de la clé '%(key)s' "
 "(transaction=%(txn)r)."
 
-#: src/vigilo/correlator/memcached_connection.py:307
+#: src/vigilo/correlator/memcached_connection.py:318
 #, python-format
 msgid "Trying to delete the key '%(key)s' (transaction=%(txn)r)."
 msgstr "Tentative de suppression de la clé '%(key)s' (transaction=%(txn)r)."
@@ -262,10 +264,10 @@ msgstr ""
 "La règle %(name)s (%(class)s) a déjà été enregistrée, tentative de "
 "ré-enregistrement ignorée."
 
-#: src/vigilo/correlator/registry.py:68
+#: src/vigilo/correlator/registry.py:70
 #, python-format
-msgid "The rule %(depended)r must be loaded before %(dependent)r."
-msgstr "La règle %(depended)r doit être chargée avant  %(dependent)r."
+msgid "Cyclic dependencies found: %(path)s"
+msgstr "Dépendances cycliques détectées : %(path)s"
 
 #: src/vigilo/correlator/registry.py:77
 #, python-format
@@ -280,49 +282,53 @@ msgstr ""
 "Le singleton a déjà été instancié, demande de création d'une nouvelle "
 "instance ignorée."
 
-#: src/vigilo/correlator/registry.py:183
+#: src/vigilo/correlator/registry.py:186
 #, python-format
 msgid "Not a valid rule name \"%s\""
 msgstr "Nom de règle non valide \"%s\""
 
-#: src/vigilo/correlator/registry.py:189
+#: src/vigilo/correlator/registry.py:192
 #, python-format
 msgid "Unable to load rule \"%(name)s\" (%(class)s)"
 msgstr "Impossible de charger la règle \"%(name)s\" (%(class)s)"
 
-#: src/vigilo/correlator/actors/executor.py:85
+#: src/vigilo/correlator/registry.py:210
+#, python-format
+msgid ""
+"The rule \"%(rule)s\" depends on the rule \"%(dependency)s\", which has "
+"not been loaded."
+msgstr ""
+"La règle \"%(rule)s\" dépend de la règle \"%(dependency)s\" qui n'a pas "
+"été chargée."
+
+#: src/vigilo/correlator/actors/executor.py:87
 #, python-format
 msgid "Rule %(rule_name)s timed out"
 msgstr "La règle %(rule_name)s a dépassé le délai d'exécution"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:142
+#: src/vigilo/correlator/actors/rule_dispatcher.py:94
 #, python-format
 msgid "Unable to contact the database: %s"
 msgstr "Impossible de contacter la base de données : %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:187
-#, python-format
-msgid "Skipping unrecognized item (%s)"
-msgstr "Élément non-reconnu ignoré (%s)"
+#: src/vigilo/correlator/actors/rule_dispatcher.py:132
+msgid "Received invalid item ID (None)"
+msgstr "Réception d'un ID non valide (None)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:193
+#: src/vigilo/correlator/actors/rule_dispatcher.py:145
 #, python-format
 msgid "Unexpected error: %s"
 msgstr "Erreur inattendue : %s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:218
-msgid "Received invalid XMPP item ID (None)"
-msgstr "Réception d'un ID XMPP non valide (None)"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:232
+#: src/vigilo/correlator/actors/rule_dispatcher.py:168
 msgid "Error while modifying the ticket"
 msgstr "Erreur lors de la modification du ticket"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:244
+#: src/vigilo/correlator/actors/rule_dispatcher.py:180
 msgid "Error while retrieving supervised item ID"
 msgstr "Erreur lors de la récupération de l'ID de l'élément supervisé"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:260
+#: src/vigilo/correlator/actors/rule_dispatcher.py:193
 msgid ""
 "The rule "
 "'vigilo.correlator_enterprise.rules.hls_deps:HighLevelServiceDepsRule' "
@@ -332,8 +338,8 @@ msgstr ""
 "'vigilo.correlator_enterprise.rules.hls_deps:HighLevelServiceDepsRule' "
 "doit être chargée pour traiter correctement les ordres de calcul."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:270
-#: src/vigilo/correlator/actors/rule_dispatcher.py:325
+#: src/vigilo/correlator/actors/rule_dispatcher.py:203
+#: src/vigilo/correlator/actors/rule_dispatcher.py:289
 msgid ""
 "The connection to memcached timed out. The message will be handled once "
 "more."
@@ -341,44 +347,44 @@ msgstr ""
 "Délai d'attente dépassé de la connexion à memcached. \"\n"
 "\"Le message sera traité à nouveau."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:345
+#: src/vigilo/correlator/actors/rule_dispatcher.py:310
 msgid "Inserting state"
 msgstr "Insertion de l'état"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:347
+#: src/vigilo/correlator/actors/rule_dispatcher.py:312
 msgid "Error while saving state"
 msgstr "Erreur lors de la sauvegarde de l'état"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:366
+#: src/vigilo/correlator/actors/rule_dispatcher.py:332
 msgid "Inserting an entry in the HLS history"
 msgstr "Ajout d'une entrée dans l'historique des SHN"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:368
+#: src/vigilo/correlator/actors/rule_dispatcher.py:334
 msgid "Error while adding an entry in the HLS history"
 msgstr "Erreur à l'ajout d'une entrée dans l'historique des SHN"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:373
+#: src/vigilo/correlator/actors/rule_dispatcher.py:339
 msgid "Inserting an entry in the history"
 msgstr "Ajout d'une entrée dans l'historique"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:375
+#: src/vigilo/correlator/actors/rule_dispatcher.py:341
 msgid "Error while adding an entry in the history"
 msgstr "Erreur à l'ajout d'une entrée dans l'historique"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:402
+#: src/vigilo/correlator/actors/rule_dispatcher.py:364
 msgid "Actual correlation"
 msgstr "Lancement de la corrélation"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:438
+#: src/vigilo/correlator/actors/rule_dispatcher.py:398
 #, python-format
 msgid "Correlation process ended (%.4fs)"
 msgstr "Le processus de corrélation se termine (%.4fs)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:458
+#: src/vigilo/correlator/actors/rule_dispatcher.py:416
 msgid "Handling correlation results"
 msgstr "Traitement des résultats de la corrélation"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:487
+#: src/vigilo/correlator/actors/rule_dispatcher.py:435
 #, python-format
 msgid ""
 "Error while saving the correlated event (%s). The message will be handled"
@@ -387,12 +393,12 @@ msgstr ""
 "Erreur lors de l'enregistrement de l'événement corrélé (%s). \"\n"
 "\"Le message sera traité à nouveau."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:518
+#: src/vigilo/correlator/actors/rule_dispatcher.py:464
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr "La corrélation a échoué pour le message #%(id)s (%(payload)s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:539
+#: src/vigilo/correlator/actors/rule_dispatcher.py:484
 #, python-format
 msgid ""
 "Unable to store correlated alert for message #%(id)s (%(payload)s) : "
@@ -401,16 +407,12 @@ msgstr ""
 "Impossible de sauvegarder l'alerte corrélée pour le message #%(id)s "
 "(%(payload)s) : %(error)s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:563
-msgid "Connection lost, stopping rule runners pool"
-msgstr "Connexion perdue; arrêt des exécuteurs de règles"
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:603
+#: src/vigilo/correlator/actors/rule_dispatcher.py:517
 #, python-format
 msgid "%s. The message will be handled once more."
 msgstr "%s. Le message sera traité à nouveau."
 
-#: src/vigilo/correlator/actors/rule_runner.py:41
+#: src/vigilo/correlator/actors/rule_runner.py:42
 #, python-format
 msgid ""
 "Got an exception while running rule \"%(rule)s\". Running the correlator "
@@ -421,27 +423,26 @@ msgstr ""
 "corrélateur au premier plan (service vigilo-correlator debug) peut aider "
 "à la résolution du problème (%(error)s)"
 
-#: src/vigilo/correlator/rules/example.py:36
+#: src/vigilo/correlator/rules/example.py:37
 #, python-format
 msgid "id %(id)s payload %(payload)s"
 msgstr "id %(id)s message %(payload)s"
 
-#: src/vigilo/correlator/rules/svc_on_host_down.py:58
+#: src/vigilo/correlator/rules/svc_on_host_down.py:48
 msgid "Host is down"
 msgstr "L'hôte est DOWN"
 
-#: src/vigilo/correlator/rules/svc_on_host_down.py:60
+#: src/vigilo/correlator/rules/svc_on_host_down.py:50
 #, python-format
 msgid "Setting %d services to UNKNOWN"
 msgstr "Passage de %d services à l'état UNKNOWN"
 
-#: src/vigilo/correlator/rules/svc_on_host_down.py:125
+#: src/vigilo/correlator/rules/svc_on_host_down.py:117
 #, python-format
 msgid "Unsupported transition: %(from)s -> %(to)s"
 msgstr "Transition non supportée : %(from)s -> %(to)s"
 
-#: src/vigilo/correlator/rules/svc_on_host_down.py:135
+#: src/vigilo/correlator/rules/svc_on_host_down.py:127
 #, python-format
 msgid "Asking Nagios for updates on %d services"
 msgstr "Demande de mise à jour de Nagios concernant %d services"
-
