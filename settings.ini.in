@@ -109,9 +109,10 @@ svc_on_host_down = vigilo.correlator.rules.svc_on_host_down:SvcHostDown
 # configuré dans VigiConf.
 #status_service = vigilo-correlator
 
-# L'exchange à utiliser pour les messages d'état du connecteur.
-# Par défaut, la section [publications] est utilisée.
-#status_exchange = connectors-status
+# Ces paramètres permettent de surcharger les valeurs présentes dans la
+# section [publications] pour les messages d'auto-supervision du connecteur.
+#self_monitoring_nagios_exchange = nagios
+#self_monitoring_perf_exchange = perf
 
 
 [publications]
