@@ -403,7 +403,8 @@ def merge_aggregates(sourceaggregateid, destinationaggregateid, database, ctx):
                 EventsAggregate
             ).filter(EventsAggregate.idcorrevent == sourceaggregateid
             ).filter(not_(EventsAggregate.idevent.in_(sub_select))
-            ).update({"idcorrevent": destinationaggregateid})
+            ).update({"idcorrevent": destinationaggregateid},
+                     synchronize_session='fetch')
         DBSession.flush()
 
     def _delete(_result):
