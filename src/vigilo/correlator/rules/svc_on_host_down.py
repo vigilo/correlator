@@ -109,9 +109,9 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
         if statename == previous_statename:
             return # Pas de changement
 
-        if previous_statename == "UP" and statename == "DOWN":
+        if previous_statename == "UP" and statename in ("DOWN", "UNREACHABLE"):
             link.registerCallback(fn=on_host_down, idnt=msg_id)
-        elif previous_statename == "DOWN" and statename == "UP":
+        elif previous_statename in ("DOWN", "UNREACHABLE") and statename == "UP":
             self._on_host_up(hostname, link)
         else:
             LOGGER.info(_("Unsupported transition: %(from)s -> %(to)s"),
