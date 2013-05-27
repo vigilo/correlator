@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2013-03-12 10:20+0100\n"
+"PO-Revision-Date: 2013-05-28 12:56+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -160,12 +160,12 @@ msgstr ""
 msgid "Merging aggregate #%(src)d into aggregate #%(dest)d"
 msgstr "Fusion de l'agrégat #%(src)d dans l'agrégat #%(dest)d"
 
-#: src/vigilo/correlator/db_insertion.py:429
-#: src/vigilo/correlator/db_insertion.py:434
+#: src/vigilo/correlator/db_insertion.py:430
+#: src/vigilo/correlator/db_insertion.py:435
 msgid "Got a reference to a nonexistent aggregate, aborting"
 msgstr "L'agrégat référencé n'existe pas, abandon"
 
-#: src/vigilo/correlator/db_insertion.py:446
+#: src/vigilo/correlator/db_insertion.py:447
 #, python-format
 msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
@@ -375,16 +375,21 @@ msgstr "Erreur à l'ajout d'une entrée dans l'historique"
 msgid "Actual correlation"
 msgstr "Lancement de la corrélation"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:398
+#: src/vigilo/correlator/actors/rule_dispatcher.py:366
+#, python-format
+msgid "Received inconsitent raw_event_id for event: %s"
+msgstr "Réception d'un raw_event_if incohérent pour l'évenement : %s"
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:401
 #, python-format
 msgid "Correlation process ended (%.4fs)"
 msgstr "Le processus de corrélation se termine (%.4fs)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:416
+#: src/vigilo/correlator/actors/rule_dispatcher.py:419
 msgid "Handling correlation results"
 msgstr "Traitement des résultats de la corrélation"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:435
+#: src/vigilo/correlator/actors/rule_dispatcher.py:438
 #, python-format
 msgid ""
 "Error while saving the correlated event (%s). The message will be handled"
@@ -393,12 +398,12 @@ msgstr ""
 "Erreur lors de l'enregistrement de l'événement corrélé (%s). \"\n"
 "\"Le message sera traité à nouveau."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:464
+#: src/vigilo/correlator/actors/rule_dispatcher.py:467
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr "La corrélation a échoué pour le message #%(id)s (%(payload)s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:484
+#: src/vigilo/correlator/actors/rule_dispatcher.py:487
 #, python-format
 msgid ""
 "Unable to store correlated alert for message #%(id)s (%(payload)s) : "
@@ -407,7 +412,7 @@ msgstr ""
 "Impossible de sauvegarder l'alerte corrélée pour le message #%(id)s "
 "(%(payload)s) : %(error)s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:517
+#: src/vigilo/correlator/actors/rule_dispatcher.py:520
 #, python-format
 msgid "%s. The message will be handled once more."
 msgstr "%s. Le message sera traité à nouveau."
@@ -446,3 +451,4 @@ msgstr "Transition non supportée : %(from)s -> %(to)s"
 #, python-format
 msgid "Asking Nagios for updates on %d services"
 msgstr "Demande de mise à jour de Nagios concernant %d services"
+

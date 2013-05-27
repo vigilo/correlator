@@ -362,6 +362,9 @@ class RuleDispatcher(MessageHandler):
 
     def _do_correl(self, raw_event_id, previous_state, info_dictionary, ctx):
         LOGGER.debug(_('Actual correlation'))
+        if raw_event_id is None:
+            LOGGER.error(_('Received inconsitent raw_event_id for event: %s') % info_dictionary)
+            return defer.succeed(None)
 
         d = defer.Deferred()
         d.addCallback(lambda _result: ctx.set('payload', info_dictionary))
@@ -517,6 +520,8 @@ class RuleDispatcher(MessageHandler):
                 LOGGER.info(_('%s. The message will be handled once more.'),
                     error_desc)
                 return failure
+            if failure.check(NoProblemException):
+                raise NoProblemException()
             LOGGER.warning(failure.getErrorMessage())
             return None
 

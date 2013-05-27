@@ -7,9 +7,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: vigilo-correlator 3.0.1\n"
+"Project-Id-Version: vigilo-correlator 3.2\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2013-03-12 10:20+0100\n"
+"POT-Creation-Date: 2013-05-28 12:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -140,12 +140,12 @@ msgstr ""
 msgid "Merging aggregate #%(src)d into aggregate #%(dest)d"
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:429
-#: src/vigilo/correlator/db_insertion.py:434
+#: src/vigilo/correlator/db_insertion.py:430
+#: src/vigilo/correlator/db_insertion.py:435
 msgid "Got a reference to a nonexistent aggregate, aborting"
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:446
+#: src/vigilo/correlator/db_insertion.py:447
 #, python-format
 msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
@@ -329,33 +329,38 @@ msgstr ""
 msgid "Actual correlation"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:398
+#: src/vigilo/correlator/actors/rule_dispatcher.py:366
+#, python-format
+msgid "Received inconsitent raw_event_id for event: %s"
+msgstr ""
+
+#: src/vigilo/correlator/actors/rule_dispatcher.py:401
 #, python-format
 msgid "Correlation process ended (%.4fs)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:416
+#: src/vigilo/correlator/actors/rule_dispatcher.py:419
 msgid "Handling correlation results"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:435
+#: src/vigilo/correlator/actors/rule_dispatcher.py:438
 #, python-format
 msgid ""
 "Error while saving the correlated event (%s). The message will be handled "
 "once more."
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:464
+#: src/vigilo/correlator/actors/rule_dispatcher.py:467
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:484
+#: src/vigilo/correlator/actors/rule_dispatcher.py:487
 #, python-format
 msgid "Unable to store correlated alert for message #%(id)s (%(payload)s) : %(error)s"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:517
+#: src/vigilo/correlator/actors/rule_dispatcher.py:520
 #, python-format
 msgid "%s. The message will be handled once more."
 msgstr ""
