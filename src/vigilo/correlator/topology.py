@@ -170,6 +170,7 @@ def get_open_aggregate(ctx, database, item_id):
     res = ctx.getShared('open_aggr:%d' % item_id)
 
     def _fetch_db(result):
+        LOGGER.debug('Open aggregate for item #%d: %r', item_id, result)
         # Si l'info se trouvait dans le cache,
         # on utilise cette valeur là.
         if result is not None:

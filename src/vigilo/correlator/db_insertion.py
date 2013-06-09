@@ -299,12 +299,12 @@ def add_to_aggregate(idevent, idcorrevent, database, ctx, idsupitem, merging):
         DBSession.add(EventsAggregate(idevent=idevent, idcorrevent=idcorrevent))
         DBSession.flush()
 
-    def _add_if_absent(entry):
+    def _add_if_absent(has_entry):
         """
         Ajoute l'association entre l'événement brut et l'événement corrélé
         si aucune association de ce type n'existe pour le moment.
         """
-        if entry:
+        if has_entry:
             LOGGER.debug(_('Event #%(event)d already belongs to aggregate '
                             '#%(aggregate)d, refusing to add it twice'), {
                             'event': idevent,

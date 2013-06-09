@@ -57,8 +57,8 @@ msgstr "Mise à jour d'un événement corrélé existant (%r)"
 #, python-format
 msgid "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr ""
-"L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à \"\n"
-"\"la BDD."
+"L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à "
+"la BDD."
 
 #: src/vigilo/correlator/correvent.py:174
 #, python-format
@@ -171,8 +171,8 @@ msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
 "#%(aggregate)d"
 msgstr ""
-"Ajout de l'événement #%(event)d (élément supervisé #%(supitem)d) \"\n"
-"\"à l'agrégat #%(aggregate)d"
+"Ajout de l'événement #%(event)d (élément supervisé #%(supitem)d) "
+"à l'agrégat #%(aggregate)d"
 
 #: src/vigilo/correlator/handle_ticket.py:35
 #, python-format
@@ -344,8 +344,8 @@ msgid ""
 "The connection to memcached timed out. The message will be handled once "
 "more."
 msgstr ""
-"Délai d'attente dépassé de la connexion à memcached. \"\n"
-"\"Le message sera traité à nouveau."
+"Délai d'attente dépassé de la connexion à memcached. "
+"Le message sera traité à nouveau."
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:310
 msgid "Inserting state"
@@ -395,8 +395,8 @@ msgid ""
 "Error while saving the correlated event (%s). The message will be handled"
 " once more."
 msgstr ""
-"Erreur lors de l'enregistrement de l'événement corrélé (%s). \"\n"
-"\"Le message sera traité à nouveau."
+"Erreur lors de l'enregistrement de l'événement corrélé (%s). "
+"Le message sera traité à nouveau."
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:467
 #, python-format
