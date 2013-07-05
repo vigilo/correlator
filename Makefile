@@ -16,7 +16,8 @@ install_pkg: build install_python_pkg install_data
 install_python: settings.ini $(PYTHON)
 	$(PYTHON) setup.py install --record=INSTALLED_FILES
 install_python_pkg: settings.ini $(PYTHON)
-	$(PYTHON) setup.py install --single-version-externally-managed --root=$(DESTDIR)
+	$(PYTHON) setup.py install --single-version-externally-managed \
+		$(SETUP_PY_OPTS) --root=$(DESTDIR)
 
 install_data: pkg/init pkg/initconf
 	# init
