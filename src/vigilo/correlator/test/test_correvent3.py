@@ -61,7 +61,6 @@ class TestCorrevents3(unittest.TestCase):
             hosttpl = u'tpl11',
             address = u'192.168.0.11',
             snmpport = 11,
-            weight = 42,
         )
         DBSession.add(self.host)
         DBSession.flush()

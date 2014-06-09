@@ -34,7 +34,6 @@ class TestDbInsertion3(unittest.TestCase):
             address=u'127.0.0.1',
             snmpcommunity=u'public',
             snmpport=42,
-            weight=42,
         )
         DBSession.add(host)
         DBSession.flush()

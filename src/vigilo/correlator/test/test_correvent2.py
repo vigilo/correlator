@@ -63,7 +63,6 @@ class TestAggregates(unittest.TestCase):
                 hosttpl = u'tpl11',
                 address = u'192.168.0.%d' % i,
                 snmpport = 11,
-                weight = 42,
             ))
             DBSession.add(hosts[i - 1])
         DBSession.flush()
