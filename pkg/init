@@ -7,11 +7,11 @@
 # description: Starts and stops the Vigilo correlator
 ### BEGIN INIT INFO
 # Provides: vigilo-correlator
-# Required-Start: $network $syslog
+# Required-Start: $network $syslog postgresql supervisor
 # Should-Start: $named
-# Required-Stop: $network $syslog
+# Required-Stop: $network $syslog postgresql supervisor
 # Should-Stop: $named
-# Default-Start: 3 4 5
+# Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
 # Short-Description: Vigilo correlator
 # Description: Vigilo event correlator
@@ -83,8 +83,7 @@ stop() {
     echo -n "Shutting down ${NAME}${NUM}: "
     killproc -p $PID_FILE $NAME
     RETVAL=$?
-    echo
-    [ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
+    [ $RETVAL -eq 0 ] && rm -f $LOCK_FILE && success || failure
 }
 
 reload() {
