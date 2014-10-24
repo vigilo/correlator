@@ -131,6 +131,7 @@ class TestDbInsertion(unittest.TestCase):
                 "type": "event",
                 "timestamp": datetime.fromtimestamp(1239104006),
                 "host": "server.example.com",
+                "service": None,
                 "state": u"DOWN",
                 "message": u"DOWN: No ping response",
                 }

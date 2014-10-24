@@ -1,15 +1,15 @@
 # English translations for vigilo-correlator.
-# Copyright (C) 2013 ORGANIZATION
+# Copyright (C) 2014 ORGANIZATION
 # This file is distributed under the same license as the vigilo-correlator
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: vigilo-correlator 3.2\n"
+"Project-Id-Version: vigilo-correlator 3.5\n"
 "Report-Msgid-Bugs-To: contact@projet-vigilo.org\n"
-"POT-Creation-Date: 2013-05-28 12:55+0200\n"
-"PO-Revision-Date: 2013-05-28 12:56+0200\n"
+"POT-Creation-Date: 2014-10-24 10:51+0200\n"
+"PO-Revision-Date: 2014-10-24 10:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -30,16 +30,7 @@ msgstr ""
 "Could not set signal handlers. The correlator may not be able to shutdown"
 " cleanly"
 
-#: src/vigilo/correlator/correvent.py:93
-#, python-format
-msgid ""
-"Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
-"the correlation rules"
-msgstr ""
-"Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
-"the correlation rules"
-
-#: src/vigilo/correlator/correvent.py:156
+#: src/vigilo/correlator/correvent.py:122
 #, python-format
 msgid ""
 "Ignoring request to update correlated event %r: a more recent update "
@@ -48,46 +39,55 @@ msgstr ""
 "Ignoring request to update correlated event %r: a more recent update "
 "already exists in the database"
 
-#: src/vigilo/correlator/correvent.py:161
+#: src/vigilo/correlator/correvent.py:127
 #, python-format
 msgid "Updating existing correlated event (%r)"
 msgstr "Updating existing correlated event (%r)"
 
-#: src/vigilo/correlator/correvent.py:164
+#: src/vigilo/correlator/correvent.py:130
 #, python-format
 msgid "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr "Got a reference to a non-existent correlated event (%r), adding as new"
 
-#: src/vigilo/correlator/correvent.py:174
+#: src/vigilo/correlator/correvent.py:173
+#, python-format
+msgid ""
+"Got a reference to a nonexistent correlated event (%r), skipping this "
+"aggregate"
+msgstr ""
+"Got a reference to a nonexistent correlated event (%r), skipping this "
+"aggregate"
+
+#: src/vigilo/correlator/correvent.py:363
+#, python-format
+msgid ""
+"Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
+"aggregate #%(original)d"
+msgstr ""
+"Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
+"aggregate #%(original)d"
+
+#: src/vigilo/correlator/correvent.py:472
+msgid "Sending the correlated event to syslog"
+msgstr "Sending the correlated event to syslog"
+
+#: src/vigilo/correlator/correvent.py:560
+#, python-format
+msgid ""
+"Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
+"the correlation rules"
+msgstr ""
+"Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
+"the correlation rules"
+
+#: src/vigilo/correlator/correvent.py:586
 #, python-format
 msgid "Raw event ignored. Reason: status = %r"
 msgstr "Raw event ignored. Reason: status = %r"
 
-#: src/vigilo/correlator/correvent.py:202
-#, python-format
-msgid ""
-"Got a reference to a nonexistent correlated event (%r), skipping this "
-"aggregate"
-msgstr ""
-"Got a reference to a nonexistent correlated event (%r), skipping this "
-"aggregate"
-
-#: src/vigilo/correlator/correvent.py:253
+#: src/vigilo/correlator/correvent.py:603
 msgid "Creating a new correlated event"
 msgstr "Creating a new correlated event"
-
-#: src/vigilo/correlator/correvent.py:386
-#, python-format
-msgid ""
-"Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
-"aggregate #%(original)d"
-msgstr ""
-"Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
-"aggregate #%(original)d"
-
-#: src/vigilo/correlator/correvent.py:505
-msgid "Sending the correlated event to syslog"
-msgstr "Sending the correlated event to syslog"
 
 #: src/vigilo/correlator/db_insertion.py:57
 #, python-format
@@ -103,7 +103,16 @@ msgstr ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
 "skipping event"
 
-#: src/vigilo/correlator/db_insertion.py:113
+#: src/vigilo/correlator/db_insertion.py:76
+#, python-format
+msgid ""
+"Got a notification about an UNKNOWN state for service \"%(service)s\" on "
+"unreachable host \"%(host)s\", skipping event"
+msgstr ""
+"Got a notification about an UNKNOWN state for service \"%(service)s\" on "
+"unreachable host \"%(host)s\", skipping event"
+
+#: src/vigilo/correlator/db_insertion.py:128
 #, python-format
 msgid ""
 "Ignoring request to create a new event with state \"%s\" (nothing "
@@ -112,25 +121,25 @@ msgstr ""
 "Ignoring request to create a new event with state \"%s\" (nothing "
 "alarming here)"
 
-#: src/vigilo/correlator/db_insertion.py:120
+#: src/vigilo/correlator/db_insertion.py:135
 msgid "Creating new event"
 msgstr "Creating new event"
 
-#: src/vigilo/correlator/db_insertion.py:125
+#: src/vigilo/correlator/db_insertion.py:140
 msgid "Multiple raw events found, using the first one available."
 msgstr "Multiple raw events found, using the first one available."
 
-#: src/vigilo/correlator/db_insertion.py:130
+#: src/vigilo/correlator/db_insertion.py:145
 #, python-format
 msgid "Updating event %r"
 msgstr "Updating event %r"
 
-#: src/vigilo/correlator/db_insertion.py:189
+#: src/vigilo/correlator/db_insertion.py:204
 #, python-format
 msgid "Got a reference to a non configured high-level service (%(service)r)"
 msgstr "Got a reference to a non configured high-level service (%(service)r)"
 
-#: src/vigilo/correlator/db_insertion.py:216
+#: src/vigilo/correlator/db_insertion.py:231
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -139,12 +148,12 @@ msgstr ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
 "skipping state"
 
-#: src/vigilo/correlator/db_insertion.py:292
+#: src/vigilo/correlator/db_insertion.py:307
 #, python-format
 msgid "Adding event #%(event)d (supitem #%(supitem)d) to aggregate #%(aggregate)d"
 msgstr "Adding event #%(event)d (supitem #%(supitem)d) to aggregate #%(aggregate)d"
 
-#: src/vigilo/correlator/db_insertion.py:308
+#: src/vigilo/correlator/db_insertion.py:323
 #, python-format
 msgid ""
 "Event #%(event)d already belongs to aggregate #%(aggregate)d, refusing to"
@@ -153,17 +162,17 @@ msgstr ""
 "Event #%(event)d already belongs to aggregate #%(aggregate)d, refusing to"
 " add it twice"
 
-#: src/vigilo/correlator/db_insertion.py:359
+#: src/vigilo/correlator/db_insertion.py:374
 #, python-format
 msgid "Merging aggregate #%(src)d into aggregate #%(dest)d"
 msgstr "Merging aggregate #%(src)d into aggregate #%(dest)d"
 
-#: src/vigilo/correlator/db_insertion.py:430
-#: src/vigilo/correlator/db_insertion.py:435
+#: src/vigilo/correlator/db_insertion.py:445
+#: src/vigilo/correlator/db_insertion.py:450
 msgid "Got a reference to a nonexistent aggregate, aborting"
 msgstr "Got a reference to a nonexistent aggregate, aborting"
 
-#: src/vigilo/correlator/db_insertion.py:447
+#: src/vigilo/correlator/db_insertion.py:462
 #, python-format
 msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
@@ -439,7 +448,7 @@ msgstr "Setting %d services to UNKNOWN"
 msgid "Unsupported transition: %(from)s -> %(to)s"
 msgstr "Unsupported transition: %(from)s -> %(to)s"
 
-#: src/vigilo/correlator/rules/svc_on_host_down.py:127
+#: src/vigilo/correlator/rules/svc_on_host_down.py:124
 #, python-format
 msgid "Asking Nagios for updates on %d services"
 msgstr "Asking Nagios for updates on %d services"

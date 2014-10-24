@@ -117,17 +117,28 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
             LOGGER.info(_("Unsupported transition: %(from)s -> %(to)s"),
                         {"from": previous_statename, "to": statename})
 
+    def _getTime(self):
+        return int(time.mktime(datetime.now().timetuple()))
 
     def _on_host_up(self, hostname, link):
-        msg_tpl = {"type": "nagios",
-                   "timestamp": int(time.mktime(datetime.now().timetuple())),
-                   "cmdname": "SEND_CUSTOM_SVC_NOTIFICATION",
-                   }
+        now = self._getTime()
         services = get_all_services(hostname, self._database)
         LOGGER.info(_("Asking Nagios for updates on %d services"),
-                    len(services))
+                      len(services))
+
+        # On envoie un message à Nagios lui indiquant que les services
+        # de l'hôte sont vus comme "UNKNOWN" par Vigilo...
+        msg_tpl = {"type": "nagios",
+                   "timestamp": now,
+                   "cmdname": "PROCESS_SERVICE_CHECK_RESULT",
+                   }
+        # @FIXME:   le nombre d'itérations devrait correspondre
+        #           au max_check_attempts du service.
+        iterations = range(3)
         for svc in services:
-            msg = msg_tpl.copy()
-            msg["value"] = ("%(host)s;%(svc)s;4;Vigilo;Host came up"
-                           % {"host": hostname, "svc": svc.servicename})
-            link.sendItem(msg)
+            for _dummy in iterations:
+                msg = msg_tpl.copy()
+                msg["value"] = ("%(host)s;%(svc)s;3;Host is down"
+                               % {"host": hostname, "svc": svc.servicename})
+                link.sendItem(msg)
+

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version:  vigilo.corr\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-04-23 13:54+0200\n"
-"PO-Revision-Date: 2013-05-28 12:56+0200\n"
+"PO-Revision-Date: 2014-10-24 10:51+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: fr <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
@@ -30,16 +30,7 @@ msgstr ""
 "Impossible d'installer le gestionnaire de signaux. Le corrélateur risque "
 "de ne pas pouvoir être arrêté proprement"
 
-#: src/vigilo/correlator/correvent.py:93
-#, python-format
-msgid ""
-"Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
-"the correlation rules"
-msgstr ""
-"Événement #%(idevent)d sur (%(host)r, %(service)r) ignoré à la demande "
-"des règles de corrélation"
-
-#: src/vigilo/correlator/correvent.py:156
+#: src/vigilo/correlator/correvent.py:122
 #, python-format
 msgid ""
 "Ignoring request to update correlated event %r: a more recent update "
@@ -48,35 +39,26 @@ msgstr ""
 "Demande de mise à jour de l'événement corrélé %r ignorée : une mise à "
 "jour plus récente existe déjà dans la base de données"
 
-#: src/vigilo/correlator/correvent.py:161
+#: src/vigilo/correlator/correvent.py:127
 #, python-format
 msgid "Updating existing correlated event (%r)"
 msgstr "Mise à jour d'un événement corrélé existant (%r)"
 
-#: src/vigilo/correlator/correvent.py:164
+#: src/vigilo/correlator/correvent.py:130
 #, python-format
 msgid "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr ""
-"L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à "
-"la BDD."
+"L'événement corrélé référencé (%r) n'existe pas, il est donc ajouté à la "
+"BDD."
 
-#: src/vigilo/correlator/correvent.py:174
-#, python-format
-msgid "Raw event ignored. Reason: status = %r"
-msgstr "Événement brut ignoré. Raison : statut = %r"
-
-#: src/vigilo/correlator/correvent.py:202
+#: src/vigilo/correlator/correvent.py:173
 #, python-format
 msgid ""
 "Got a reference to a nonexistent correlated event (%r), skipping this "
 "aggregate"
 msgstr "L'événement corrélé référencé (%r) n'existe pas, l'agrégat est ignoré."
 
-#: src/vigilo/correlator/correvent.py:253
-msgid "Creating a new correlated event"
-msgstr "Création d'un nouvel événement corrélé"
-
-#: src/vigilo/correlator/correvent.py:386
+#: src/vigilo/correlator/correvent.py:363
 #, python-format
 msgid ""
 "Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
@@ -85,9 +67,27 @@ msgstr ""
 "Création d'un nouvel agrégat avec la cause #%(cause)d (#%(supitem)d) à "
 "partir de l'agrégat #%(original)d"
 
-#: src/vigilo/correlator/correvent.py:505
+#: src/vigilo/correlator/correvent.py:472
 msgid "Sending the correlated event to syslog"
 msgstr "Envoi de l'événement corrélé vers les journaux système"
+
+#: src/vigilo/correlator/correvent.py:560
+#, python-format
+msgid ""
+"Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
+"the correlation rules"
+msgstr ""
+"Événement #%(idevent)d sur (%(host)r, %(service)r) ignoré à la demande "
+"des règles de corrélation"
+
+#: src/vigilo/correlator/correvent.py:586
+#, python-format
+msgid "Raw event ignored. Reason: status = %r"
+msgstr "Événement brut ignoré. Raison : statut = %r"
+
+#: src/vigilo/correlator/correvent.py:603
+msgid "Creating a new correlated event"
+msgstr "Création d'un nouvel événement corrélé"
 
 #: src/vigilo/correlator/db_insertion.py:57
 #, python-format
@@ -103,7 +103,17 @@ msgstr ""
 "L'item référencé (%(host)r, %(service)r) n'existe pas, l'événement est "
 "ignoré"
 
-#: src/vigilo/correlator/db_insertion.py:113
+#: src/vigilo/correlator/db_insertion.py:76
+#, python-format
+msgid ""
+"Got a notification about an UNKNOWN state for service \"%(service)s\" on "
+"unreachable host \"%(host)s\", skipping event"
+msgstr ""
+"Réception d'une notification UNKNOWN concernant le service "
+"\"%(service)s\" de l'hôte injoignable \"%(host)s\", l'événement est "
+"ignoré"
+
+#: src/vigilo/correlator/db_insertion.py:128
 #, python-format
 msgid ""
 "Ignoring request to create a new event with state \"%s\" (nothing "
@@ -112,25 +122,25 @@ msgstr ""
 "Demande de création d'un nouvel événement avec l'état \"%s\" ignorée "
 "(rien d'alarmant)"
 
-#: src/vigilo/correlator/db_insertion.py:120
+#: src/vigilo/correlator/db_insertion.py:135
 msgid "Creating new event"
 msgstr "Création d'un nouvel événement"
 
-#: src/vigilo/correlator/db_insertion.py:125
+#: src/vigilo/correlator/db_insertion.py:140
 msgid "Multiple raw events found, using the first one available."
 msgstr "Plusieurs événements bruts trouvés, le premier sera utilisé."
 
-#: src/vigilo/correlator/db_insertion.py:130
+#: src/vigilo/correlator/db_insertion.py:145
 #, python-format
 msgid "Updating event %r"
 msgstr "Mise à jour de l'événement %r"
 
-#: src/vigilo/correlator/db_insertion.py:189
+#: src/vigilo/correlator/db_insertion.py:204
 #, python-format
 msgid "Got a reference to a non configured high-level service (%(service)r)"
 msgstr "Le service de haut niveau référencé (%(service)r) n'existe pas"
 
-#: src/vigilo/correlator/db_insertion.py:216
+#: src/vigilo/correlator/db_insertion.py:231
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -139,14 +149,14 @@ msgstr ""
 "L'élément référencé (%(host)r, %(service)r) n'existe pas, l'état est "
 "ignoré"
 
-#: src/vigilo/correlator/db_insertion.py:292
+#: src/vigilo/correlator/db_insertion.py:307
 #, python-format
 msgid "Adding event #%(event)d (supitem #%(supitem)d) to aggregate #%(aggregate)d"
 msgstr ""
 "Ajout de l'événement #%(event)d (élément supervisé #%(supitem)d) à "
 "l'agrégat #%(aggregate)d"
 
-#: src/vigilo/correlator/db_insertion.py:308
+#: src/vigilo/correlator/db_insertion.py:323
 #, python-format
 msgid ""
 "Event #%(event)d already belongs to aggregate #%(aggregate)d, refusing to"
@@ -155,24 +165,24 @@ msgstr ""
 "L'événement #%(event)d appartient déjà à l'agrégat #%(aggregate)d. Il ne "
 "sera pas ajouté une seconde fois"
 
-#: src/vigilo/correlator/db_insertion.py:359
+#: src/vigilo/correlator/db_insertion.py:374
 #, python-format
 msgid "Merging aggregate #%(src)d into aggregate #%(dest)d"
 msgstr "Fusion de l'agrégat #%(src)d dans l'agrégat #%(dest)d"
 
-#: src/vigilo/correlator/db_insertion.py:430
-#: src/vigilo/correlator/db_insertion.py:435
+#: src/vigilo/correlator/db_insertion.py:445
+#: src/vigilo/correlator/db_insertion.py:450
 msgid "Got a reference to a nonexistent aggregate, aborting"
 msgstr "L'agrégat référencé n'existe pas, abandon"
 
-#: src/vigilo/correlator/db_insertion.py:447
+#: src/vigilo/correlator/db_insertion.py:462
 #, python-format
 msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
 "#%(aggregate)d"
 msgstr ""
-"Ajout de l'événement #%(event)d (élément supervisé #%(supitem)d) "
-"à l'agrégat #%(aggregate)d"
+"Ajout de l'événement #%(event)d (élément supervisé #%(supitem)d) à "
+"l'agrégat #%(aggregate)d"
 
 #: src/vigilo/correlator/handle_ticket.py:35
 #, python-format
@@ -344,8 +354,8 @@ msgid ""
 "The connection to memcached timed out. The message will be handled once "
 "more."
 msgstr ""
-"Délai d'attente dépassé de la connexion à memcached. "
-"Le message sera traité à nouveau."
+"Délai d'attente dépassé de la connexion à memcached. Le message sera "
+"traité à nouveau."
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:310
 msgid "Inserting state"
@@ -395,8 +405,8 @@ msgid ""
 "Error while saving the correlated event (%s). The message will be handled"
 " once more."
 msgstr ""
-"Erreur lors de l'enregistrement de l'événement corrélé (%s). "
-"Le message sera traité à nouveau."
+"Erreur lors de l'enregistrement de l'événement corrélé (%s). Le message "
+"sera traité à nouveau."
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:467
 #, python-format
@@ -447,7 +457,7 @@ msgstr "Passage de %d services à l'état UNKNOWN"
 msgid "Unsupported transition: %(from)s -> %(to)s"
 msgstr "Transition non supportée : %(from)s -> %(to)s"
 
-#: src/vigilo/correlator/rules/svc_on_host_down.py:127
+#: src/vigilo/correlator/rules/svc_on_host_down.py:124
 #, python-format
 msgid "Asking Nagios for updates on %d services"
 msgstr "Demande de mise à jour de Nagios concernant %d services"
