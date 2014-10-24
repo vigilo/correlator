@@ -66,6 +66,21 @@ def insert_event(info_dictionary):
                         })
         return None
 
+    # Si on reçoit une notification sur un LLS indiquant que l'hôte est DOWN,
+    # le message vient de Vigilo lui-même (cf. règle SvcHostDown) et on doit
+    # l'ignorer pour éviter de générer une alerte pour rien.
+    # L'état du service a déjà été mis à jour par la règle de corrélation.
+    if info_dictionary['service'] and \
+        info_dictionary['state'] == 'UNKNOWN' and \
+        info_dictionary['message'] == u'Host is down':
+        LOGGER.debug(_('Got a notification about an UNKNOWN state for '
+                       'service "%(service)s" on unreachable host "%(host)s", '
+                       'skipping event'), {
+                            "host": info_dictionary["host"],
+                            "service": info_dictionary["service"],
+                       })
+        return None
+
     # On recherche un éventuel évènement brut concernant cet item.
     # L'événement doit être associé à un événement corrélé ouvert
     # ou bien ne pas être à rattaché à un événement corrélé du tout.

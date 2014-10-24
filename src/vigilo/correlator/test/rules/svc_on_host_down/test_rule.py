@@ -25,12 +25,17 @@ from vigilo.correlator.rules.svc_on_host_down import on_host_down
 from vigilo.correlator.db_thread import DummyDatabaseWrapper
 from vigilo.correlator.test import helpers
 
+
+class TestRule(SvcHostDown):
+    def _getTime(self):
+        return 42
+
+
 class TestSvcHostDownRule(unittest.TestCase):
     """
     Le setUp et le tearDown sont décorés par @deferred() pour que la création
     de la base soit réalisée dans le même threads que les accès dans les tests.
     """
-
 
     @deferred(timeout=60)
     def setUp(self):
@@ -43,7 +48,7 @@ class TestSvcHostDownRule(unittest.TestCase):
 
         # Préparation de la règle
         self.rule_dispatcher = helpers.RuleDispatcherStub()
-        self.rule = SvcHostDown()
+        self.rule = TestRule()
         self.rule.set_database(DummyDatabaseWrapper(
                                disable_txn=True, async=False))
         self.rule._context_factory = helpers.ContextStubFactory()
@@ -121,15 +126,26 @@ class TestSvcHostDownRule(unittest.TestCase):
         """Demander les états des services d'un hôte qui passe UP"""
         yield self.setup_context("DOWN", "UP")
         yield self.rule.process(self.rule_dispatcher, self.message_id)
+        self.assertEqual(len(self.rule_dispatcher.buffer), 3)
+
+        # On doit avoir envoyé 3 changements d'état identiques.
+        self.assertEqual(
+            self.rule_dispatcher.buffer[-1],
+            self.rule_dispatcher.buffer[-2],
+        )
+        self.assertEqual(
+            self.rule_dispatcher.buffer[-2],
+            self.rule_dispatcher.buffer[-3],
+        )
+
+        # On vérifie le contenu des changements d'état.
         expected = {"type": "nagios",
                     "timestamp": 42,
-                    "cmdname": "SEND_CUSTOM_SVC_NOTIFICATION",
-                    "value": "testhost;testservice;4;Vigilo;Host came up"
+                    "cmdname": "PROCESS_SERVICE_CHECK_RESULT",
+                    "value": "testhost;testservice;3;Host is down"
                     }
-        self.assertTrue(len(self.rule_dispatcher.buffer) > 0)
         recv = self.rule_dispatcher.buffer[-1]
-        print "Received:", recv
-        recv["timestamp"] = 42
+        print "Received #1:", recv
         self.assertEqual(recv, expected)
 
 
@@ -145,9 +161,15 @@ class TestSvcHostDownRule(unittest.TestCase):
         yield self.rule.process(rule_dispatcher, self.message_id)
         servicenames.insert(0, "testservice") # crée en setUp
         print "Count:", rule_dispatcher.sendItem.call_count
-        self.assertEqual(rule_dispatcher.sendItem.call_count, len(servicenames))
+        # 3 messages envoyés (changement d'état) par service
+        # + 1 message de resynchro de l'hôte
+        self.assertEqual(
+            rule_dispatcher.sendItem.call_count,
+            len(servicenames) * 3
+        )
         for i, servicename in enumerate(servicenames):
-            call = rule_dispatcher.method_calls[i]
-            print servicename, call
-            self.assertEqual(call[0], "sendItem")
-            self.assertEqual(call[1][0]["value"].count(servicename), 1)
+            for j in xrange(3):
+                call = rule_dispatcher.method_calls[i * 3 + j]
+                print servicename, call
+                self.assertEqual(call[0], "sendItem")
+                self.assertEqual(call[1][0]["value"].count(servicename), 1)
