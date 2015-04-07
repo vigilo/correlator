@@ -643,6 +643,8 @@ class CorrEventBuilder(object):
         else:
             info_dictionary['update'] = True
             info_dictionary['idcorrevent'] = update_id
+            info_dictionary['ticket_id'] = correvent.trouble_ticket
+            info_dictionary['acknowledgement_status'] = correvent.ack
 
             if state in ('OK', 'UP'):
                 # La cause de l'événement corrélé n'est plus en panne,
