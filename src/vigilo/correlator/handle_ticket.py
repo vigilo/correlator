@@ -38,7 +38,7 @@ def handle_ticket(info_dictionary):
                  '%(ack_status)r. Message = %(message)r.'),
                  {
                     'timestamp': info_dictionary["timestamp"],
-                    'hls': info_dictionary["impacted_HLS"],
+                    'hls': info_dictionary["highlevel"],
                     'ticket_id': info_dictionary["ticket_id"],
                     'ack_status': info_dictionary["acknowledgement_status"],
                     'message': info_dictionary["message"],
@@ -76,7 +76,7 @@ def handle_ticket(info_dictionary):
     history.value = info_dictionary['ticket_id']
     history.text = '%r;%r;%r' % (info_dictionary['acknowledgement_status'],
                                  info_dictionary['message'],
-                                 info_dictionary['impacted_HLS'])
+                                 info_dictionary['highlevel'])
     history.timestamp = info_dictionary['timestamp']
     history.username = None
 

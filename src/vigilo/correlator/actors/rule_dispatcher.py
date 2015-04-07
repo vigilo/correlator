@@ -239,7 +239,6 @@ class RuleDispatcher(MessageHandler):
                            "service": None,
                            "state": None,
                            "message": None,
-                           "impacted_HLS": None,
                            "ticket_id": None,
                            "acknowledgement_status": None,}
         for key, value in msg.iteritems():

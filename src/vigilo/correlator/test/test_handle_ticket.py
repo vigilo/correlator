@@ -57,7 +57,7 @@ class TestHandleTicket(unittest.TestCase):
         # On initialise les données du message.
         info_dictionary = {
             'timestamp': datetime.now(),
-            'impacted_HLS': '',
+            'highlevel': [],
             'ticket_id': u'azerty1234',
             'acknowledgement_status': 'foo',
             'message': 'bar',
@@ -78,6 +78,6 @@ class TestHandleTicket(unittest.TestCase):
         self.assertEqual(history.text, '%r;%r;%r' %
                             (info_dictionary['acknowledgement_status'],
                              info_dictionary['message'],
-                             info_dictionary['impacted_HLS']))
+                             info_dictionary['highlevel']))
         self.assertEqual(history.timestamp, info_dictionary['timestamp'])
         self.assertFalse(history.username)
