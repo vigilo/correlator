@@ -144,7 +144,7 @@ class Executor(object):
             if not durations:
                 continue # pas de messages depuis la dernière fois
             average = sum(durations) / len(durations)
-            stats[prefix+rulename] = round(average, 5)
+            stats[prefix + rulename] = round(average, 5)
             # et on ré-initialise
             self._stats[rulename] = []
         return stats

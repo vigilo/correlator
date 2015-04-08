@@ -37,9 +37,6 @@ class OldStateReceived(object):
         self.current = current
         self.received = received
 
-class NoProblemException(Exception):
-    pass
-
 def insert_event(info_dictionary):
     """
     Insère un événement dans la BDD.
@@ -128,7 +125,7 @@ def insert_event(info_dictionary):
             LOGGER.info(_('Ignoring request to create a new event '
                             'with state "%s" (nothing alarming here)'),
                             info_dictionary['state'])
-            raise NoProblemException(info_dictionary.copy())
+            return None
         # Sinon, il s'agit d'un nouvel incident, on le prépare.
         event = Event()
         event.idsupitem = info_dictionary['idsupitem']

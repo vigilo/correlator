@@ -142,3 +142,12 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
                                % {"host": hostname, "svc": svc.servicename})
                 link.sendItem(msg)
 
+        # On demande à Nagios de revérifier l'état de tous les services
+        # de la machine et de nous notifier les états.
+        link.sendItem({
+            "type": 'nagios',
+            "timestamp": now,
+            "cmdname": "SCHEDULE_HOST_SVC_CHECKS",
+            "value": "%s;%s" % (hostname, now + 1),
+        })
+

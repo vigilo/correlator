@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: vigilo-correlator 2.0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2010-11-19 12:29+0100\n"
-"PO-Revision-Date: 2014-10-24 10:51+0200\n"
+"PO-Revision-Date: 2015-04-22 09:58+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -87,12 +87,12 @@ msgstr "Rohereignis ignoriert. Ursache: Status = %r"
 msgid "Creating a new correlated event"
 msgstr "Neues korreliertes Ereignis wird erstellt"
 
-#: src/vigilo/correlator/db_insertion.py:57
+#: src/vigilo/correlator/db_insertion.py:54
 #, python-format
 msgid "Received request to add an event on HLS \"%s\""
 msgstr "Anforderung zur Hinzufügung eines Ereignisses auf HLS \"%s\" erhalten"
 
-#: src/vigilo/correlator/db_insertion.py:62
+#: src/vigilo/correlator/db_insertion.py:59
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -101,14 +101,14 @@ msgstr ""
 "Verweis auf ein nicht konfiguriertes Element (%(host)r, %(service)r) "
 "erhalten, Ereignis übersprungen"
 
-#: src/vigilo/correlator/db_insertion.py:76
+#: src/vigilo/correlator/db_insertion.py:73
 #, python-format
 msgid ""
 "Got a notification about an UNKNOWN state for service \"%(service)s\" on "
 "unreachable host \"%(host)s\", skipping event"
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:128
+#: src/vigilo/correlator/db_insertion.py:125
 #, python-format
 msgid ""
 "Ignoring request to create a new event with state \"%s\" (nothing "
@@ -117,27 +117,27 @@ msgstr ""
 "Anforderung zur Erstellung eines neuen Ereignisse mit Status \"%s\" wird "
 "ignoriert (hier nicht bedenklich)"
 
-#: src/vigilo/correlator/db_insertion.py:135
+#: src/vigilo/correlator/db_insertion.py:132
 msgid "Creating new event"
 msgstr "Neues Ereignis wird erstellt"
 
-#: src/vigilo/correlator/db_insertion.py:140
+#: src/vigilo/correlator/db_insertion.py:137
 msgid "Multiple raw events found, using the first one available."
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:145
+#: src/vigilo/correlator/db_insertion.py:142
 #, python-format
 msgid "Updating event %r"
 msgstr "Ereignis %r wird aktualisiert"
 
-#: src/vigilo/correlator/db_insertion.py:204
+#: src/vigilo/correlator/db_insertion.py:201
 #, python-format
 msgid "Got a reference to a non configured high-level service (%(service)r)"
 msgstr ""
 "Verweis auf einen nicht konfigurierten High-level-Service (%(service)r) "
 "vorhanden"
 
-#: src/vigilo/correlator/db_insertion.py:231
+#: src/vigilo/correlator/db_insertion.py:228
 #, python-format
 msgid ""
 "Got a reference to a non configured item (%(host)r, %(service)r), "
@@ -146,29 +146,29 @@ msgstr ""
 "Verweis auf ein nicht konfiguriertes Element (%(host)r, %(service)r) "
 "vorhanden, Status überspringen"
 
-#: src/vigilo/correlator/db_insertion.py:307
+#: src/vigilo/correlator/db_insertion.py:304
 #, python-format
 msgid "Adding event #%(event)d (supitem #%(supitem)d) to aggregate #%(aggregate)d"
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:323
+#: src/vigilo/correlator/db_insertion.py:320
 #, python-format
 msgid ""
 "Event #%(event)d already belongs to aggregate #%(aggregate)d, refusing to"
 " add it twice"
 msgstr ""
 
-#: src/vigilo/correlator/db_insertion.py:374
+#: src/vigilo/correlator/db_insertion.py:371
 #, fuzzy, python-format
 msgid "Merging aggregate #%(src)d into aggregate #%(dest)d"
 msgstr "Aggregat #%(src)d und Aggregat #%(dest)d werden zusammengeführt"
 
-#: src/vigilo/correlator/db_insertion.py:445
-#: src/vigilo/correlator/db_insertion.py:450
+#: src/vigilo/correlator/db_insertion.py:442
+#: src/vigilo/correlator/db_insertion.py:447
 msgid "Got a reference to a nonexistent aggregate, aborting"
 msgstr "Verweis auf ein nicht existierendes Quell-Aggregat vorhanden, abbrechen"
 
-#: src/vigilo/correlator/db_insertion.py:462
+#: src/vigilo/correlator/db_insertion.py:459
 #, python-format
 msgid ""
 "Event #%(event)d (supitem #%(supitem)d) will be merged into aggregate "
@@ -368,44 +368,39 @@ msgstr ""
 msgid "Error while adding an entry in the history"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:364
+#: src/vigilo/correlator/actors/rule_dispatcher.py:355
 msgid "Actual correlation"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:366
-#, python-format
-msgid "Received inconsitent raw_event_id for event: %s"
-msgstr ""
-
-#: src/vigilo/correlator/actors/rule_dispatcher.py:401
+#: src/vigilo/correlator/actors/rule_dispatcher.py:389
 #, python-format
 msgid "Correlation process ended (%.4fs)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:419
+#: src/vigilo/correlator/actors/rule_dispatcher.py:407
 msgid "Handling correlation results"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:438
+#: src/vigilo/correlator/actors/rule_dispatcher.py:426
 #, python-format
 msgid ""
 "Error while saving the correlated event (%s). The message will be handled"
 " once more."
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:467
+#: src/vigilo/correlator/actors/rule_dispatcher.py:455
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:487
+#: src/vigilo/correlator/actors/rule_dispatcher.py:475
 #, python-format
 msgid ""
 "Unable to store correlated alert for message #%(id)s (%(payload)s) : "
 "%(error)s"
 msgstr ""
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:520
+#: src/vigilo/correlator/actors/rule_dispatcher.py:508
 #, python-format
 msgid "%s. The message will be handled once more."
 msgstr ""
@@ -440,14 +435,11 @@ msgstr ""
 msgid "Unsupported transition: %(from)s -> %(to)s"
 msgstr ""
 
-#: src/vigilo/correlator/rules/svc_on_host_down.py:124
+#: src/vigilo/correlator/rules/svc_on_host_down.py:126
 #, python-format
 msgid "Asking Nagios for updates on %d services"
 msgstr ""
 
-#~ msgid ""
-#~ "Got a notification about service "
-#~ "\"%(service)s\" on unreachable host "
-#~ "\"%(host)s\", skipping event"
+#~ msgid "Received inconsitent raw_event_id for event: %s"
 #~ msgstr ""
 

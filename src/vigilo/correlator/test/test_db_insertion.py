@@ -9,7 +9,7 @@ import unittest
 import time
 
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-                                    OldStateReceived, NoProblemException
+                                    OldStateReceived
 from vigilo.correlator.test import helpers
 
 from vigilo.models.demo import functions
@@ -204,20 +204,3 @@ class TestDbInsertion(unittest.TestCase):
         supitem = DBSession.query(SupItem).get(idsupitem)
         self.assertEqual(supitem.state.timestamp, ts_recent_dt)
 
-
-    def test_no_problem_exception(self):
-        """Exception à réception d'une alerte n'indiquant aucun problème."""
-        self.make_dependencies()
-        info_dictionary = {
-                "type": "event",
-                "timestamp": int(time.time()),
-                "host": "server.example.com",
-                "service": "Load",
-                "state": "OK",
-                "message": "No problem here",
-                }
-        info_dictionary['idsupitem'] = SupItem.get_supitem(
-            info_dictionary['host'],
-            info_dictionary['service']
-        )
-        self.assertRaises(NoProblemException, insert_event, info_dictionary)

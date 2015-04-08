@@ -40,7 +40,7 @@ from vigilo.correlator.actors import executor
 from vigilo.correlator.context import Context
 from vigilo.correlator.handle_ticket import handle_ticket
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
-        insert_hls_history, OldStateReceived, NoProblemException
+        insert_hls_history, OldStateReceived
 from vigilo.correlator import registry
 
 LOGGER = get_logger(__name__)
@@ -345,15 +345,6 @@ class RuleDispatcher(MessageHandler):
 
         d.addCallback(self._do_correl, previous_state, info_dictionary, ctx)
         d.addCallback(self._commit)
-
-        def no_problem(fail):
-            """
-            Court-circuite l'exécution des règles de corrélation
-            lorsqu'aucun événement corrélé n'existe en base de données
-            et qu'on reçoit un message indiquant un état nominal (OK/UP).
-            """
-            fail.trap(NoProblemException)
-        d.addErrback(no_problem)
         return d
 
     def _commit(self, res):
@@ -362,9 +353,6 @@ class RuleDispatcher(MessageHandler):
 
     def _do_correl(self, raw_event_id, previous_state, info_dictionary, ctx):
         LOGGER.debug(_('Actual correlation'))
-        if raw_event_id is None:
-            LOGGER.error(_('Received inconsitent raw_event_id for event: %s') % info_dictionary)
-            return defer.succeed(None)
 
         d = defer.Deferred()
         d.addCallback(lambda _result: ctx.set('payload', info_dictionary))
@@ -520,8 +508,6 @@ class RuleDispatcher(MessageHandler):
                 LOGGER.info(_('%s. The message will be handled once more.'),
                     error_desc)
                 return failure
-            if failure.check(NoProblemException):
-                raise NoProblemException()
             LOGGER.warning(failure.getErrorMessage())
             return None
 
