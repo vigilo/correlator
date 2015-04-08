@@ -126,16 +126,17 @@ class TestSvcHostDownRule(unittest.TestCase):
         """Demander les états des services d'un hôte qui passe UP"""
         yield self.setup_context("DOWN", "UP")
         yield self.rule.process(self.rule_dispatcher, self.message_id)
-        self.assertEqual(len(self.rule_dispatcher.buffer), 3)
 
-        # On doit avoir envoyé 3 changements d'état identiques.
-        self.assertEqual(
-            self.rule_dispatcher.buffer[-1],
-            self.rule_dispatcher.buffer[-2],
-        )
+        # On doit avoir envoyé 3 changements d'état identiques
+        # + 1 un message de resynchronisation pour l'hôte.
+        self.assertEqual(len(self.rule_dispatcher.buffer), 4)
         self.assertEqual(
             self.rule_dispatcher.buffer[-2],
             self.rule_dispatcher.buffer[-3],
+        )
+        self.assertEqual(
+            self.rule_dispatcher.buffer[-3],
+            self.rule_dispatcher.buffer[-4],
         )
 
         # On vérifie le contenu des changements d'état.
@@ -144,8 +145,18 @@ class TestSvcHostDownRule(unittest.TestCase):
                     "cmdname": "PROCESS_SERVICE_CHECK_RESULT",
                     "value": "testhost;testservice;3;Host is down"
                     }
-        recv = self.rule_dispatcher.buffer[-1]
+        recv = self.rule_dispatcher.buffer[-2]
         print "Received #1:", recv
+        self.assertEqual(recv, expected)
+
+        # On vérifie la resynchronisation de l'hôte.
+        expected = {"type": "nagios",
+                    "timestamp": 42,
+                    "cmdname": "SCHEDULE_HOST_SVC_CHECKS",
+                    "value": "testhost;43"
+                    }
+        recv = self.rule_dispatcher.buffer[-1]
+        print "Received #2:", recv
         self.assertEqual(recv, expected)
 
 
@@ -165,11 +176,23 @@ class TestSvcHostDownRule(unittest.TestCase):
         # + 1 message de resynchro de l'hôte
         self.assertEqual(
             rule_dispatcher.sendItem.call_count,
-            len(servicenames) * 3
+            len(servicenames) * 3 + 1
         )
+
+        # On vérifie qu'il y a bien eu 3 messages
+        # de resynchronisation par service.
         for i, servicename in enumerate(servicenames):
             for j in xrange(3):
                 call = rule_dispatcher.method_calls[i * 3 + j]
                 print servicename, call
                 self.assertEqual(call[0], "sendItem")
-                self.assertEqual(call[1][0]["value"].count(servicename), 1)
+                self.assertEqual(call[1][0]["cmdname"],
+                    "PROCESS_SERVICE_CHECK_RESULT")
+                self.assertEqual(call[1][0]["value"].count(
+                    "%s;%s;" % (self.host.name, servicename)), 1)
+        # + 1 message de resynchronisation
+        # pour (l'ensemble des services de) l'hôte.
+        call = rule_dispatcher.method_calls[len(servicenames) * 3]
+        self.assertEqual(call[1][0]["value"].count(self.host.name + ';'), 1)
+        self.assertEqual(call[1][0]["cmdname"], "SCHEDULE_HOST_SVC_CHECKS")
+
