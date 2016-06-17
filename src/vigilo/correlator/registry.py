@@ -8,7 +8,6 @@ ainsi que les dépendances entre ces règles.
 """
 
 import sys
-import networkx
 import pkg_resources
 
 from vigilo.correlator.datatypes import Named
@@ -17,6 +16,7 @@ from vigilo.correlator.rule import Rule
 from vigilo.common.conf import settings
 from vigilo.common.logging import get_logger
 from vigilo.common.gettext import translate
+from vigilo.common.nx import networkx
 
 LOGGER = get_logger(__name__)
 _ = translate(__name__)
@@ -64,13 +64,15 @@ class RegistryDict(object):
         self.__graph.add_node(item.name)
         for dep in item.depends:
             if self.__graph.has_node(dep):
-                path = networkx.shortest_path(self.__graph, dep, item.name)
-                if path:
+                try:
+                    path = networkx.shortest_path(self.__graph, dep, item.name)
                     path.append(path[0])
                     LOGGER.error(_('Cyclic dependencies found: %(path)s') % {
                                     'path': " -> ".join(path),
                                 })
                     raise RuntimeError()
+                except networkx.NetworkXNoPath:
+                    pass
             self.__graph.add_edge(item.name, dep)
 
         self.__dict[item.name] = item
