@@ -54,6 +54,18 @@ class CorrEventBuilder(object):
         self.publisher = publisher
         self.database = database
 
+        try:
+            self.log_level = settings['correlator'].as_int('syslog_data_level')
+        except KeyError:
+            self.log_level = logging.INFO
+
+        data_logger = get_logger('vigilo.correlator.syslog')
+        if data_logger.isEnabledFor(self.log_level):
+            self.data_logger = data_logger
+        else:
+            self.data_logger = None
+
+
     @defer.inlineCallbacks
     def _get_update_id(self, item_id):
         """
@@ -460,17 +472,8 @@ class CorrEventBuilder(object):
             sur l'événement courant.
         @type info_dictionary: C{dict}
         """
-        try:
-            log_level = settings['correlator'].as_int('syslog_data_level')
-        except KeyError:
-            log_level = logging.INFO
-
-        data_logger = get_logger('vigilo.correlator.syslog')
-        if not data_logger.isEnabledFor(log_level):
-            return
-
-        LOGGER.debug(_('Sending the correlated event to syslog'))
-        data_logger.log(log_level,
+        self.data_logger and self.data_logger.log(
+                        self.log_level,
                         '%s|%s|%s|%s|%s|%s|%s',
                         info_dictionary['idcorrevent'],
                         info_dictionary['update'] and
