@@ -33,9 +33,6 @@ log_traffic = False
 # URL d'accès à la base de données.
 sqlalchemy_url = postgresql://vigilo:vigilo@127.0.0.1/vigilo
 
-# Préfixe des tables.
-db_basename = vigilo_
-
 
 [correlator]
 # Délai d'expiration par défaut des contextes.
