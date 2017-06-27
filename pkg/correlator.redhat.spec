@@ -11,6 +11,7 @@ BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-build
 License:    GPLv2
 Buildarch:  noarch
 
+BuildRequires:   systemd
 BuildRequires:   python-distribute
 BuildRequires:   python-babel
 
@@ -22,10 +23,6 @@ Requires:   python-memcached
 
 # Init
 Requires(pre): shadow-utils
-Requires(post): chkconfig
-Requires(preun): chkconfig
-Requires(preun): initscripts
-Requires(postun): initscripts
 
 %description
 @DESCRIPTION@
@@ -38,11 +35,12 @@ This application is part of the Vigilo Project <http://vigilo-project.org>
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install_pkg \
+make install_pkg_systemd \
     DESTDIR=$RPM_BUILD_ROOT \
     PREFIX=%{_prefix} \
     SYSCONFDIR=%{_sysconfdir} \
     LOCALSTATEDIR=%{_localstatedir} \
+    SYSTEMDDIR=%{_unitdir} \
     PYTHON=%{__python}
 mkdir -p $RPM_BUILD_ROOT/%{_tmpfilesdir}
 install -m 644 pkg/%{name}.conf $RPM_BUILD_ROOT/%{_tmpfilesdir}
@@ -56,22 +54,16 @@ getent passwd %{name} >/dev/null || useradd -r -g %{name} -d %{_localstatedir}/l
 exit 0
 
 %post
-/sbin/chkconfig --add %{name} || :
+%systemd_post %{name}.service
 %{_libexecdir}/twisted-dropin-cache >/dev/null 2>&1 || :
 %tmpfiles_create %{_tmpfilesdir}/%{name}.conf
 
 %preun
-if [ $1 = 0 ]; then
-    /sbin/service %{name} stop > /dev/null 2>&1 || :
-    /sbin/chkconfig --del %{name} || :
-fi
+%systemd_preun %{name}.service
 
 %postun
-if [ "$1" -ge "1" ] ; then
-    /sbin/service %{name} condrestart > /dev/null 2>&1 || :
-fi
+%systemd_postun_with_restart %{name}.service
 %{_libexecdir}/twisted-dropin-cache >/dev/null 2>&1 || :
-
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -80,13 +72,11 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %doc COPYING.txt README.txt
 %attr(755,root,root) %{_bindir}/%{name}
-%attr(755,root,root) %{_initrddir}/%{name}
 %dir %{_sysconfdir}/vigilo/
 %dir %{_sysconfdir}/vigilo/%{module}
 %dir %{_sysconfdir}/vigilo/%{module}/conf.d
 %attr(640,root,%{name}) %config(noreplace) %{_sysconfdir}/vigilo/%{module}/settings.ini
 %dir %{_sysconfdir}/vigilo/%{module}/plugins
-%config(noreplace) %{_sysconfdir}/sysconfig/%{name}
 %{python_sitelib}/vigilo*
 %{python_sitelib}/twisted*
 %dir %{_localstatedir}/lib/vigilo
@@ -94,8 +84,13 @@ rm -rf $RPM_BUILD_ROOT
 %dir %{_localstatedir}/log/vigilo
 %attr(-,%{name},%{name}) %{_localstatedir}/log/vigilo/%{module}
 %attr(644,root,root) %{_tmpfilesdir}/%{name}.conf
+%attr(644,root,root) %{_unitdir}/%{name}.service
+%attr(644,root,root) %{_unitdir}/%{name}@.service
 
 %changelog
+* Tue Jun 27 2017 François Poirotte <francois.poirotte@c-s.fr>
+- Add support for systemd
+
 * Thu Mar 16 2017 Yves Ouattara <yves.ouattara@c-s.fr>
 - Rebuild for RHEL7.
 

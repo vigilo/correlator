@@ -1,0 +1,25 @@
+[Unit]
+Description=Vigilo correlator
+
+After=syslog.service
+After=rsyslog.service
+After=network.target
+
+After=supervisord.service
+After=rabbitmq-server.service
+After=postgresql-9.2.service
+
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/sysconfig/vigilo-correlator
+User=vigilo-correlator
+Restart=on-failure
+
+# Evite la création de services dont le nom d'instance n'est pas un nombre,
+# ou bien est un nombre inférieur à 1
+ExecStartPre=/usr/bin/test %i -eq %i -a %i -gt 1
+ExecStart=/usr/bin/vigilo-correlator -d /var/lib/vigilo/correlator --pidfile '' -n vigilo-correlator --config /etc/vigilo/correlator/settings-%i.ini --id %i

@@ -38,7 +38,7 @@ This application is part of the Vigilo Project <http://vigilo-project.org>
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make install_pkg \
+make install_pkg_initd \
     DESTDIR=$RPM_BUILD_ROOT \
     PREFIX=%{_prefix} \
     SYSCONFDIR=%{_sysconfdir} \
