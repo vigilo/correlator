@@ -3,7 +3,7 @@
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
 """
-
+Tests portant sur la création d'agrégats de corrélation.
 """
 
 # pylint: disable-msg=C0111,W0212,R0904,W0201
@@ -12,7 +12,7 @@
 # - R0904: Too many public methods
 # - W0201: Attribute defined outside __init__
 
-
+from __future__ import print_function
 import time
 from datetime import datetime
 import unittest
@@ -67,10 +67,10 @@ class TestCorrevents5(unittest.TestCase):
         self.hosts = {}
         for i in xrange(1, 4 + 1):
             self.hosts[i] = functions.add_host(u'Host %d' % i)
-            print "Added %s with ID #%d" % (
-                self.hosts[i].name,
-                self.hosts[i].idhost)
-        print ""
+            print("Added %s with ID #%d" % (
+                    self.hosts[i].name,
+                    self.hosts[i].idhost))
+        print()
 
 
     @defer.inlineCallbacks

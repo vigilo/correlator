@@ -12,7 +12,7 @@ Teste la désaggrégation d'un événement corrélé (#467).
 # - R0904: Too many public methods
 # - W0201: Attribute defined outside __init__
 
-
+from __future__ import print_function
 import time
 from datetime import datetime
 import unittest
@@ -68,10 +68,10 @@ class TestCorrevents4(unittest.TestCase):
         self.hosts = {}
         for i in xrange(1, 4 + 1):
             self.hosts[i] = functions.add_host(u'Host %d' % i)
-            print "Added %s with ID #%d" % (
-                self.hosts[i].name,
-                self.hosts[i].idhost)
-        print ""
+            print("Added %s with ID #%d" % (
+                    self.hosts[i].name,
+                    self.hosts[i].idhost))
+        print()
 
 
     @defer.inlineCallbacks
@@ -175,7 +175,7 @@ class TestCorrevents4(unittest.TestCase):
         # 1. Un 1er agrégat doit avoir été créé.
         res, idcorrevent1 = yield self.handle_alert(
             self.hosts[2], 'UNREACHABLE')
-        print "Finished step 1\n"
+        print("Finished step 1\n")
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
         self.assertNotEquals(idcorrevent1, None)
@@ -198,7 +198,7 @@ class TestCorrevents4(unittest.TestCase):
         #    précédent doit avoir été fusionné dans celui-ci.
         res, idcorrevent2 = yield self.handle_alert(
             self.hosts[1], 'DOWN', succs=[idcorrevent1])
-        print "Finished step 2\n"
+        print("Finished step 2\n")
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
         self.assertNotEquals(idcorrevent2, None)
@@ -223,7 +223,7 @@ class TestCorrevents4(unittest.TestCase):
         #    ajouté à l'agrégat de l'étape 2.
         res, idcorrevent3 = yield self.handle_alert(
             self.hosts[4], 'UNREACHABLE', preds=[idcorrevent2])
-        print "Finished step 3\n"
+        print("Finished step 3\n")
         # Aucune erreur n'a été levée.
         self.assertEquals(res, None)
         self.assertEquals(idcorrevent3, None) # ajouté dans l'agrégat 2.
@@ -248,7 +248,7 @@ class TestCorrevents4(unittest.TestCase):
         #    ajouté à l'agrégat de l'étape 2.
         res, idcorrevent4 = yield self.handle_alert(
             self.hosts[3], 'UNREACHABLE', preds=[idcorrevent2])
-        print "Finished step 4\n"
+        print("Finished step 4\n")
         # Aucune erreur n'a été levée.
         self.assertEquals(res, None)
         self.assertEquals(idcorrevent4, None) # ajouté dans l'agrégat 2.
@@ -276,16 +276,16 @@ class TestCorrevents4(unittest.TestCase):
         #    un autre indiquant que l'hôte 2 est UNREACHABLE,
         #    le dernier donnant les hôtes 4 et 3 UNREACHABLE.
         res, idcorrevent5 = yield self.handle_alert(self.hosts[1], 'UP')
-        print "Finished step 5\n"
+        print("Finished step 5\n")
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
         # Désagrégé à partir de l'agrégat 2.
         self.assertEquals(idcorrevent5, idcorrevent2)
         # On a 4 événements bruts et 3 agrégats en base.
-        print "events"
+        print("events")
         self.assertEquals(4, DBSession.query(tables.Event).count())
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        print "correvents"
+        print("correvents")
         self.assertEquals(3, len(db_correvents))
         db_correvents.sort(key=lambda x: x.cause.supitem.name)
         # L'un porte sur l'hôte 1 qui doit être dans l'état "UP"
@@ -364,7 +364,7 @@ class TestCorrevents4(unittest.TestCase):
             preds=[idcorrevent1, idcorrevent2],
         )
         self.assertEquals(res, None) # Pas de nouvel agrégat créé.
-        print "Finished step 1\n"
+        print("Finished step 1\n")
         self.assertNotEquals(idcorrevent1, None)
         self.assertNotEquals(idcorrevent2, None)
         self.assertEquals(idcorrevent3, None)
@@ -386,7 +386,7 @@ class TestCorrevents4(unittest.TestCase):
         # des agrégats de l'hôte 1 et de l'hôte 2.
         # Un nouvel agrégat doit avoir été créé pour l'accueillir.
         res, _idcorrevent = yield self.handle_alert(self.hosts[1], 'UP')
-        print "Finished step 2\n"
+        print("Finished step 2\n")
         self.assertNotEquals(res, None)
         # On s'attend à trouver 3 événements bruts et 3 agrégats.
         self.assertEquals(3, DBSession.query(tables.Event).count())
@@ -408,7 +408,7 @@ class TestCorrevents4(unittest.TestCase):
 
         # "Host 2" remonte : rien ne change.
         res, _idcorrevent = yield self.handle_alert(self.hosts[2], 'UP')
-        print "Finished step 3\n"
+        print("Finished step 3\n")
         self.assertNotEquals(res, None)
         # On s'attend à trouver 3 événements bruts et 3 agrégats.
         self.assertEquals(3, DBSession.query(tables.Event).count())

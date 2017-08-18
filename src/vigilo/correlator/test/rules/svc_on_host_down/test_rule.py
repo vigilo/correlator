@@ -7,6 +7,7 @@
 Teste la règle de gestion des services sur un hôte DOWN
 """
 
+from __future__ import print_function
 from datetime import datetime
 import unittest
 
@@ -93,9 +94,9 @@ class TestSvcHostDownRule(unittest.TestCase):
         yield self.setup_context("UP", "DOWN")
         rule_dispatcher = Mock()
         yield self.rule.process(rule_dispatcher, self.message_id)
-        print "Count:", rule_dispatcher.registerCallback.call_count
+        print("Count:", rule_dispatcher.registerCallback.call_count)
         self.assertEqual(rule_dispatcher.registerCallback.call_count, 1)
-        print rule_dispatcher.registerCallback.call_args
+        print(rule_dispatcher.registerCallback.call_args)
         self.assertEqual(
             rule_dispatcher.registerCallback.call_args[1]["fn"],
             on_host_down)
@@ -116,7 +117,7 @@ class TestSvcHostDownRule(unittest.TestCase):
             42,
             self.rule._context_factory(42)
         )
-        print "state:", self.lls.state.name.statename
+        print("state:", self.lls.state.name.statename)
         self.assertEqual(self.lls.state.name.statename, u"UNKNOWN")
 
 
@@ -146,7 +147,7 @@ class TestSvcHostDownRule(unittest.TestCase):
                     "value": "testhost;testservice;3;Host is down"
                     }
         recv = self.rule_dispatcher.buffer[-2]
-        print "Received #1:", recv
+        print("Received #1:", recv)
         self.assertEqual(recv, expected)
 
         # On vérifie la resynchronisation de l'hôte.
@@ -156,7 +157,7 @@ class TestSvcHostDownRule(unittest.TestCase):
                     "value": "testhost;43"
                     }
         recv = self.rule_dispatcher.buffer[-1]
-        print "Received #2:", recv
+        print("Received #2:", recv)
         self.assertEqual(recv, expected)
 
 
@@ -171,7 +172,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         rule_dispatcher = Mock()
         yield self.rule.process(rule_dispatcher, self.message_id)
         servicenames.insert(0, "testservice") # crée en setUp
-        print "Count:", rule_dispatcher.sendItem.call_count
+        print("Count:", rule_dispatcher.sendItem.call_count)
         # 3 messages envoyés (changement d'état) par service
         # + 1 message de resynchro de l'hôte
         self.assertEqual(
@@ -184,7 +185,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         for i, servicename in enumerate(servicenames):
             for j in xrange(3):
                 call = rule_dispatcher.method_calls[i * 3 + j]
-                print servicename, call
+                print(servicename, call)
                 self.assertEqual(call[0], "sendItem")
                 self.assertEqual(call[1][0]["cmdname"],
                     "PROCESS_SERVICE_CHECK_RESULT")

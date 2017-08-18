@@ -7,6 +7,7 @@
 Test du module publish_messages.
 """
 
+from __future__ import print_function
 import unittest
 from datetime import datetime
 from time import mktime
@@ -56,7 +57,7 @@ class MessagePublisherTestCase(unittest.TestCase):
     def test_publish_aggregate(self):
         """Publication d'alertes à ajouter à des évènements corrélés"""
         self.mp.publish_aggregate([1, 2], [1, 2, 3, 4])
-        print self.mp.sendMessage.call_args
+        print(self.mp.sendMessage.call_args)
         self.assertEqual(self.mp.sendMessage.call_args[0][0],
                 {'aggregates': [1, 2], 'alerts': [1, 2, 3, 4], 'type': 'aggr'})
 
@@ -64,6 +65,6 @@ class MessagePublisherTestCase(unittest.TestCase):
     def test_delete_published_aggregates(self):
         """Publication d'une liste d'évènements corrélés à supprimer"""
         self.mp.delete_published_aggregates([1, 2])
-        print self.mp.sendMessage.call_args
+        print(self.mp.sendMessage.call_args)
         self.assertEqual(self.mp.sendMessage.call_args[0][0],
                 {'aggregates': [1, 2], 'type': 'delaggr'})

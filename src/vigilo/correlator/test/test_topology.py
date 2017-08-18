@@ -10,6 +10,7 @@
 # - R0904: Too many public methods
 # - W0201: Attribute defined outside __init__
 
+from __future__ import print_function
 import unittest
 
 from nose.twistedtools import reactor  # pylint: disable-msg=W0611
@@ -127,7 +128,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         ctx._connection._must_defer = False
 
         # On récupère les aggrégats dont dépend le service 1
-        print "First step"
+        print("First step")
         aggregates = yield self.topology.get_first_predecessors_aggregates(
             ctx,
             self.database,
@@ -141,7 +142,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         self.assertEqual(aggregates, aggregate_list)
 
         # On récupère les aggrégats dont dépend le service 2
-        print "Second step"
+        print("Second step")
         aggregates = yield self.topology.get_first_predecessors_aggregates(
             ctx,
             self.database,
@@ -170,7 +171,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         # On récupère les aggrégats causés par le service 5
         ctx = self.context_factory(142, defer=True)
         ctx._connection._must_defer = False
-        print "First step"
+        print("First step")
         aggregates = yield self.topology.get_first_successors_aggregates(
             ctx,
             self.database,
@@ -181,7 +182,7 @@ class TestTopologyFunctions(TopologyTestHelpers, unittest.TestCase):
         self.assertEqual(aggregates, [])
 
         # On récupère les aggrégats causés par le service 4
-        print "Second step"
+        print("Second step")
         aggregates = yield self.topology.get_first_successors_aggregates(
             ctx,
             self.database,

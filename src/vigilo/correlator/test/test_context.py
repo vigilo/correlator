@@ -5,6 +5,7 @@
 
 """Tests sur l'API des contextes de corrélation."""
 
+from __future__ import print_function
 import random
 import unittest
 
@@ -116,7 +117,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(42)
         ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection._cache.get.call_args)
+            print(repr(ctx._connection._cache.get.call_args))
             key = ctx._connection._cache.get.call_args[0][0]
             self.assertTrue(isinstance(key, str),
                     "Toutes les clés doivent être des str")
@@ -131,7 +132,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(42)
         ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection._cache.set.call_args)
+            print(repr(ctx._connection._cache.set.call_args))
             key = ctx._connection._cache.set.call_args[0][0]
             self.assertFalse(isinstance(key, unicode),
                     "Toutes les clés doivent être des str")
@@ -146,7 +147,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(42)
         ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection._cache.delete.call_args)
+            print(repr(ctx._connection._cache.delete.call_args))
             key = ctx._connection._cache.delete.call_args[0][0]
             self.assertTrue(
                 isinstance(key, str),
@@ -162,7 +163,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(42)
         ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection._cache.get.call_args)
+            print(repr(ctx._connection._cache.get.call_args))
             key = ctx._connection._cache.get.call_args[0][0]
             self.assertTrue(
                 isinstance(key, str),
@@ -178,7 +179,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(42)
         ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection._cache.set.call_args)
+            print(repr(ctx._connection._cache.set.call_args))
             key = ctx._connection._cache.set.call_args[0][0]
             self.assertTrue(
                 isinstance(key, str),
@@ -194,7 +195,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx = Context(42)
         ctx._connection = MemcachedConnectionStub()
         def check(x):
-            print repr(ctx._connection._cache.delete.call_args)
+            print(repr(ctx._connection._cache.delete.call_args))
             key = ctx._connection._cache.delete.call_args[0][0]
             self.assertTrue(
                 isinstance(key, str),

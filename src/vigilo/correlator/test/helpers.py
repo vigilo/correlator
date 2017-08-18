@@ -9,6 +9,7 @@
 Classes et fonctions pour aider aux tests unitaires
 """
 
+from __future__ import print_function
 import subprocess
 import os
 import signal
@@ -89,10 +90,10 @@ def teardown_mc():
         # Tue le serveur memcached lancé en arrière-plan.
         os.kill(mc_pid, signal.SIGTERM)
         os.wait() # Avoid zombies. Bad zombies.
-    except OSError, e:
+    except OSError as e:
         # We mostly ignore errors, maybe we should
         # do something more useful here.
-        print e
+        print(e)
     finally:
         mc_pid = None
     return MemcachedConnection.reset()
@@ -133,14 +134,14 @@ class ConnectionStub(object):
         # pylint: disable-msg=E0202,W0613
         # E0202: An attribute inherited from TestApiFunctions hide this method (Mock)
         # W0613: Unused argument 'transaction'
-        print "GETTING: %r = %r" % (key, self.data.get(key))
+        print("GETTING: %r = %r" % (key, self.data.get(key)))
         value = self.data.get(key)
         return self._must_defer and defer.succeed(value) or value
 
     def set(self, key, value, transaction=True, **kwargs):
         # pylint: disable-msg=W0613
         # W0613: Unused argument 'transaction' and 'kwargs'
-        print "SETTING: %r = %r" % (key, value)
+        print("SETTING: %r = %r" % (key, value))
         self.data[key] = value
         if self._must_defer:
             return defer.succeed(None)
@@ -149,7 +150,7 @@ class ConnectionStub(object):
         # pylint: disable-msg=E0202,W0613
         # E0202: An attribute inherited from TestApiFunctions hide this method (Mock)
         # W0613: Unused argument 'transaction'
-        print "DELETING: %r = %r" % (key, self.data[key])
+        print("DELETING: %r = %r" % (key, self.data[key]))
         del self.data[key]
         if self._must_defer:
             return defer.succeed(None)
@@ -179,11 +180,11 @@ class ContextStubFactory(object):
         # pylint: disable-msg=W0613
         # W0613: Unused argument
         if msgid not in self.contexts:
-            print "CREATING CONTEXT FOR", msgid
+            print("CREATING CONTEXT FOR", msgid)
             must_defer = kwargs.pop('must_defer', True)
             self.contexts[msgid] = ContextStub(msgid, timeout, must_defer=must_defer)
         else:
-            print "GETTING PREVIOUS CONTEXT FOR", msgid
+            print("GETTING PREVIOUS CONTEXT FOR", msgid)
         return self.contexts[msgid]
 
     def reset(self):
@@ -191,7 +192,7 @@ class ContextStubFactory(object):
         # On ne peut pas écraser le _connection.data de chaque
         # contexte séparément car la modification ne serait vue
         # que pour cette instance du contexte.
-        print "CLEARING CONTEXTS"
+        print("CLEARING CONTEXTS")
         ConnectionStub.data = {}
 
 

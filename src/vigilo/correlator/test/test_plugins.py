@@ -13,7 +13,7 @@ Tests portant sur les plugins du corrélateur.
 # - R0904: Too many public methods
 # - W0201: Attribute defined outside __init__
 
-
+from __future__ import print_function
 import unittest
 from vigilo.correlator.test.helpers import settings
 
@@ -127,7 +127,7 @@ class TestRuleLoading(unittest.TestCase):
         }
         registry = get_registry()
         registry._load_from_settings()
-        print registry.rules.keys()
+        print(registry.rules.keys())
         self.assertEquals(len(registry.rules), 2)
         self.assertEquals(registry.rules.keys(), ["TestRule2", "TestRule1"])
 
@@ -141,5 +141,5 @@ class TestRuleLoading(unittest.TestCase):
         }
         registry = get_registry()
         registry._load_from_settings()
-        print registry.rules.keys()
+        print(registry.rules.keys())
         self.assertEquals(len(registry.rules), 1)

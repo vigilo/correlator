@@ -3,6 +3,7 @@
 # Copyright (C) 2006-2016 CS-SI
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
+from __future__ import print_function
 from datetime import datetime
 import unittest
 
@@ -175,7 +176,7 @@ class TestAggregates(unittest.TestCase):
                 ).first()
             correvents.append(correvent)
 
-            print self.corrbuilder.publisher.sendMessage.call_args_list
+            print(self.corrbuilder.publisher.sendMessage.call_args_list)
 
         # Il doit y avoir 1 seul agrégat, dont la cause est Host2
         # et qui contient 4 événements correspondant aux 4 hôtes.

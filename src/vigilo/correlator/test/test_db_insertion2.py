@@ -10,6 +10,7 @@
 # - R0904: Too many public methods
 # - W0201: Attribute defined outside __init__
 
+from __future__ import print_function
 import unittest
 
 from nose.twistedtools import reactor  # pylint: disable-msg=W0611
@@ -76,5 +77,5 @@ class TestDbInsertion2(unittest.TestCase):
         DBSession.refresh(events_aggregate1)
         expected = sorted([event1.idevent, event2.idevent])
         actual = sorted([event.idevent for event in events_aggregate1.events])
-        print "actual = %r, expected = %r" % (actual, expected)
+        print("actual = %r, expected = %r" % (actual, expected))
         self.assertEquals(actual, expected)

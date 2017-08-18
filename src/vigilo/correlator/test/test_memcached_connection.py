@@ -164,7 +164,7 @@ class TestMemcachedConnection(unittest.TestCase):
             self.fail("A TimeoutError exception was expected, got nothing.")
         except (defer.TimeoutError, error.ConnectionDone, KeyboardInterrupt):
             pass
-        except Exception, e:
+        except Exception as e:
             self.fail("A TimeoutError exception was expected, got %r" % e)
 
         # Ce get() fonctionnera car la connexion a été rétablie
