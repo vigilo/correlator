@@ -1,15 +1,15 @@
 # English translations for vigilo-correlator.
-# Copyright (C) 2015 ORGANIZATION
+# Copyright (C) 2017 ORGANIZATION
 # This file is distributed under the same license as the vigilo-correlator
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2015.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2017.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: vigilo-correlator 3.5\n"
+"Project-Id-Version: vigilo-correlator 4.1.0rc2\n"
 "Report-Msgid-Bugs-To: contact.vigilo@c-s.fr\n"
-"POT-Creation-Date: 2015-04-22 09:58+0200\n"
-"PO-Revision-Date: 2015-04-22 09:58+0200\n"
+"POT-Creation-Date: 2017-08-24 12:16+0200\n"
+"PO-Revision-Date: 2017-08-24 12:17+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: en <LL@li.org>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -30,7 +30,7 @@ msgstr ""
 "Could not set signal handlers. The correlator may not be able to shutdown"
 " cleanly"
 
-#: src/vigilo/correlator/correvent.py:122
+#: src/vigilo/correlator/correvent.py:134
 #, python-format
 msgid ""
 "Ignoring request to update correlated event %r: a more recent update "
@@ -39,17 +39,17 @@ msgstr ""
 "Ignoring request to update correlated event %r: a more recent update "
 "already exists in the database"
 
-#: src/vigilo/correlator/correvent.py:127
+#: src/vigilo/correlator/correvent.py:139
 #, python-format
 msgid "Updating existing correlated event (%r)"
 msgstr "Updating existing correlated event (%r)"
 
-#: src/vigilo/correlator/correvent.py:130
+#: src/vigilo/correlator/correvent.py:142
 #, python-format
 msgid "Got a reference to a non-existent correlated event (%r), adding as new"
 msgstr "Got a reference to a non-existent correlated event (%r), adding as new"
 
-#: src/vigilo/correlator/correvent.py:173
+#: src/vigilo/correlator/correvent.py:185
 #, python-format
 msgid ""
 "Got a reference to a nonexistent correlated event (%r), skipping this "
@@ -58,7 +58,7 @@ msgstr ""
 "Got a reference to a nonexistent correlated event (%r), skipping this "
 "aggregate"
 
-#: src/vigilo/correlator/correvent.py:363
+#: src/vigilo/correlator/correvent.py:375
 #, python-format
 msgid ""
 "Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
@@ -67,11 +67,7 @@ msgstr ""
 "Creating new aggregate with cause #%(cause)d (#%(supitem)d) from "
 "aggregate #%(original)d"
 
-#: src/vigilo/correlator/correvent.py:472
-msgid "Sending the correlated event to syslog"
-msgstr "Sending the correlated event to syslog"
-
-#: src/vigilo/correlator/correvent.py:560
+#: src/vigilo/correlator/correvent.py:563
 #, python-format
 msgid ""
 "Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
@@ -80,12 +76,12 @@ msgstr ""
 "Ignoring event #%(idevent)d on (%(host)r, %(service)r) as requested by "
 "the correlation rules"
 
-#: src/vigilo/correlator/correvent.py:586
+#: src/vigilo/correlator/correvent.py:589
 #, python-format
 msgid "Raw event ignored. Reason: status = %r"
 msgstr "Raw event ignored. Reason: status = %r"
 
-#: src/vigilo/correlator/correvent.py:603
+#: src/vigilo/correlator/correvent.py:606
 msgid "Creating a new correlated event"
 msgstr "Creating a new correlated event"
 
@@ -270,12 +266,12 @@ msgstr ""
 msgid "Cyclic dependencies found: %(path)s"
 msgstr "Cyclic dependencies found: %(path)s"
 
-#: src/vigilo/correlator/registry.py:77
+#: src/vigilo/correlator/registry.py:79
 #, python-format
 msgid "Successfully registered rule %r"
 msgstr "Successfully registered rule %r"
 
-#: src/vigilo/correlator/registry.py:142
+#: src/vigilo/correlator/registry.py:144
 msgid ""
 "Singleton has already been instanciated, ignoring attempt to create a new"
 " instance."
@@ -283,17 +279,17 @@ msgstr ""
 "Singleton has already been instanciated, ignoring attempt to create a new"
 " instance."
 
-#: src/vigilo/correlator/registry.py:186
+#: src/vigilo/correlator/registry.py:188
 #, python-format
 msgid "Not a valid rule name \"%s\""
 msgstr "Not a valid rule name \"%s\""
 
-#: src/vigilo/correlator/registry.py:192
+#: src/vigilo/correlator/registry.py:194
 #, python-format
 msgid "Unable to load rule \"%(name)s\" (%(class)s)"
 msgstr "Unable to load rule \"%(name)s\" (%(class)s)"
 
-#: src/vigilo/correlator/registry.py:210
+#: src/vigilo/correlator/registry.py:212
 #, python-format
 msgid ""
 "The rule \"%(rule)s\" depends on the rule \"%(dependency)s\", which has "
@@ -340,7 +336,7 @@ msgstr ""
 "must be loaded for computation orders to be handled properly."
 
 #: src/vigilo/correlator/actors/rule_dispatcher.py:203
-#: src/vigilo/correlator/actors/rule_dispatcher.py:289
+#: src/vigilo/correlator/actors/rule_dispatcher.py:288
 msgid ""
 "The connection to memcached timed out. The message will be handled once "
 "more."
@@ -348,44 +344,44 @@ msgstr ""
 "The connection to memcached timed out. The message will be handled once "
 "more."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:310
+#: src/vigilo/correlator/actors/rule_dispatcher.py:309
 msgid "Inserting state"
 msgstr "Inserting state"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:312
+#: src/vigilo/correlator/actors/rule_dispatcher.py:311
 msgid "Error while saving state"
 msgstr "Error while saving state"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:332
+#: src/vigilo/correlator/actors/rule_dispatcher.py:331
 msgid "Inserting an entry in the HLS history"
 msgstr "Inserting an entry in the HLS history"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:334
+#: src/vigilo/correlator/actors/rule_dispatcher.py:333
 msgid "Error while adding an entry in the HLS history"
 msgstr "Error while adding an entry in the HLS history"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:339
+#: src/vigilo/correlator/actors/rule_dispatcher.py:338
 msgid "Inserting an entry in the history"
 msgstr "Inserting an entry in the history"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:341
+#: src/vigilo/correlator/actors/rule_dispatcher.py:340
 msgid "Error while adding an entry in the history"
 msgstr "Error while adding an entry in the history"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:355
+#: src/vigilo/correlator/actors/rule_dispatcher.py:354
 msgid "Actual correlation"
 msgstr "Actual correlation"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:389
+#: src/vigilo/correlator/actors/rule_dispatcher.py:388
 #, python-format
 msgid "Correlation process ended (%.4fs)"
 msgstr "Correlation process ended (%.4fs)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:407
+#: src/vigilo/correlator/actors/rule_dispatcher.py:406
 msgid "Handling correlation results"
 msgstr "Handling correlation results"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:426
+#: src/vigilo/correlator/actors/rule_dispatcher.py:425
 #, python-format
 msgid ""
 "Error while saving the correlated event (%s). The message will be handled"
@@ -394,12 +390,12 @@ msgstr ""
 "Error while saving the correlated event (%s). The message will be handled"
 " once more."
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:455
+#: src/vigilo/correlator/actors/rule_dispatcher.py:454
 #, python-format
 msgid "Correlation failed for message #%(id)s (%(payload)s)"
 msgstr "Correlation failed for message #%(id)s (%(payload)s)"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:475
+#: src/vigilo/correlator/actors/rule_dispatcher.py:474
 #, python-format
 msgid ""
 "Unable to store correlated alert for message #%(id)s (%(payload)s) : "
@@ -408,7 +404,7 @@ msgstr ""
 "Unable to store correlated alert for message #%(id)s (%(payload)s) : "
 "%(error)s"
 
-#: src/vigilo/correlator/actors/rule_dispatcher.py:508
+#: src/vigilo/correlator/actors/rule_dispatcher.py:507
 #, python-format
 msgid "%s. The message will be handled once more."
 msgstr "%s. The message will be handled once more."
