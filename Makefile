@@ -8,7 +8,7 @@ include buildenv/Makefile.common.python
 settings.ini: settings.ini.in
 	sed -e 's,@LOCALSTATEDIR@,$(LOCALSTATEDIR),g' -e 's,@SYSCONFDIR@,$(SYSCONFDIR),g' settings.ini.in > settings.ini
 
-install: build install_python install_data install_permissions
+install: build install_python install_data_initd install_permissions
 	# regénérer le dropin.cache de twisted
 	-$(PYTHON) -c "from twisted.scripts.twistd import run; run()" > /dev/null 2>&1
 
