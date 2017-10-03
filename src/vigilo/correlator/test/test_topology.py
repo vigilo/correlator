@@ -220,4 +220,4 @@ class TestPredecessorsAliveness(TopologyTestHelpers, unittest.TestCase):
             self.database,
             self.service1.idservice
         )
-        self.assertEquals([], aggregates)
+        self.assertEqual([], aggregates)

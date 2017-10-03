@@ -181,5 +181,5 @@ class TestAggregates(unittest.TestCase):
         # Il doit y avoir 1 seul agrégat, dont la cause est Host2
         # et qui contient 4 événements correspondant aux 4 hôtes.
         correvent = DBSession.query(tables.CorrEvent).one()
-        self.assertEquals(hosts[3].idhost, correvent.cause.idsupitem)
-        self.assertEquals(4, len(correvent.events))
+        self.assertEqual(hosts[3].idhost, correvent.cause.idsupitem)
+        self.assertEqual(4, len(correvent.events))

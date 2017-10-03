@@ -69,7 +69,7 @@ class TestRuleLoading(unittest.TestCase):
         # On vérifie que toutes les règles demandées
         # ont bien pu être chargées.
         for rule in rules:
-            self.assertEquals(
+            self.assertEqual(
                 registry.rules.lookup(rule.__name__).name,
                 rule.__name__
             )
@@ -115,7 +115,7 @@ class TestRuleLoading(unittest.TestCase):
         rules = [ TestRule1, TestRule1 ]
         for rule in rules:
             registry.rules.register(rule())
-        self.assertEquals(len(registry.rules), 1)
+        self.assertEqual(len(registry.rules), 1)
 
     def test_rules_load_from_settings(self):
         """
@@ -128,8 +128,8 @@ class TestRuleLoading(unittest.TestCase):
         registry = get_registry()
         registry._load_from_settings()
         print(registry.rules.keys())
-        self.assertEquals(len(registry.rules), 2)
-        self.assertEquals(registry.rules.keys(), ["TestRule2", "TestRule1"])
+        self.assertEqual(len(registry.rules), 2)
+        self.assertEqual(registry.rules.keys(), ["TestRule2", "TestRule1"])
 
     def test_rules_load_from_settings_twice(self):
         """
@@ -142,4 +142,4 @@ class TestRuleLoading(unittest.TestCase):
         registry = get_registry()
         registry._load_from_settings()
         print(registry.rules.keys())
-        self.assertEquals(len(registry.rules), 1)
+        self.assertEqual(len(registry.rules), 1)

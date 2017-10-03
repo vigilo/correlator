@@ -70,17 +70,17 @@ class TestDbInsertion3(unittest.TestCase):
         # Aucun nouvel événement brut ne doit avoir été créé.
         event = DBSession.query(Event).one()
         # À la place, l'événement initial doit avoir été mis à jour.
-        self.assertEquals(datetime.fromtimestamp(ts), event.timestamp)
-        self.assertEquals(
+        self.assertEqual(datetime.fromtimestamp(ts), event.timestamp)
+        self.assertEqual(
             StateName.statename_to_value(u'CRITICAL'),
             event.current_state)
-        self.assertEquals(
+        self.assertEqual(
             StateName.statename_to_value(u'CRITICAL'),
             event.peak_state)
-        self.assertEquals(
+        self.assertEqual(
             StateName.statename_to_value(u'WARNING'),
             event.initial_state)
-        self.assertEquals(info_dictionary['message'], event.message)
+        self.assertEqual(info_dictionary['message'], event.message)
 
 
     def test_reuse_correvent_if_possible(self):
@@ -133,39 +133,39 @@ class TestDbInsertion3(unittest.TestCase):
         insert_event(info_dictionary)
 
         # On doit toujours avoir 2 événements bruts en base.
-        self.assertEquals(2, DBSession.query(Event).count())
+        self.assertEqual(2, DBSession.query(Event).count())
         # On doit avoir un seul événement corrélé.
         correvent = DBSession.query(CorrEvent).one()
         # La cause de cet événement corrélé
         # doit toujours être la même.
         DBSession.refresh(event)
-        self.assertEquals(event, correvent.cause)
+        self.assertEqual(event, correvent.cause)
 
         # L'événement brut associé à l'événement
         # corrélé doit avoir été mis à jour.
-        self.assertEquals(datetime.fromtimestamp(ts), event.timestamp)
-        self.assertEquals(
+        self.assertEqual(datetime.fromtimestamp(ts), event.timestamp)
+        self.assertEqual(
             StateName.statename_to_value(u'CRITICAL'),
             event.current_state)
-        self.assertEquals(
+        self.assertEqual(
             StateName.statename_to_value(u'CRITICAL'),
             event.peak_state)
-        self.assertEquals(
+        self.assertEqual(
             StateName.statename_to_value(u'WARNING'),
             event.initial_state)
-        self.assertEquals(info_dictionary['message'], event.message)
+        self.assertEqual(info_dictionary['message'], event.message)
 
         # L'autre événement brut ne doit pas avoir changé.
         event = DBSession.query(Event).filter(
             Event.idevent != event.idevent).one()
-        self.assertEquals(datetime.fromtimestamp(ts - 42), event.timestamp)
-        self.assertEquals(
+        self.assertEqual(datetime.fromtimestamp(ts - 42), event.timestamp)
+        self.assertEqual(
             StateName.statename_to_value(u'WARNING'),
             event.current_state)
-        self.assertEquals(
+        self.assertEqual(
             StateName.statename_to_value(u'WARNING'),
             event.peak_state)
-        self.assertEquals(
+        self.assertEqual(
             StateName.statename_to_value(u'WARNING'),
             event.initial_state)
-        self.assertEquals('WARNING: ping', event.message)
+        self.assertEqual('WARNING: ping', event.message)

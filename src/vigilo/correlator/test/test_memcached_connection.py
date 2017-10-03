@@ -127,7 +127,7 @@ class TestMemcachedConnection(unittest.TestCase):
 
         # On s'assure que la clé a bien été supprimée
         value = yield connection.get(key)
-        self.assertEquals(None, value[-1])
+        self.assertEqual(None, value[-1])
 
     @deferred(timeout=60)
     @defer.inlineCallbacks
@@ -170,4 +170,4 @@ class TestMemcachedConnection(unittest.TestCase):
         # Ce get() fonctionnera car la connexion a été rétablie
         # entre temps (reconnexion automatique).
         value = yield self.cache.get("test")
-        self.assertEquals(42, value)
+        self.assertEqual(42, value)

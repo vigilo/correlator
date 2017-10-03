@@ -65,17 +65,17 @@ class TestDbInsertion(unittest.TestCase):
         event = DBSession.query(Event).one()
 
         # Vérification des informations de l'événement dans la BDD.
-        self.assertEquals(LowLevelService, type(event.supitem))
-        self.assertEquals(1239104006, time.mktime(event.timestamp.timetuple()))
-        self.assertEquals(u'server.example.com', event.supitem.host.name)
-        self.assertEquals(u'Load', event.supitem.servicename)
-        self.assertEquals(u'WARNING',
+        self.assertEqual(LowLevelService, type(event.supitem))
+        self.assertEqual(1239104006, time.mktime(event.timestamp.timetuple()))
+        self.assertEqual(u'server.example.com', event.supitem.host.name)
+        self.assertEqual(u'Load', event.supitem.servicename)
+        self.assertEqual(u'WARNING',
             StateName.value_to_statename(event.current_state))
-        self.assertEquals(u'WARNING',
+        self.assertEqual(u'WARNING',
             StateName.value_to_statename(event.initial_state))
-        self.assertEquals(u'WARNING',
+        self.assertEqual(u'WARNING',
             StateName.value_to_statename(event.peak_state))
-        self.assertEquals(u'WARNING: Load average is above 4 (4.5)',
+        self.assertEqual(u'WARNING: Load average is above 4 (4.5)',
                             event.message)
 
         # Insertion de l'état dans la BDD
@@ -86,13 +86,13 @@ class TestDbInsertion(unittest.TestCase):
         insert_state(info_dictionary)
 
         # Vérification des informations de l'état dans la BDD.
-        self.assertEquals(LowLevelService, type(state.supitem))
-        self.assertEquals(1239104006, time.mktime(state.timestamp.timetuple()))
-        self.assertEquals('server.example.com', state.supitem.host.name)
-        self.assertEquals('Load', state.supitem.servicename)
-        self.assertEquals('WARNING',
+        self.assertEqual(LowLevelService, type(state.supitem))
+        self.assertEqual(1239104006, time.mktime(state.timestamp.timetuple()))
+        self.assertEqual('server.example.com', state.supitem.host.name)
+        self.assertEqual('Load', state.supitem.servicename)
+        self.assertEqual('WARNING',
             StateName.value_to_statename(state.state))
-        self.assertEquals('WARNING: Load average is above 4 (4.5)',
+        self.assertEqual('WARNING: Load average is above 4 (4.5)',
                             state.message)
 
     def test_insert_hls_event(self):
@@ -146,16 +146,16 @@ class TestDbInsertion(unittest.TestCase):
         event = DBSession.query(Event).one()
 
         # Vérification des informations de l'événement dans la BDD.
-        self.assertEquals(Host, type(event.supitem))
-        self.assertEquals(1239104006, time.mktime(event.timestamp.timetuple()))
-        self.assertEquals(u'server.example.com', event.supitem.name)
-        self.assertEquals(u'DOWN',
+        self.assertEqual(Host, type(event.supitem))
+        self.assertEqual(1239104006, time.mktime(event.timestamp.timetuple()))
+        self.assertEqual(u'server.example.com', event.supitem.name)
+        self.assertEqual(u'DOWN',
             StateName.value_to_statename(event.current_state))
-        self.assertEquals(u'DOWN',
+        self.assertEqual(u'DOWN',
             StateName.value_to_statename(event.initial_state))
-        self.assertEquals(u'DOWN',
+        self.assertEqual(u'DOWN',
             StateName.value_to_statename(event.peak_state))
-        self.assertEquals(u'DOWN: No ping response',
+        self.assertEqual(u'DOWN: No ping response',
                             event.message)
 
         # Insertion de l'état dans la BDD
@@ -166,12 +166,12 @@ class TestDbInsertion(unittest.TestCase):
         insert_state(info_dictionary)
 
         # Vérification des informations de l'état dans la BDD.
-        self.assertEquals(Host, type(state.supitem))
-        self.assertEquals(1239104006, time.mktime(state.timestamp.timetuple()))
-        self.assertEquals('server.example.com', state.supitem.name)
-        self.assertEquals('DOWN',
+        self.assertEqual(Host, type(state.supitem))
+        self.assertEqual(1239104006, time.mktime(state.timestamp.timetuple()))
+        self.assertEqual('server.example.com', state.supitem.name)
+        self.assertEqual('DOWN',
             StateName.value_to_statename(state.state))
-        self.assertEquals('DOWN: No ping response', state.message)
+        self.assertEqual('DOWN: No ping response', state.message)
 
 
 

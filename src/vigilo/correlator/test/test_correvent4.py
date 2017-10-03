@@ -181,15 +181,15 @@ class TestCorrevents4(unittest.TestCase):
         self.assertNotEquals(idcorrevent1, None)
         # Un agrégat a été créé sur cet hôte...
         db_correvent = DBSession.query(tables.CorrEvent).get(idcorrevent1)
-        self.assertEquals(self.hosts[2].idhost, db_correvent.cause.idsupitem)
+        self.assertEqual(self.hosts[2].idhost, db_correvent.cause.idsupitem)
         # ... dans l'état indiqué.
-        self.assertEquals(
+        self.assertEqual(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
                 db_correvent.cause.current_state)
         )
         # ... contenant uniquement un événement (cause hôte 2).
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 2'],
             [ev.supitem.name for ev in db_correvent.events]
         )
@@ -204,17 +204,17 @@ class TestCorrevents4(unittest.TestCase):
         self.assertNotEquals(idcorrevent2, None)
         # Il ne doit rester qu'un seul agrégat (le 1er a été fusionné).
         db_correvent = DBSession.query(tables.CorrEvent).one()
-        self.assertEquals(db_correvent.idcorrevent, idcorrevent2)
+        self.assertEqual(db_correvent.idcorrevent, idcorrevent2)
         # ... dont la cause est l'hôte 1.
-        self.assertEquals(self.hosts[1].idhost, db_correvent.cause.idsupitem)
+        self.assertEqual(self.hosts[1].idhost, db_correvent.cause.idsupitem)
         # ... dans l'état indiqué.
-        self.assertEquals(
+        self.assertEqual(
             u'DOWN',
             tables.StateName.value_to_statename(
                 db_correvent.cause.current_state)
         )
         # ... ayant 2 événements bruts rattachés (cause hôte 1 + hôte 2).
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 1', u'Host 2'],
             sorted([ev.supitem.name for ev in db_correvent.events])
         )
@@ -225,21 +225,21 @@ class TestCorrevents4(unittest.TestCase):
             self.hosts[4], 'UNREACHABLE', preds=[idcorrevent2])
         print("Finished step 3\n")
         # Aucune erreur n'a été levée.
-        self.assertEquals(res, None)
-        self.assertEquals(idcorrevent3, None) # ajouté dans l'agrégat 2.
+        self.assertEqual(res, None)
+        self.assertEqual(idcorrevent3, None) # ajouté dans l'agrégat 2.
         # Toujours un seul agrégat.
         db_correvent = DBSession.query(tables.CorrEvent).one()
-        self.assertEquals(db_correvent.idcorrevent, idcorrevent2)
+        self.assertEqual(db_correvent.idcorrevent, idcorrevent2)
         # ... dont la cause est l'hôte 1.
-        self.assertEquals(self.hosts[1].idhost, db_correvent.cause.idsupitem)
+        self.assertEqual(self.hosts[1].idhost, db_correvent.cause.idsupitem)
         # ... dans l'état indiqué.
-        self.assertEquals(
+        self.assertEqual(
             u'DOWN',
             tables.StateName.value_to_statename(
                 db_correvent.cause.current_state)
         )
         # ... ayant 3 événements bruts.
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 1', u'Host 2', u'Host 4'],
             sorted([ev.supitem.name for ev in db_correvent.events])
         )
@@ -250,23 +250,23 @@ class TestCorrevents4(unittest.TestCase):
             self.hosts[3], 'UNREACHABLE', preds=[idcorrevent2])
         print("Finished step 4\n")
         # Aucune erreur n'a été levée.
-        self.assertEquals(res, None)
-        self.assertEquals(idcorrevent4, None) # ajouté dans l'agrégat 2.
+        self.assertEqual(res, None)
+        self.assertEqual(idcorrevent4, None) # ajouté dans l'agrégat 2.
         # On a 4 événements bruts en base.
-        self.assertEquals(4, DBSession.query(tables.Event).count())
+        self.assertEqual(4, DBSession.query(tables.Event).count())
         # On a toujours un seul agrégat.
         db_correvent = DBSession.query(tables.CorrEvent).one()
-        self.assertEquals(db_correvent.idcorrevent, idcorrevent2)
+        self.assertEqual(db_correvent.idcorrevent, idcorrevent2)
         # ... dont la cause est l'hôte 1.
-        self.assertEquals(self.hosts[1].idhost, db_correvent.cause.idsupitem)
+        self.assertEqual(self.hosts[1].idhost, db_correvent.cause.idsupitem)
         # ... dans l'état indiqué.
-        self.assertEquals(
+        self.assertEqual(
             u'DOWN',
             tables.StateName.value_to_statename(
                 db_correvent.cause.current_state)
         )
         # ... ayant 3 événements bruts.
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 1', u'Host 2', u'Host 3', u'Host 4'],
             sorted([ev.supitem.name for ev in db_correvent.events])
         )
@@ -280,51 +280,51 @@ class TestCorrevents4(unittest.TestCase):
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
         # Désagrégé à partir de l'agrégat 2.
-        self.assertEquals(idcorrevent5, idcorrevent2)
+        self.assertEqual(idcorrevent5, idcorrevent2)
         # On a 4 événements bruts et 3 agrégats en base.
         print("events")
-        self.assertEquals(4, DBSession.query(tables.Event).count())
+        self.assertEqual(4, DBSession.query(tables.Event).count())
         db_correvents = DBSession.query(tables.CorrEvent).all()
         print("correvents")
-        self.assertEquals(3, len(db_correvents))
+        self.assertEqual(3, len(db_correvents))
         db_correvents.sort(key=lambda x: x.cause.supitem.name)
         # L'un porte sur l'hôte 1 qui doit être dans l'état "UP"
         # et ne contient qu'un seul événement brut sur host 1.
-        self.assertEquals(self.hosts[1].idhost,
+        self.assertEqual(self.hosts[1].idhost,
                           db_correvents[0].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'UP',
             tables.StateName.value_to_statename(
                 db_correvents[0].cause.current_state)
         )
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 1'],
             sorted([ev.supitem.name for ev in db_correvents[0].events])
         )
         # Le second porte sur l'hôte 2, qui se trouve toujours dans
         # l'état "UNREACHABLE" et n'a qu'un seul événement brut (host 2).
-        self.assertEquals(self.hosts[2].idhost,
+        self.assertEqual(self.hosts[2].idhost,
                          db_correvents[1].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
                 db_correvents[1].cause.current_state)
         )
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 2'],
             sorted([ev.supitem.name for ev in db_correvents[1].events])
         )
         # Le dernier des agrégats porte sur l'hôte 4
         # qui se trouve dans l'état UNREACHABLE et
         # contient 2 événements bruts (host 4 et host 3).
-        self.assertEquals(self.hosts[4].idhost,
+        self.assertEqual(self.hosts[4].idhost,
                           db_correvents[2].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
                 db_correvents[2].cause.current_state)
         )
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 3', u'Host 4'],
             sorted([ev.supitem.name for ev in db_correvents[2].events])
         )
@@ -363,14 +363,14 @@ class TestCorrevents4(unittest.TestCase):
             'UNREACHABLE',
             preds=[idcorrevent1, idcorrevent2],
         )
-        self.assertEquals(res, None) # Pas de nouvel agrégat créé.
+        self.assertEqual(res, None) # Pas de nouvel agrégat créé.
         print("Finished step 1\n")
         self.assertNotEquals(idcorrevent1, None)
         self.assertNotEquals(idcorrevent2, None)
-        self.assertEquals(idcorrevent3, None)
+        self.assertEqual(idcorrevent3, None)
         # On s'attend à trouver 3 événements bruts et 2 agrégats.
-        self.assertEquals(3, DBSession.query(tables.Event).count())
-        self.assertEquals(2, DBSession.query(tables.CorrEvent).count())
+        self.assertEqual(3, DBSession.query(tables.Event).count())
+        self.assertEqual(2, DBSession.query(tables.CorrEvent).count())
         # L'événement brut sur "Host 3" a été agrégé dans les 2 autres.
         event3 = DBSession.query(tables.Event).filter(
             tables.Event.idsupitem == self.hosts[3].idhost).one()
@@ -389,8 +389,8 @@ class TestCorrevents4(unittest.TestCase):
         print("Finished step 2\n")
         self.assertNotEquals(res, None)
         # On s'attend à trouver 3 événements bruts et 3 agrégats.
-        self.assertEquals(3, DBSession.query(tables.Event).count())
-        self.assertEquals(3, DBSession.query(tables.CorrEvent).count())
+        self.assertEqual(3, DBSession.query(tables.Event).count())
+        self.assertEqual(3, DBSession.query(tables.CorrEvent).count())
         # L'événement brut sur "Host 3" n'est plus l'agrégat de l'hôte 1.
         correvent = DBSession.query(tables.CorrEvent).get(idcorrevent1)
         self.assertFalse(event3 in correvent.events)
@@ -411,8 +411,8 @@ class TestCorrevents4(unittest.TestCase):
         print("Finished step 3\n")
         self.assertNotEquals(res, None)
         # On s'attend à trouver 3 événements bruts et 3 agrégats.
-        self.assertEquals(3, DBSession.query(tables.Event).count())
-        self.assertEquals(3, DBSession.query(tables.CorrEvent).count())
+        self.assertEqual(3, DBSession.query(tables.Event).count())
+        self.assertEqual(3, DBSession.query(tables.CorrEvent).count())
         # L'événement brut sur "Host 3" n'est plus l'agrégat de l'hôte 1.
         correvent = DBSession.query(tables.CorrEvent).get(idcorrevent1)
         self.assertFalse(event3 in correvent.events)
@@ -464,10 +464,10 @@ class TestCorrevents4(unittest.TestCase):
         # On vérifie que les événements sont bien dans les bons agrégats.
         correvent = DBSession.query(tables.CorrEvent).filter(
             tables.CorrEvent.idcorrevent == idcorrevent1).one()
-        self.assertEquals(len(correvent.events), 1)
+        self.assertEqual(len(correvent.events), 1)
         correvent2 = DBSession.query(tables.CorrEvent).filter(
             tables.CorrEvent.idcorrevent == idcorrevent2).one()
-        self.assertEquals(
+        self.assertEqual(
             [event.idevent],
             [e.idevent for e in correvent2.events]
         )

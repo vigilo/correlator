@@ -58,7 +58,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx._connection = ConnectionStub()
         yield ctx.set("foo", "bar")
         foo = yield ctx.get("foo")
-        self.assertEquals(foo, "bar")
+        self.assertEqual(foo, "bar")
 
     @deferred(timeout=60)
     @defer.inlineCallbacks
@@ -73,7 +73,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx2 = Context(43)
         ctx2._connection = ConnectionStub()
         foo = yield ctx2.get("foo")
-        self.assertEquals(foo, None)
+        self.assertEqual(foo, None)
 
     @deferred(timeout=60)
     @defer.inlineCallbacks
@@ -84,7 +84,7 @@ class TestApiFunctions(unittest.TestCase):
         yield ctx.set("foo", "bar")
         yield ctx.delete("foo")
         foo = yield ctx.get("foo")
-        self.assertEquals(foo, None)
+        self.assertEqual(foo, None)
 
     @deferred(timeout=60)
     @defer.inlineCallbacks
@@ -94,7 +94,7 @@ class TestApiFunctions(unittest.TestCase):
         ctx._connection = ConnectionStub()
         yield ctx.setShared("foo", "bar")
         foo = yield ctx.getShared("foo")
-        self.assertEquals(foo, "bar")
+        self.assertEqual(foo, "bar")
 
     @deferred(timeout=60)
     @defer.inlineCallbacks
@@ -106,10 +106,10 @@ class TestApiFunctions(unittest.TestCase):
         ctx2 = Context(43)
         ctx2._connection = ConnectionStub()
         foo = yield ctx2.getShared("foo")
-        self.assertEquals(foo, "bar")
+        self.assertEqual(foo, "bar")
         yield ctx.deleteShared("foo")
         foo = yield ctx2.getShared("foo")
-        self.assertEquals(foo, None)
+        self.assertEqual(foo, None)
 
     @deferred(timeout=60)
     def test_get_unicode(self):
@@ -121,7 +121,7 @@ class TestApiFunctions(unittest.TestCase):
             key = ctx._connection._cache.get.call_args[0][0]
             self.assertTrue(isinstance(key, str),
                     "Toutes les clés doivent être des str")
-            self.assertEquals('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
+            self.assertEqual('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
         d = ctx.get(u"é à è")
         d.addCallback(check)
         return d
@@ -136,7 +136,7 @@ class TestApiFunctions(unittest.TestCase):
             key = ctx._connection._cache.set.call_args[0][0]
             self.assertFalse(isinstance(key, unicode),
                     "Toutes les clés doivent être des str")
-            self.assertEquals('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
+            self.assertEqual('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
         d = ctx.set(u"é à è", "bar")
         d.addCallback(check)
         return d
@@ -152,7 +152,7 @@ class TestApiFunctions(unittest.TestCase):
             self.assertTrue(
                 isinstance(key, str),
                 "Toutes les clés doivent être des str")
-            self.assertEquals('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
+            self.assertEqual('vigilo%3A%C3%A9+%C3%A0+%C3%A8%3A42', key)
         d = ctx.delete(u"é à è")
         d.addCallback(check)
         return d
@@ -168,7 +168,7 @@ class TestApiFunctions(unittest.TestCase):
             self.assertTrue(
                 isinstance(key, str),
                 "Toutes les clés doivent être des str")
-            self.assertEquals('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
+            self.assertEqual('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
         d = ctx.getShared(u"é à è")
         d.addCallback(check)
         return d
@@ -184,7 +184,7 @@ class TestApiFunctions(unittest.TestCase):
             self.assertTrue(
                 isinstance(key, str),
                 "Toutes les clés doivent être des str")
-            self.assertEquals('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
+            self.assertEqual('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
         d = ctx.setShared(u"é à è", "bar")
         d.addCallback(check)
         return d
@@ -200,7 +200,7 @@ class TestApiFunctions(unittest.TestCase):
             self.assertTrue(
                 isinstance(key, str),
                 "Toutes les clés doivent être des str, pas d'unicode")
-            self.assertEquals('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
+            self.assertEqual('shared%3A%C3%A9+%C3%A0+%C3%A8', key)
         d = ctx.deleteShared(u"é à è")
         d.addCallback(check)
         return d

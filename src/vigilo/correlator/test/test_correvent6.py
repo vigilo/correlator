@@ -71,7 +71,7 @@ class TestCorrevents6(unittest.TestCase):
         ctx.set('predecessors_aggregates', [])
         res = yield self.corrbuilder._aggregate_topologically(
                     ctx, None, event1.idevent, self.hosts[1].idhost)
-        self.assertEquals(False, res)
+        self.assertEqual(False, res)
 
 
     @deferred(timeout=60)
@@ -86,9 +86,9 @@ class TestCorrevents6(unittest.TestCase):
         ctx.set('successors_aggregates', [])
         res = yield self.corrbuilder._aggregate_topologically(
                     ctx, None, event2.idevent, self.hosts[2].idhost)
-        self.assertEquals(True, res)
-        self.assertEquals(1, DBSession.query(tables.CorrEvent).count())
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(True, res)
+        self.assertEqual(1, DBSession.query(tables.CorrEvent).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
 
 
     @deferred(timeout=60)
@@ -101,9 +101,9 @@ class TestCorrevents6(unittest.TestCase):
         ctx.set('predecessors_aggregates', [1])
         res = yield self.corrbuilder._aggregate_topologically(
                     ctx, None, event2.idevent, self.hosts[2].idhost)
-        self.assertEquals(False, res)
-        self.assertEquals(0, DBSession.query(tables.CorrEvent).count())
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(False, res)
+        self.assertEqual(0, DBSession.query(tables.CorrEvent).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
 
 
     @deferred(timeout=60)
@@ -121,7 +121,7 @@ class TestCorrevents6(unittest.TestCase):
         ctx.set('successors_aggregates', [aggr3.idcorrevent])
         res = yield self.corrbuilder._aggregate_topologically(
                     ctx, aggr2, event2.idevent, self.hosts[2].idhost)
-        self.assertEquals(True, res)
-        self.assertEquals(1, DBSession.query(tables.CorrEvent).count())
-        self.assertEquals(3, DBSession.query(tables.Event).count())
+        self.assertEqual(True, res)
+        self.assertEqual(1, DBSession.query(tables.CorrEvent).count())
+        self.assertEqual(3, DBSession.query(tables.Event).count())
 

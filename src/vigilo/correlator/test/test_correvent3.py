@@ -148,11 +148,11 @@ class TestCorrevents3(unittest.TestCase):
         # Le CorrEvent doit toujours être le même.
         LOGGER.debug('Checking the CorrEvent')
         db_correvent = DBSession.query(CorrEvent).one()
-        self.assertEquals(db_correvent.idcorrevent, idcorrevent)
+        self.assertEqual(db_correvent.idcorrevent, idcorrevent)
 
         # L'état d'acquittement ne doit pas avoir été modifié
         # et l'agrégat doit toujours être ouvert.
-        self.assertEquals(db_correvent.ack, CorrEvent.ACK_KNOWN)
+        self.assertEqual(db_correvent.ack, CorrEvent.ACK_KNOWN)
         ctx = self.context_factory(42)
         open_aggr = yield ctx.getShared('open_aggr:%s' % self.host.idhost)
         self.assertNotEquals(open_aggr, 0)
@@ -181,11 +181,11 @@ class TestCorrevents3(unittest.TestCase):
         # Le CorrEvent doit toujours être le même.
         LOGGER.debug('Checking the CorrEvent')
         db_correvent = DBSession.query(CorrEvent).one()
-        self.assertEquals(db_correvent.idcorrevent, idcorrevent)
+        self.assertEqual(db_correvent.idcorrevent, idcorrevent)
 
         # L'état d'acquittement DOIT avoir été modifié
         # et l'agrégat doit toujours être ouvert.
-        self.assertEquals(db_correvent.ack, CorrEvent.ACK_NONE)
+        self.assertEqual(db_correvent.ack, CorrEvent.ACK_NONE)
         ctx = self.context_factory(42)
         open_aggr = yield ctx.getShared('open_aggr:%s' % self.host.idhost)
         self.assertNotEquals(open_aggr, 0)
@@ -214,12 +214,12 @@ class TestCorrevents3(unittest.TestCase):
         # Le CorrEvent doit toujours être le même.
         LOGGER.debug('Checking the CorrEvent')
         db_correvent = DBSession.query(CorrEvent).one()
-        self.assertEquals(db_correvent.idcorrevent, idcorrevent)
+        self.assertEqual(db_correvent.idcorrevent, idcorrevent)
 
         # L'état d'acquittement DOIT être "AAClosed"
         # et l'agrégat ne doit plus être marqué comme "ouvert".
-        self.assertEquals(db_correvent.ack, CorrEvent.ACK_CLOSED)
+        self.assertEqual(db_correvent.ack, CorrEvent.ACK_CLOSED)
         ctx = self.context_factory(42)
         open_aggr = yield ctx.getShared('open_aggr:%s' % self.host.idhost)
-        self.assertEquals(open_aggr, 0)
+        self.assertEqual(open_aggr, 0)
         defer.returnValue(None)

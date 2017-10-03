@@ -175,10 +175,10 @@ class TestCorrevents5(unittest.TestCase):
 
         # On a 2 événements bruts et 1 agrégat en base.
         LOGGER.debug("Checking events")
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
         LOGGER.debug("Checking correvents")
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(1, len(db_correvents))
+        self.assertEqual(1, len(db_correvents))
 
         # 3. L'agrégat de l'étape 2 doit avoir été désagrégé.
         LOGGER.debug('Step 3')
@@ -189,23 +189,23 @@ class TestCorrevents5(unittest.TestCase):
 
         # On a 2 événements bruts et 2 agrégats en base.
         LOGGER.debug("Checking events")
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
         LOGGER.debug("Checking correvents")
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(2, len(db_correvents))
+        self.assertEqual(2, len(db_correvents))
         db_correvents.sort(key=lambda x: x.cause.supitem.name)
         # Le premier à l'état "UP" et porte sur "Host 1".
-        self.assertEquals(self.hosts[1].idhost,
+        self.assertEqual(self.hosts[1].idhost,
                           db_correvents[0].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'UP',
             tables.StateName.value_to_statename(
                 db_correvents[0].cause.current_state)
         )
         # Le 2nd est "UNREACHABLE" et porte sur "Host 2".
-        self.assertEquals(self.hosts[2].idhost,
+        self.assertEqual(self.hosts[2].idhost,
                           db_correvents[1].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
                 db_correvents[1].cause.current_state)
@@ -218,24 +218,24 @@ class TestCorrevents5(unittest.TestCase):
             self.hosts[1], 'DOWN', succs=[3])
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
-        self.assertEquals(idcorrevent4, idcorrevent2)
+        self.assertEqual(idcorrevent4, idcorrevent2)
 
         # On a 2 événements bruts et 1 agrégat en base.
         LOGGER.debug("Checking events")
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
         LOGGER.debug("Checking correvents")
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(1, len(db_correvents))
+        self.assertEqual(1, len(db_correvents))
         # Il a l'état "DOWN", porte sur "Host 1"
         # et contient les 2 événements bruts.
-        self.assertEquals(self.hosts[1].idhost,
+        self.assertEqual(self.hosts[1].idhost,
                           db_correvents[0].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'DOWN',
             tables.StateName.value_to_statename(
                 db_correvents[0].cause.current_state)
         )
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 1', u'Host 2'],
             sorted([ev.supitem.name for ev in db_correvents[0].events])
         )
@@ -262,15 +262,15 @@ class TestCorrevents5(unittest.TestCase):
         res, idcorrevent2 = yield self.handle_alert(
             self.hosts[2], 'UNREACHABLE', preds=[idcorrevent1])
         # Aucune erreur, mais correvent agrégé.
-        self.assertEquals(res, None)
-        self.assertEquals(idcorrevent2, None)
+        self.assertEqual(res, None)
+        self.assertEqual(idcorrevent2, None)
 
         # On a 2 événements bruts et 1 agrégat en base.
         LOGGER.debug("Checking events")
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
         LOGGER.debug("Checking correvents")
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(1, len(db_correvents))
+        self.assertEqual(1, len(db_correvents))
 
         # 3. L'agrégat de l'étape 2 doit avoir été désagrégé.
         LOGGER.debug('Step 3')
@@ -281,23 +281,23 @@ class TestCorrevents5(unittest.TestCase):
 
         # On a 2 événements bruts et 2 agrégats en base.
         LOGGER.debug("Checking events")
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
         LOGGER.debug("Checking correvents")
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(2, len(db_correvents))
+        self.assertEqual(2, len(db_correvents))
         db_correvents.sort(key=lambda x: x.cause.supitem.name)
         # Le premier à l'état "UP" et porte sur "Host 1".
-        self.assertEquals(self.hosts[1].idhost,
+        self.assertEqual(self.hosts[1].idhost,
                           db_correvents[0].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'UP',
             tables.StateName.value_to_statename(
                 db_correvents[0].cause.current_state)
         )
         # Le 2nd est "UNREACHABLE" et porte sur "Host 2".
-        self.assertEquals(self.hosts[2].idhost,
+        self.assertEqual(self.hosts[2].idhost,
                           db_correvents[1].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'UNREACHABLE',
             tables.StateName.value_to_statename(
                 db_correvents[1].cause.current_state)
@@ -310,24 +310,24 @@ class TestCorrevents5(unittest.TestCase):
             self.hosts[1], 'DOWN', succs=[2])
         # Aucune erreur n'a été levée.
         self.assertNotEquals(res, None)
-        self.assertEquals(idcorrevent4, idcorrevent1)
+        self.assertEqual(idcorrevent4, idcorrevent1)
 
         # On a 2 événements bruts et 1 agrégat en base.
         LOGGER.debug("Checking events")
-        self.assertEquals(2, DBSession.query(tables.Event).count())
+        self.assertEqual(2, DBSession.query(tables.Event).count())
         LOGGER.debug("Checking correvents")
         db_correvents = DBSession.query(tables.CorrEvent).all()
-        self.assertEquals(1, len(db_correvents))
+        self.assertEqual(1, len(db_correvents))
         # Il a l'état "DOWN", porte sur "Host 1"
         # et contient les 2 événements bruts.
-        self.assertEquals(self.hosts[1].idhost,
+        self.assertEqual(self.hosts[1].idhost,
                           db_correvents[0].cause.idsupitem)
-        self.assertEquals(
+        self.assertEqual(
             u'DOWN',
             tables.StateName.value_to_statename(
                 db_correvents[0].cause.current_state)
         )
-        self.assertEquals(
+        self.assertEqual(
             [u'Host 1', u'Host 2'],
             sorted([ev.supitem.name for ev in db_correvents[0].events])
         )
@@ -360,15 +360,15 @@ class TestCorrevents5(unittest.TestCase):
             preds=[idcorrevent1],
             succs=[idcorrevent3],
         )
-        self.assertEquals(res, None) # Pas de nouvel agrégat créé.
+        self.assertEqual(res, None) # Pas de nouvel agrégat créé.
 
         # On s'attend à trouver 3 événements bruts et 1 agrégat.
-        self.assertEquals(3, DBSession.query(tables.Event).count())
-        self.assertEquals(1, DBSession.query(tables.CorrEvent).count())
+        self.assertEqual(3, DBSession.query(tables.Event).count())
+        self.assertEqual(1, DBSession.query(tables.CorrEvent).count())
 
         events = DBSession.query(tables.Event).all()
         events.sort(key=lambda x: x.supitem.name)
-        self.assertEquals(u'Host 1', events[0].supitem.name)
-        self.assertEquals(u'Host 2', events[1].supitem.name)
-        self.assertEquals(u'Host 3', events[2].supitem.name)
+        self.assertEqual(u'Host 1', events[0].supitem.name)
+        self.assertEqual(u'Host 2', events[1].supitem.name)
+        self.assertEqual(u'Host 3', events[2].supitem.name)
 

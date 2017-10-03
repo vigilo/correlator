@@ -78,4 +78,4 @@ class TestDbInsertion2(unittest.TestCase):
         expected = sorted([event1.idevent, event2.idevent])
         actual = sorted([event.idevent for event in events_aggregate1.events])
         print("actual = %r, expected = %r" % (actual, expected))
-        self.assertEquals(actual, expected)
+        self.assertEqual(actual, expected)
