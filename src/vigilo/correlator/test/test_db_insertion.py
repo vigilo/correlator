@@ -104,7 +104,7 @@ class TestDbInsertion(unittest.TestCase):
         info_dictionary = {
                 "type": "event",
                 "timestamp": datetime.fromtimestamp(1239104006),
-                "host": helpers.settings['correlator']['nagios_hls_host'],
+                "host": 'High-Level-Services',
                 "service": "Load",
                 "state": "WARNING",
                 "message": "WARNING: Load average is above 4 (4.5)",

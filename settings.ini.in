@@ -51,10 +51,6 @@ memcached_debug = False
 # Validation des messages reçus.
 validate_messages = False
 
-# Nom de l'hôte symbolisant les services
-# de haut niveau dans Nagios.
-nagios_hls_host = High-Level-Services
-
 # Durée maximale d'exécution pour chaque règle de corrélation.
 # La valeur 0 désactive cette limite.
 rules_timeout = 0

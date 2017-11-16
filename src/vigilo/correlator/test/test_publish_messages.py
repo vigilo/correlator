@@ -26,8 +26,7 @@ class MessagePublisherTestCase(unittest.TestCase):
 
     def setUp(self):
         """Initialisation d'une réplique du RuleDispatcher."""
-        self.mp = MessagePublisher(
-                helpers.settings['correlator']['nagios_hls_host'], {})
+        self.mp = MessagePublisher({})
         self.mp.sendMessage = Mock()
 
         # Initialisation de la BDD

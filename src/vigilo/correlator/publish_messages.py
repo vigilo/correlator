@@ -16,12 +16,11 @@ class MessagePublisher(BusPublisher):
     sur le bus d'échange de Vigilo.
     """
 
-    def __init__(self, nagios_hls_host, publications):
+    def __init__(self, publications):
         """
         Construit une nouvelle instance de publication des messages.
         """
         super(MessagePublisher, self).__init__(publications)
-        self.nagios_hls_host = nagios_hls_host
 
 
     def publish_aggregate(self, aggregate_id_list, event_id_list):

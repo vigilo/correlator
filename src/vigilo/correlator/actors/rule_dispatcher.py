@@ -56,13 +56,12 @@ class RuleDispatcher(MessageHandler):
     _context_factory = Context
 
 
-    def __init__(self, database, nagios_hls_host, timeout, min_runner,
+    def __init__(self, database, timeout, min_runner,
                  max_runner, max_idle, instance):
         self.instance = instance
         super(RuleDispatcher, self).__init__()
         self.tree_end = None
         self._database = database
-        self.nagios_hls_host = nagios_hls_host
         self.timeout = timeout
 
         # @TODO: #875: réimplémenter le timeout avec des threads.
@@ -252,7 +251,7 @@ class RuleDispatcher(MessageHandler):
             except ValueError:
                 info_dictionary["timestamp"] = datetime.now()
 
-        if info_dictionary["host"] == self.nagios_hls_host:
+        if info_dictionary["host"] == 'High-Level-Services':
             info_dictionary["host"] = None
 
         # Le message vaut None lorsqu'on force l'envoi d'une notification
@@ -409,7 +408,7 @@ class RuleDispatcher(MessageHandler):
 
         # Pour les services de haut niveau, on s'arrête ici,
         # on NE DOIT PAS générer d'événement corrélé.
-        if info_dictionary["host"] == self.nagios_hls_host:
+        if info_dictionary["host"] == 'High-Level-Services':
             d.callback(None)
             return d
 
@@ -562,8 +561,6 @@ class RuleDispatcher(MessageHandler):
 
 
 def ruledispatcher_factory(settings, database, client):
-    nagios_hls_host = settings['correlator']['nagios_hls_host']
-
     timeout = settings['correlator'].as_int('rules_timeout')
     if timeout <= 0:
         timeout = None
@@ -579,7 +576,7 @@ def ruledispatcher_factory(settings, database, client):
     except KeyError:
         max_idle = 20
 
-    msg_handler = RuleDispatcher(database, nagios_hls_host, timeout,
+    msg_handler = RuleDispatcher(database, timeout,
                                  min_runner, max_runner, max_idle, instance)
     msg_handler.check_database_connectivity()
     msg_handler.setClient(client)
@@ -590,7 +587,7 @@ def ruledispatcher_factory(settings, database, client):
 
     # Expéditeur de messages
     publications = parsePublications(settings.get('publications', {}).copy())
-    publisher = MessagePublisher(nagios_hls_host, publications)
+    publisher = MessagePublisher(publications)
     publisher.setClient(client)
     msg_handler.bus_publisher = publisher
 

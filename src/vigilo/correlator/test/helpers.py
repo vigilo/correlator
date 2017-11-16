@@ -201,7 +201,7 @@ class RuleDispatcherStub(RuleDispatcher):
     """Classe simulant le fonctionnement du RuleDispatcher"""
     def __init__(self):
         database = DummyDatabaseWrapper(True)
-        RuleDispatcher.__init__(self, database, "HLS", None, 0, 4, 20, 42)
+        RuleDispatcher.__init__(self, database, None, 0, 4, 20, 42)
         self.buffer = []
         # Nécessaire à cause de HighLevelServiceDepsRule:_send_states()
         # qui a besoin de contourner le ThreadWrapper (qui n'existe pas

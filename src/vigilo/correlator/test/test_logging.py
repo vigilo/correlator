@@ -144,7 +144,7 @@ class TestLogging(unittest.TestCase):
         if host_name:
             infos['host'] = host_name
         else:
-            infos['host'] = helpers.settings['correlator']['nagios_hls_host']
+            infos['host'] = 'High-Level-Services'
 
         idsupitem = SupItem.get_supitem(host_name, service_name)
 
