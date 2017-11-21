@@ -4,7 +4,6 @@ Description=Vigilo correlator
 After=syslog.service
 After=rsyslog.service
 After=network.target
-
 After=supervisord.service
 After=rabbitmq-server.service
 After=postgresql-9.2.service
@@ -13,9 +12,7 @@ After=postgresql-9.2.service
 [Install]
 WantedBy=multi-user.target
 
+
 [Service]
 Type=simple
-EnvironmentFile=-/etc/sysconfig/vigilo-correlator
-User=vigilo-correlator
-Restart=on-failure
-ExecStart=/usr/bin/vigilo-correlator -d /var/lib/vigilo/correlator --pidfile '' -n vigilo-correlator
+ExecStart=/bin/bash -c 'while /bin/true; do /bin/sleep 3600; done'

@@ -11,7 +11,6 @@ BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-build
 License:    GPLv2
 Buildarch:  noarch
 
-BuildRequires:   systemd
 BuildRequires:   python-distribute
 BuildRequires:   python-babel
 
@@ -22,6 +21,7 @@ Requires:   vigilo-models
 Requires:   python-memcached
 
 # Init
+%systemd_requires
 Requires(pre): shadow-utils
 
 %description
@@ -55,14 +55,17 @@ exit 0
 
 %post
 %systemd_post %{name}.service
+%systemd_post %{name}@1.service
 %{_libexecdir}/twisted-dropin-cache >/dev/null 2>&1 || :
 %tmpfiles_create %{_tmpfilesdir}/%{name}.conf
 
 %preun
+%systemd_preun %{name}@1.service
 %systemd_preun %{name}.service
 
 %postun
 %systemd_postun_with_restart %{name}.service
+%systemd_postun_with_restart %{name}@1.service
 %{_libexecdir}/twisted-dropin-cache >/dev/null 2>&1 || :
 
 %clean
