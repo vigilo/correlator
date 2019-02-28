@@ -103,13 +103,19 @@ with_mc = nose.with_setup(setup_mc, teardown_mc)
 #Create an empty database before we start our tests for this module
 def setup_db():
     """Crée toutes les tables du modèle dans la BDD."""
-    from vigilo.models.tables.grouppath import GroupPath
-    from vigilo.models.tables.usersupitem import UserSupItem
-    tables = metadata.tables.copy()
-    del tables[GroupPath.__tablename__]
-    del tables[UserSupItem.__tablename__]
-    metadata.create_all(tables=tables.itervalues())
-    metadata.create_all(tables=[GroupPath.__table__, UserSupItem.__table__])
+    # On crée les tables, puis les vues.
+    mapped_tables = metadata.tables.copy()
+    views = {}
+    for tablename in mapped_tables:
+        info = mapped_tables[tablename].info or {}
+        if info.get('vigilo_view'):
+            views[tablename] = mapped_tables[tablename]
+    for view in views:
+        del mapped_tables[view]
+
+    metadata.create_all(tables=mapped_tables.itervalues())
+    metadata.create_all(tables=views.values())
+
 
 #Teardown that database
 def teardown_db():
