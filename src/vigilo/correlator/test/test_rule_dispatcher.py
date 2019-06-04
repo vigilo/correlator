@@ -46,7 +46,7 @@ class RuleDispatcherTestCase(unittest.TestCase):
         """Abandon du traitement d'un état ancien"""
         ts_old = 1239104006
         ts_recent = 1239104042
-        ts_recent_dt = datetime.fromtimestamp(int(ts_recent))
+        ts_recent_dt = datetime.utcfromtimestamp(int(ts_recent))
         idsupitem = tables.SupItem.get_supitem("server.example.com", "Load")
         self.rd._do_correl = Mock(name="do_correl")
         self.rd._context_factory = Mock(name="context") # pas besoin ici

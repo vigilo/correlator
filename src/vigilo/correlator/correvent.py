@@ -390,7 +390,7 @@ class CorrEventBuilder(object):
                 # l'état d'acquittement initial.
                 ack=CorrEvent.ACK_NONE,
                 occurrence=1,
-                timestamp_active=timestamp, # @XXX: ou datetime.now() ?
+                timestamp_active=timestamp, # @XXX: ou datetime.utcnow() ?
             )
             yield self.database.run(
                 DBSession.add, new_correvent,

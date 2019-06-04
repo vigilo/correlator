@@ -13,6 +13,7 @@ except ImportError:
 from datetime import datetime
 import time
 import urllib
+import calendar
 from twisted.internet import defer, reactor, protocol
 from twisted.protocols.memcache import MemCacheProtocol
 
@@ -200,8 +201,8 @@ class MemcachedConnection(object):
         if not timestamp:
             return None
         if timestamp > self.MAX_RELATIVE:
-            return datetime.fromtimestamp(timestamp)
-        return datetime.fromtimestamp(timestamp + time.time())
+            return datetime.utcfromtimestamp(timestamp)
+        return datetime.utcfromtimestamp(timestamp + time.time())
 
     @classmethod
     def reset(cls):
@@ -256,7 +257,7 @@ class MemcachedConnection(object):
         if exp_time is None:
             exp_time = 0
         else:
-            exp_time = int(time.mktime(exp_time.timetuple()))
+            exp_time = calendar.timegm(exp_time.utctimetuple())
 
         def _check_set(res):
             # Lève une exception si la valeur n'a pas pu être stockée.

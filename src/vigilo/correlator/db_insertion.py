@@ -208,7 +208,7 @@ def insert_hls_history(info_dictionary):
     history.idhls = info_dictionary['idsupitem']
     # On enregistre l'heure à laquelle le message a
     # été traité plutôt que le timestamp du message.
-    history.timestamp = datetime.now()
+    history.timestamp = datetime.utcnow()
     history.idstatename = StateName.statename_to_value(
                             info_dictionary['state'])
     DBSession.add(history)

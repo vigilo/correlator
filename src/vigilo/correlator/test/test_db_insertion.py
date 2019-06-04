@@ -6,7 +6,7 @@
 """Suite de tests des fonctions réalisant des insertions dans la BDD."""
 from datetime import datetime
 import unittest
-import time
+import calendar
 
 from vigilo.correlator.db_insertion import insert_event, insert_state, \
                                     OldStateReceived
@@ -47,7 +47,7 @@ class TestDbInsertion(unittest.TestCase):
         # Création d'un message d'événement portant sur un SBN.
         info_dictionary = {
                 "type": "event",
-                "timestamp": datetime.fromtimestamp(1239104006),
+                "timestamp": datetime.utcfromtimestamp(1239104006),
                 "host": "server.example.com",
                 "service": "Load",
                 "state": u"WARNING",
@@ -66,7 +66,7 @@ class TestDbInsertion(unittest.TestCase):
 
         # Vérification des informations de l'événement dans la BDD.
         self.assertEqual(LowLevelService, type(event.supitem))
-        self.assertEqual(1239104006, time.mktime(event.timestamp.timetuple()))
+        self.assertEqual(1239104006, calendar.timegm(event.timestamp.utctimetuple()))
         self.assertEqual(u'server.example.com', event.supitem.host.name)
         self.assertEqual(u'Load', event.supitem.servicename)
         self.assertEqual(u'WARNING',
@@ -87,7 +87,7 @@ class TestDbInsertion(unittest.TestCase):
 
         # Vérification des informations de l'état dans la BDD.
         self.assertEqual(LowLevelService, type(state.supitem))
-        self.assertEqual(1239104006, time.mktime(state.timestamp.timetuple()))
+        self.assertEqual(1239104006, calendar.timegm(state.timestamp.utctimetuple()))
         self.assertEqual('server.example.com', state.supitem.host.name)
         self.assertEqual('Load', state.supitem.servicename)
         self.assertEqual('WARNING',
@@ -103,7 +103,7 @@ class TestDbInsertion(unittest.TestCase):
         # Création d'un message d'événement portant sur un SHN.
         info_dictionary = {
                 "type": "event",
-                "timestamp": datetime.fromtimestamp(1239104006),
+                "timestamp": datetime.utcfromtimestamp(1239104006),
                 "host": 'High-Level-Services',
                 "service": "Load",
                 "state": "WARNING",
@@ -129,7 +129,7 @@ class TestDbInsertion(unittest.TestCase):
         # Création d'un message d'événement portant sur un hôte.
         info_dictionary = {
                 "type": "event",
-                "timestamp": datetime.fromtimestamp(1239104006),
+                "timestamp": datetime.utcfromtimestamp(1239104006),
                 "host": "server.example.com",
                 "service": None,
                 "state": u"DOWN",
@@ -147,7 +147,7 @@ class TestDbInsertion(unittest.TestCase):
 
         # Vérification des informations de l'événement dans la BDD.
         self.assertEqual(Host, type(event.supitem))
-        self.assertEqual(1239104006, time.mktime(event.timestamp.timetuple()))
+        self.assertEqual(1239104006, calendar.timegm(event.timestamp.utctimetuple()))
         self.assertEqual(u'server.example.com', event.supitem.name)
         self.assertEqual(u'DOWN',
             StateName.value_to_statename(event.current_state))
@@ -167,7 +167,7 @@ class TestDbInsertion(unittest.TestCase):
 
         # Vérification des informations de l'état dans la BDD.
         self.assertEqual(Host, type(state.supitem))
-        self.assertEqual(1239104006, time.mktime(state.timestamp.timetuple()))
+        self.assertEqual(1239104006, calendar.timegm(state.timestamp.utctimetuple()))
         self.assertEqual('server.example.com', state.supitem.name)
         self.assertEqual('DOWN',
             StateName.value_to_statename(state.state))
@@ -180,7 +180,7 @@ class TestDbInsertion(unittest.TestCase):
         self.make_dependencies()
         ts_old = 1239104006
         ts_recent = 1239104042
-        ts_recent_dt = datetime.fromtimestamp(ts_recent)
+        ts_recent_dt = datetime.utcfromtimestamp(ts_recent)
         idsupitem = SupItem.get_supitem("server.example.com", "Load")
         # Insertion de l'état récent
         state = DBSession.query(State).get(idsupitem)
@@ -188,7 +188,7 @@ class TestDbInsertion(unittest.TestCase):
         # Création d'un message d'événement portant sur un SBN.
         info_dictionary = {
                 "type": "event",
-                "timestamp": datetime.fromtimestamp(ts_old),
+                "timestamp": datetime.utcfromtimestamp(ts_old),
                 "host": "server.example.com",
                 "service": "Load",
                 "state": "WARNING",

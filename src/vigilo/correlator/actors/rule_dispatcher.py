@@ -246,10 +246,10 @@ class RuleDispatcher(MessageHandler):
 
         if "timestamp" in msg:
             try:
-                info_dictionary["timestamp"] = datetime.fromtimestamp(
+                info_dictionary["timestamp"] = datetime.utcfromtimestamp(
                         int(msg["timestamp"]))
             except ValueError:
-                info_dictionary["timestamp"] = datetime.now()
+                info_dictionary["timestamp"] = datetime.utcnow()
 
         if info_dictionary["host"] == 'High-Level-Services':
             info_dictionary["host"] = None

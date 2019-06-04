@@ -118,10 +118,10 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
                         {"from": previous_statename, "to": statename})
 
     def _getTime(self):
-        return int(time.mktime(datetime.now().timetuple()))
+        return int(time.time())
 
     def _on_host_up(self, hostname, link):
-        now = self._getTime()
+        utcnow = self._getTime()
         services = get_all_services(hostname, self._database)
         LOGGER.info(_("Asking Nagios for updates on %d services"),
                       len(services))
@@ -129,7 +129,7 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
         # On envoie un message à Nagios lui indiquant que les services
         # de l'hôte sont vus comme "UNKNOWN" par Vigilo...
         msg_tpl = {"type": "nagios",
-                   "timestamp": now,
+                   "timestamp": utcnow,
                    "cmdname": "PROCESS_SERVICE_CHECK_RESULT",
                    }
         # @FIXME:   le nombre d'itérations devrait correspondre
@@ -146,8 +146,8 @@ class SvcHostDown(Rule): # pylint: disable-msg=W0232
         # de la machine et de nous notifier les états.
         link.sendItem({
             "type": 'nagios',
-            "timestamp": now,
+            "timestamp": utcnow,
             "cmdname": "SCHEDULE_HOST_SVC_CHECKS",
-            "value": "%s;%s" % (hostname, now + 1),
+            "value": "%s;%s" % (hostname, utcnow + 1),
         })
 

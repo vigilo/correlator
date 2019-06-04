@@ -56,7 +56,7 @@ class TestHandleTicket(unittest.TestCase):
 
         # On initialise les données du message.
         info_dictionary = {
-            'timestamp': datetime.now(),
+            'timestamp': datetime.utcnow(),
             'highlevel': [],
             'ticket_id': u'azerty1234',
             'acknowledgement_status': 'foo',

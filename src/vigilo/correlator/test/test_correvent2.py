@@ -115,7 +115,7 @@ class TestAggregates(unittest.TestCase):
                 'host': u'Host éçà %d' % i,
                 'service': None,
                 'state': u'DOWN',
-                'timestamp': datetime.now(),
+                'timestamp': datetime.utcnow(),
                 'message': u'Host %d' % i,
             }
 

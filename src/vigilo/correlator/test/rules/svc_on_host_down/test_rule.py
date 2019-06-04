@@ -78,7 +78,7 @@ class TestSvcHostDownRule(unittest.TestCase):
                 'previous_state':
                     tables.StateName.statename_to_value(unicode(state_from)),
                 'statename': unicode(state_to),
-                'timestamp': datetime.now(),
+                'timestamp': datetime.utcnow(),
                 'hostname': "testhost",
                 'servicename': None,
         })
@@ -109,7 +109,7 @@ class TestSvcHostDownRule(unittest.TestCase):
         yield self.setup_context("UP", "DOWN")
         # le timestamp par défaut est plus récent et insert_state refusera la
         # mise à jour
-        self.lls.state.timestamp = datetime.fromtimestamp(1)
+        self.lls.state.timestamp = datetime.utcfromtimestamp(1)
         yield on_host_down(
             None,
             None,

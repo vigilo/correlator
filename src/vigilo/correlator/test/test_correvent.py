@@ -78,7 +78,7 @@ class TestCorrevents(unittest.TestCase):
         ctx = self.context_factory(42)
         info_dictionary = {
             'id': 42,
-            'timestamp': datetime.fromtimestamp(int(ts)),
+            'timestamp': datetime.utcfromtimestamp(int(ts)),
             'host': self.host.name,
             'service': u'',
             'state': u'DOWN',
@@ -87,7 +87,7 @@ class TestCorrevents(unittest.TestCase):
 
         # Création Event + CorrEvent plus récent que
         # les informations portées par le message.
-        new_ts = datetime.fromtimestamp(int(ts + 3600))
+        new_ts = datetime.utcfromtimestamp(int(ts + 3600))
         event = Event(
             idsupitem=self.host.idhost,
             timestamp=new_ts,

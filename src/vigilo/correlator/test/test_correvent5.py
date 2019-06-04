@@ -95,7 +95,7 @@ class TestCorrevents5(unittest.TestCase):
             'state': new_state,
             'message': new_state,
         }
-        info_dictionary['timestamp'] = datetime.fromtimestamp(self.ts)
+        info_dictionary['timestamp'] = datetime.utcfromtimestamp(self.ts)
 
         ctx = self.context_factory(self.ts)
 

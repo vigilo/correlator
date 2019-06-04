@@ -45,8 +45,8 @@ class MessagePublisherTestCase(unittest.TestCase):
         self.lls1 = functions.add_lowlevelservice(self.host1, u'Processes')
 
         # Création d'un timestamp à partir de l'heure actuelle
-        self.timestamp = datetime.now()
-        self.int_timestamp = int(mktime(self.timestamp.timetuple()))
+        self.timestamp = datetime.utcnow()
+        self.int_timestamp = int(mktime(self.timestamp.utctimetuple()))
 
 
     def tearDown(self):

@@ -130,7 +130,7 @@ class TestLogging(unittest.TestCase):
         self.msgid += 1
 
         # On génère un timestamp à partir de la date courante
-        timestamp = datetime.now()
+        timestamp = datetime.utcnow()
 
         infos = {
             'type': "event",
@@ -197,7 +197,7 @@ class TestLogging(unittest.TestCase):
         # modification de la topologie dans la BDD.
         DBSession.add(Change(
             element = u"Topology",
-            last_modified = datetime.now(),))
+            last_modified = datetime.utcnow(),))
         DBSession.flush()
 
         self.host = functions.add_host(u'Host')

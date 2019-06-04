@@ -51,14 +51,14 @@ class TestDbInsertion3(unittest.TestCase):
             supitem = host,
             current_state = StateName.statename_to_value(u'WARNING'),
             message = 'WARNING: ping',
-            timestamp = datetime.fromtimestamp(ts - 42),
+            timestamp = datetime.utcfromtimestamp(ts - 42),
         ))
         DBSession.flush()
 
         # Préparation des informations du messages
         # et mise à jour de l'événement brut en base.
         info_dictionary = {
-            'timestamp': datetime.fromtimestamp(ts),
+            'timestamp': datetime.utcfromtimestamp(ts),
             'host': host.name,
             'service': None,
             'state': u'CRITICAL',
@@ -70,7 +70,7 @@ class TestDbInsertion3(unittest.TestCase):
         # Aucun nouvel événement brut ne doit avoir été créé.
         event = DBSession.query(Event).one()
         # À la place, l'événement initial doit avoir été mis à jour.
-        self.assertEqual(datetime.fromtimestamp(ts), event.timestamp)
+        self.assertEqual(datetime.utcfromtimestamp(ts), event.timestamp)
         self.assertEqual(
             StateName.statename_to_value(u'CRITICAL'),
             event.current_state)
@@ -95,7 +95,7 @@ class TestDbInsertion3(unittest.TestCase):
             supitem = host,
             current_state = StateName.statename_to_value(u'WARNING'),
             message = 'WARNING: ping',
-            timestamp = datetime.fromtimestamp(ts - 42),
+            timestamp = datetime.utcfromtimestamp(ts - 42),
         ))
         DBSession.flush()
 
@@ -105,7 +105,7 @@ class TestDbInsertion3(unittest.TestCase):
             supitem = host,
             current_state = StateName.statename_to_value(u'WARNING'),
             message = 'WARNING: ping2',
-            timestamp = datetime.fromtimestamp(ts - 21),
+            timestamp = datetime.utcfromtimestamp(ts - 21),
         )
         correvent = CorrEvent(
             cause = event,
@@ -113,7 +113,7 @@ class TestDbInsertion3(unittest.TestCase):
             trouble_ticket = u'azerty1234',
             ack = CorrEvent.ACK_CLOSED,
             occurrence = 1,
-            timestamp_active = datetime.fromtimestamp(ts - 21),
+            timestamp_active = datetime.utcfromtimestamp(ts - 21),
         )
         correvent.events = [event]
         DBSession.add(event)
@@ -123,7 +123,7 @@ class TestDbInsertion3(unittest.TestCase):
         # Préparation des informations du messages
         # et mise à jour de l'événement brut en base.
         info_dictionary = {
-            'timestamp': datetime.fromtimestamp(ts),
+            'timestamp': datetime.utcfromtimestamp(ts),
             'host': host.name,
             'service': None,
             'state': u'CRITICAL',
@@ -143,7 +143,7 @@ class TestDbInsertion3(unittest.TestCase):
 
         # L'événement brut associé à l'événement
         # corrélé doit avoir été mis à jour.
-        self.assertEqual(datetime.fromtimestamp(ts), event.timestamp)
+        self.assertEqual(datetime.utcfromtimestamp(ts), event.timestamp)
         self.assertEqual(
             StateName.statename_to_value(u'CRITICAL'),
             event.current_state)
@@ -158,7 +158,7 @@ class TestDbInsertion3(unittest.TestCase):
         # L'autre événement brut ne doit pas avoir changé.
         event = DBSession.query(Event).filter(
             Event.idevent != event.idevent).one()
-        self.assertEqual(datetime.fromtimestamp(ts - 42), event.timestamp)
+        self.assertEqual(datetime.utcfromtimestamp(ts - 42), event.timestamp)
         self.assertEqual(
             StateName.statename_to_value(u'WARNING'),
             event.current_state)

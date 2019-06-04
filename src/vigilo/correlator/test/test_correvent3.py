@@ -84,12 +84,12 @@ class TestCorrevents3(unittest.TestCase):
             'state': new_state,
             'message': new_state,
         }
-        info_dictionary['timestamp'] = datetime.fromtimestamp(int(ts + 1))
+        info_dictionary['timestamp'] = datetime.utcfromtimestamp(int(ts + 1))
 
         # Création Event + CorrEvent.
         event = Event(
             idsupitem=self.host.idhost,
-            timestamp=datetime.fromtimestamp(int(ts)),
+            timestamp=datetime.utcfromtimestamp(int(ts)),
             current_state=StateName.statename_to_value(old_state),
             message=old_state,
         )
@@ -101,7 +101,7 @@ class TestCorrevents3(unittest.TestCase):
             trouble_ticket=None,
             ack=ack,
             occurrence=42,
-            timestamp_active=datetime.fromtimestamp(int(ts)),
+            timestamp_active=datetime.utcfromtimestamp(int(ts)),
         )
         DBSession.add(correvent)
         correvent.events.append(event)
