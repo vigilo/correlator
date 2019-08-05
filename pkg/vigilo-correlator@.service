@@ -26,4 +26,4 @@ Restart=on-failure
 # Evite la création de services dont le nom d'instance n'est pas un nombre,
 # ou bien est un nombre inférieur à 1.
 ExecStartPre=/usr/bin/test %i -eq %i -a %i -ge 1
-ExecStart=/usr/bin/vigilo-correlator -d /var/lib/vigilo/correlator --pidfile '' -n vigilo-correlator --config ${VIGILO_SETTINGS} --id %i
+ExecStart=/usr/bin/vigilo-correlator -d /var/lib/vigilo/correlator --pidfile '' -l /dev/null -n vigilo-correlator --config ${VIGILO_SETTINGS} --id %i
