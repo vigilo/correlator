@@ -101,10 +101,14 @@ class CorrEventBuilder(object):
                     Event.current_state.in_([state_ok, state_up]),
                     CorrEvent.ack == CorrEvent.ACK_CLOSED
                 ))
-            ).scalar,
+            ).first,
             transaction=False
         )
-        defer.returnValue(update_id)
+        if update_id:
+            res = update_id.idcorrevent
+        else:
+            res = None
+        defer.returnValue(res)
 
     @defer.inlineCallbacks
     def _get_updated_correvent(self, update_id, timestamp):
