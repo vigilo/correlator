@@ -8,6 +8,7 @@ Traite l'insertion en base de données.
 
 from sqlalchemy import not_, and_, or_
 from sqlalchemy.orm import aliased
+from sqlalchemy.sql import literal
 
 from twisted.internet import defer
 from datetime import datetime
@@ -78,44 +79,68 @@ def insert_event(info_dictionary):
                        })
         return None
 
-    # On recherche un éventuel évènement brut concernant cet item.
-    # L'événement doit être associé à un événement corrélé ouvert
-    # ou bien ne pas être à rattaché à un événement corrélé du tout.
-    cause_event = aliased(Event)
-    current_event = aliased(Event)
-    # On privilégie les événements bruts associés à un événement corrélé.
-    order_clause = (CorrEvent.idcorrevent != None)
-    event = DBSession.query(
-                current_event,
-                order_clause,   # Doit être présent dans le SELECT
-                                # pour satisfaire PostgreSQL.
-            ).outerjoin(
-                (EVENTSAGGREGATE_TABLE, EVENTSAGGREGATE_TABLE.c.idevent ==
-                    current_event.idevent),
-                (CorrEvent, CorrEvent.idcorrevent ==
-                    EVENTSAGGREGATE_TABLE.c.idcorrevent),
-                (cause_event, cause_event.idevent == CorrEvent.idcause),
-            ).filter(current_event.idsupitem == info_dictionary['idsupitem']
-            ).filter(
-                or_(
-                    # Soit l'événement brut n'est pas
-                    # rattaché à un événement corrélé.
-                    CorrEvent.idcorrevent == None,
-
-                    # Soit l'événement corrélé auquel
-                    # il est rattaché est toujours ouvert.
-                    not_(
-                        and_(
-                            cause_event.current_state.in_([
-                                StateName.statename_to_value(u'OK'),
-                                StateName.statename_to_value(u'UP')
-                            ]),
-                            CorrEvent.ack == CorrEvent.ACK_CLOSED
-                        )
-                    )
+    # On recherche en priorité un événement brut qui cause un événement
+    # corrélé encore actif et qui porte sur l'objet supervisé indiqué.
+    event1 = DBSession.query(
+            Event,
+            literal(1).label("rank"),
+        ).join(
+            (CorrEvent, CorrEvent.idcause == Event.idevent),
+        ).filter(Event.idsupitem == info_dictionary['idsupitem']
+        ).filter(
+            not_(
+                and_(
+                    Event.current_state.in_([
+                        StateName.statename_to_value(u'OK'),
+                        StateName.statename_to_value(u'UP')
+                    ]),
+                    CorrEvent.ack == CorrEvent.ACK_CLOSED
                 )
-            ).order_by(order_clause.desc()
-            ).distinct().limit(2).all()
+            )
+        )
+
+    # En second choix, on recherche un événement brut qui appartient
+    # à l'agrégat d'un événement corrélé encore actif.
+    cause_event = aliased(Event)
+    found_event = aliased(Event)
+    event2 = DBSession.query(
+            found_event,
+            literal(2).label("rank"),
+        ).join(
+            (EVENTSAGGREGATE_TABLE,
+                EVENTSAGGREGATE_TABLE.c.idevent == found_event.idevent),
+            (CorrEvent,
+                CorrEvent.idcorrevent == EVENTSAGGREGATE_TABLE.c.idcorrevent),
+            (cause_event, cause_event.idevent == CorrEvent.idcause),
+        ).filter(found_event.idsupitem == info_dictionary['idsupitem']
+        ).filter(
+            not_(
+                and_(
+                    cause_event.current_state.in_([
+                        StateName.statename_to_value(u'OK'),
+                        StateName.statename_to_value(u'UP')
+                    ]),
+                    CorrEvent.ack == CorrEvent.ACK_CLOSED
+                )
+            )
+        )
+
+    # En troisième choix, on se rabat sur un événement brut qui n'appartient
+    # à aucun agrégat et qui n'est la cause d'aucun événement corrélé
+    # (situation anormale, mais qu'on ne veut pas aggraver, cf. #908).
+    event3 = DBSession.query(
+            Event,
+            literal(3).label("rank"),
+        ).filter(Event.idsupitem == info_dictionary['idsupitem']
+        ).filter(~Event.idsupitem.in_(
+            DBSession.query(EVENTSAGGREGATE_TABLE.c.idevent))
+        ).filter(~Event.idsupitem.in_(
+            DBSession.query(CorrEvent.idcause)))
+
+    # Retourne 2 des événements trouvés, triés par préférence (rank).
+    # La limite permet de détecter les situations anormales (doublons).
+    event = event1.union_all(event2, event3).order_by("rank", Event.idevent
+                ).distinct("rank", Event.idevent).limit(2).all()
 
     # Si aucun événement correpondant à cet item ne figure dans la base
     if not event:
@@ -134,10 +159,11 @@ def insert_event(info_dictionary):
     # Si plusieurs événements ont été trouvés
     else:
         if len(event) > 1:
+            # Ce n'est pas vraiment normal, mais on fait de notre mieux
+            # pour ne pas faire empirer la situation.
             LOGGER.warning(_('Multiple raw events found, '
                              'using the first one available.'))
-        # On sélectionne le premier Event parmi la liste
-        # des tuples (Event, CorrEvent.idcorrevent != None).
+        # On prend le premier Event parmi la liste des tuples (Event, rank).
         event = event[0][0]
         LOGGER.debug(_('Updating event %r'), event.idevent)
 
