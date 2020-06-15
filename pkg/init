@@ -7,9 +7,9 @@
 # description: Starts and stops the Vigilo correlator
 ### BEGIN INIT INFO
 # Provides: vigilo-correlator
-# Required-Start: $network $syslog postgresql supervisor
+# Required-Start: $network $syslog postgresql memcached
 # Should-Start: $named
-# Required-Stop: $network $syslog postgresql supervisor
+# Required-Stop: $network $syslog postgresql memcached
 # Should-Stop: $named
 # Default-Start: 2 3 4 5
 # Default-Stop: 0 1 6
