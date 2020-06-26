@@ -91,15 +91,13 @@ svc_on_host_down = vigilo.correlator.rules.svc_on_host_down:SvcHostDown
 
 
 [connector]
-# Nom d'hôte utilisé pour signaler à Vigilo que ce connecteur fonctionne
-# correctement. Cela doit correspondre au nom d'hôte configuré dans VigiConf
-# pour cette machine. Par défaut, on utilise le nom d'hôte court (sans le
-# domaine DNS)
+# Nom d'hôte utilisé pour signaler que ce connecteur fonctionne.
+# Cela doit correspondre au nom configuré pour cette machine dans VigiConf.
+# Par défaut, le nom qualifié de la machine est utilisé.
 #hostname = hostname
 
-# Service utilisé pour signaler à Vigilo que ce connecteur fonctionne
-# correctement. Comme ci-dessus, cela doit correspondre au nom de service
-# configuré dans VigiConf.
+# Nom de service utilisé pour signaler que ce connecteur fonctionne.
+# Ce nom doit correspondre au nom du service configuré dans VigiConf.
 #status_service = vigilo-correlator
 
 # Ces paramètres permettent de surcharger les valeurs présentes dans la
