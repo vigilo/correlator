@@ -92,7 +92,10 @@ def makeService(options):
     msg_handler = ruledispatcher_factory(settings, database, client)
 
     # Statistiques
-    from vigilo.connector.status import statuspublisher_factory
-    statuspublisher_factory(settings, client, providers=(msg_handler,))
+    # Seule la première instance du corrélateur est permanente.
+    idinstance = str(settings.get("instance", "") or 1)
+    if idinstance == "1":
+        from vigilo.connector.status import statuspublisher_factory
+        statuspublisher_factory(settings, client, providers=(msg_handler,))
 
     return root_service
