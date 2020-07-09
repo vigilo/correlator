@@ -158,11 +158,13 @@ def insert_event(info_dictionary):
 
     # Si plusieurs événements ont été trouvés
     else:
-        if len(event) > 1:
+        event_ids = set(e[0].idevent for e in event)
+        if len(event_ids) > 1:
             # Ce n'est pas vraiment normal, mais on fait de notre mieux
             # pour ne pas faire empirer la situation.
-            LOGGER.warning(_('Multiple raw events found, '
-                             'using the first one available.'))
+            LOGGER.warning(_('Multiple raw events found (%s), '
+                             'using the first one available.') %
+                            ', '.join(sorted(event_ids)))
         # On prend le premier Event parmi la liste des tuples (Event, rank).
         event = event[0][0]
         LOGGER.debug(_('Updating event %r'), event.idevent)
