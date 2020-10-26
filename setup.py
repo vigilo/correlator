@@ -6,8 +6,16 @@
 import os, sys
 from setuptools import setup, find_packages
 
-sysconfdir = os.getenv("SYSCONFDIR", "/etc")
-localstatedir = os.getenv("LOCALSTATEDIR", "/var")
+cmdclass = {}
+try:
+    from vigilo.common.commands import install_data
+except ImportError:
+    pass
+else:
+    cmdclass['install_data'] = install_data
+
+sysconfdir = os.environ.setdefault("SYSCONFDIR", "/etc")
+localstatedir = os.environ.setdefault("LOCALSTATEDIR", "/var")
 
 tests_require = [
     'coverage',
@@ -67,13 +75,13 @@ setup(name='vigilo-correlator',
                 ],
         },
         package_dir={'': 'src'},
+        test_suite='nose.collector',
+        cmdclass=cmdclass,
         data_files=[
-                    (os.path.join(sysconfdir, "vigilo/correlator"),
-                        ["settings.ini"]),
-                    (os.path.join(sysconfdir, "vigilo/correlator/plugins"), []),
-                    (os.path.join(sysconfdir, "vigilo/correlator/conf.d"), []),
-                    (os.path.join(localstatedir, "lib/vigilo/correlator"), []),
-                    (os.path.join(localstatedir, "log/vigilo/correlator"), []),
-                    (os.path.join(localstatedir, "run/vigilo-correlator"), []),
-                   ] + install_i18n("i18n", os.path.join(sys.prefix, 'share', 'locale')),
+            (os.path.join("@SYSCONFDIR@", "vigilo", "correlator"), ["settings.ini.in"]),
+            (os.path.join("@SYSCONFDIR@", "vigilo", "correlator", "plugins"), []),
+            (os.path.join("@SYSCONFDIR@", "vigilo", "correlator", "conf.d"), []),
+            (os.path.join("@LOCALSTATEDIR@", "lib", "vigilo", "correlator"), []),
+            (os.path.join("@LOCALSTATEDIR@", "log", "vigilo", "correlator"), []),
+           ] + install_i18n("i18n", os.path.join(sys.prefix, 'share', 'locale')),
         )

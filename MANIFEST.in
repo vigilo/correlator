@@ -1,15 +1,8 @@
-include buildout.cfg
-include Makefile
 include COPYING.txt
 
-graft doc
-graft pkg
-graft debian
 recursive-include i18n *.pot *.po
 
 include settings_tests.ini
 include settings.ini.in
 
 include src/twisted/plugins/*.py
-
-include patches/*.patch
