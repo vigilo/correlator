@@ -12,6 +12,7 @@ Classes et fonctions pour aider aux tests unitaires
 from __future__ import print_function
 import subprocess
 import os
+import pwd
 import signal
 import time
 import socket
@@ -71,10 +72,22 @@ def setup_mc():
     port = get_available_port()
     settings['correlator']['memcached_port'] = port
     env = os.environ.copy()
-    env["PATH"] += ":/usr/sbin" # Sur mandriva, memcached est dans /usr/sbin
+    env["PATH"] += ":/usr/sbin"
     LOGGER.info("Configuring memcached to run on port %d", port)
-    mc_pid = subprocess.Popen(["memcached", "-l", "127.0.0.1", "-p", str(port)],
-                               env=env, close_fds=True).pid
+
+    # Do not run memcached as root as this could have security implications...
+    # Instead, try to run it as user "nobody".
+    # We also disable the UDP port to prevent amplication attacks,
+    # even if it's only for the duration of the tests.
+    cmdline = ["memcached", "-U", "0", "-l", "127.0.0.1", "-p", str(port)]
+    if os.getuid() == 0:
+        try:
+            pwd.getpwnam('nobody')
+        except KeyError:
+            cmdline += ["-u", "root"]
+        else:
+            cmdline += ["-u", "nobody"]
+    mc_pid = subprocess.Popen(cmdline, env=env, close_fds=True).pid
     # Give it time to start up properly. I should try a client connection in a
     # while loop. Oh well...
     MemcachedConnection.reset()
