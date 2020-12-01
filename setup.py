@@ -6,16 +6,7 @@
 import os, sys
 from setuptools import setup, find_packages
 
-cmdclass = {}
-try:
-    from vigilo.common.commands import install_data
-except ImportError:
-    pass
-else:
-    cmdclass['install_data'] = install_data
-
-sysconfdir = os.environ.setdefault("SYSCONFDIR", "/etc")
-localstatedir = os.environ.setdefault("LOCALSTATEDIR", "/var")
+setup_requires = ['vigilo-common'] if not os.environ.get('CI') else []
 
 tests_require = [
     'coverage',
@@ -50,6 +41,7 @@ setup(name='vigilo-correlator',
                          "to reduce information overload and help point "
                          "out the cause of a problem.",
         zip_safe=False, # pour pouvoir écrire le dropin.cache de twisted
+        setup_requires=setup_requires,
         install_requires=[
             'setuptools',
             'python-memcached',
@@ -76,12 +68,21 @@ setup(name='vigilo-correlator',
         },
         package_dir={'': 'src'},
         test_suite='nose.collector',
-        cmdclass=cmdclass,
+        vigilo_build_vars={
+            'sysconfdir': {
+                'default': '/etc',
+                'description': "installation directory for configuration files",
+            },
+            'localstatedir': {
+                'default': '/var',
+                'description': "local state directory",
+            },
+        },
         data_files=[
-            (os.path.join("@SYSCONFDIR@", "vigilo", "correlator"), ["settings.ini.in"]),
-            (os.path.join("@SYSCONFDIR@", "vigilo", "correlator", "plugins"), []),
-            (os.path.join("@SYSCONFDIR@", "vigilo", "correlator", "conf.d"), []),
-            (os.path.join("@LOCALSTATEDIR@", "lib", "vigilo", "correlator"), []),
-            (os.path.join("@LOCALSTATEDIR@", "log", "vigilo", "correlator"), []),
+            (os.path.join("@sysconfdir@", "vigilo", "correlator"), ["settings.ini.in"]),
+            (os.path.join("@sysconfdir@", "vigilo", "correlator", "plugins"), []),
+            (os.path.join("@sysconfdir@", "vigilo", "correlator", "conf.d"), []),
+            (os.path.join("@localstatedir@", "lib", "vigilo", "correlator"), []),
+            (os.path.join("@localstatedir@", "log", "vigilo", "correlator"), []),
            ] + install_i18n("i18n", os.path.join(sys.prefix, 'share', 'locale')),
         )

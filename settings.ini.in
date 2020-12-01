@@ -1,5 +1,5 @@
 [include]
-include = @SYSCONFDIR@/vigilo/correlator/conf.d/
+include = @sysconfdir@/vigilo/correlator/conf.d/
 
 [bus]
 # Liste des serveurs AMQP (noms ou adresses IP) à utiliser,
@@ -165,7 +165,7 @@ args = '/dev/log', 'daemon'
 [handler_errors]
 level = ERROR
 class = handlers.RotatingFileHandler
-args = ('@LOCALSTATEDIR@/log/vigilo/correlator/error.log', 'a', 1024*1024*10, 5)
+args = ('@localstatedir@/log/vigilo/correlator/error.log', 'a', 1024*1024*10, 5)
 formatter = errorFormatter
 
 [formatter_consoleFormatter]
