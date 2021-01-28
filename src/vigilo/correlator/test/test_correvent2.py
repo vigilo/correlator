@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 sw=4 ts=4 et :
 # pylint: disable-msg=C0111,W0212,R0904
-# Copyright (C) 2006-2020 CS GROUP - France
+# Copyright (C) 2006-2021 CS GROUP - France
 # License: GNU GPL v2 <http://www.gnu.org/licenses/gpl-2.0.html>
 
 from __future__ import print_function
